@@ -15,36 +15,35 @@ namespace Fiffi.Testing
 	{
 		private TestServer server;
 		private HttpClient client;
-		private IEventBus pub;
+		private Lodge lodge;
 
 		private ServerFixture(Action<IApplicationBuilder> a, Action<IServiceCollection> a2)
 		{
-			//var env = new HostingEnvironment
-			//{
-			//	EnvironmentName = "Test"
-			//};
-			//var startup = new Startup(env);
 			var lf = new LoggerFactory { MinimumLevel = LogLevel.Debug };
 			lf.AddConsole(LogLevel.Verbose);
-
-
 			server = TestServer.Create(a, collection =>
 			{
 				a2(collection);
-				pub = (IEventBus)collection.Single(x => x.ServiceType == typeof(IEventBus)).ImplementationInstance;
+				//TODO get from startup as property ? or via create as param
+				lodge = (Lodge) collection.Single(x => x.ServiceType == typeof (Lodge)).ImplementationInstance;
 			});
-			
 			client = server.CreateClient();
 		}
+
+		internal static ServerFixture Create(Action<IApplicationBuilder> a, Action<IServiceCollection> a2)	
+			=> new ServerFixture(a, a2);
+
+		public Task RunAsync(Func<HttpClient, Lodge, Task> @case)
+			=> @case(client, lodge);
 
 		public static async Task UseAsync(
 			Action<IApplicationBuilder> a, 
 			Action<IServiceCollection> a2, 
-			Func<HttpClient, IEventBus, Task> f)
+			Func<HttpClient, Lodge, Task> f)
 		{
 			using (var s = new ServerFixture(a, a2))
 			{
-				await f(s.client, s.pub);
+				await f(s.client, s.lodge);
 			}
 		}
 

@@ -63,7 +63,7 @@ namespace Fiffi
 	public void Register<T>(Func<T, Task> f)
 		where T : IEvent
 	{
-		_processors.Add(events => Task.WhenAll((IEnumerable<Task>) events.Select(e => f((T)e))));
+		_processors.Add(events => Task.WhenAll(events.Select(e => f((T)e)))); //TODO applicable - casting ?
 	}
 
 	public async Task PublishAsync(params IEvent[] events)

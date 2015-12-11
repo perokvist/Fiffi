@@ -5,53 +5,89 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.AspNet.Builder;
 using Microsoft.Extensions.DependencyInjection;
+using Newtonsoft.Json;
 using Xunit;
 
 namespace Fiffi.Testing
 {
 	public static class Env
 	{
-		public static async Task RunAsync(
-			Action<IApplicationBuilder> a, 
-			Action<IServiceCollection> a2,
-			UseCaseData @case)
+
+		public static Context CreateContext(Action<IApplicationBuilder> a, Action<IServiceCollection> a2)
+			=>	new Context(a, a2);
+
+		public class Context : IDisposable
 		{
-			await ServerFixture.UseAsync(a, a2, async (client, pub) =>
+			private ServerFixture fixture;
+
+			internal Context(Action<IApplicationBuilder> a, Action<IServiceCollection> a2)
 			{
-				var happend = new List<IEvent>();
-				var assertEvents = @case.ThenEvents != null && @case.ThenEvents.Any();
+				fixture = ServerFixture.Create(a, a2);
+			}
 
-				if (assertEvents)
-					pub.Register(events => 
-					 {
-						 happend.AddRange(events);
-						 return Task.FromResult(0);
-					 });
+			public Task RunAsync(Func<HttpClient, Lodge, Task> @case)
+				=> fixture.RunAsync(@case);
 
-				await pub.PublishAsync(@case.Given.ToArray());
+			public Task RunAsync(UseCaseData @case) 
+				=> fixture.RunAsync((client, lodge) => RunCaseAsync(@case, lodge, client));
 
-				if (@case.When != null)
+			public void Dispose() => fixture.Dispose();
+		}
+
+		public static async Task RunAsync(
+			Action<IApplicationBuilder> a,
+			Action<IServiceCollection> a2,
+			params UseCaseData[] @cases)
+		{
+			await ServerFixture.UseAsync(a, a2, async (client, lodge) =>
+			{
+				foreach (var @case in @cases)
 				{
-					var r = await client.SendAsync(@case.When);
-					Assert.Equal(@case.ThenResponse, await r.Content.ReadAsStringAsync());
-				}
-
-				if (assertEvents)
-				{
-					// MessageVault.MessageReader sleeps for 1sec :I
-					if (!happend.Any())
-						await Task.Delay(1000);
-
-					Assert.Collection(@case.ThenEvents, @event => Assert.True(happend.Any(e => e.GetType() == @event.GetType())));
+					await RunCaseAsync(@case, lodge , client);
 				}
 			});
 		}
 
+		private static async Task RunCaseAsync(UseCaseData @case, Lodge lodge, HttpClient client)
+		{
+			var assertEvents = @case.ThenEvents != null && @case.ThenEvents.Any();
+			var apiInteraction = @case.When != null;
+			Nest nest = null;
+
+			lodge.AddModules(bus =>
+			{
+				nest = Nest.InitializeAsync(bus, @case.Given.ToArray()).Result;
+				return Task.FromResult(0);
+			});
+
+			if (apiInteraction)
+			{
+				var r = await client.SendAsync(@case.When);
+				string expectedString;
+
+				if (@case.ThenResponse is string)
+					expectedString = @case.ThenResponse.ToString();
+				else
+					expectedString = JsonConvert.SerializeObject(@case.ThenResponse);
+
+				Assert.Equal(expectedString, await r.Content.ReadAsStringAsync());
+			}
+
+			if (assertEvents)
+			{
+				// MessageVault.MessageReader sleeps for 1sec :I
+				if (!nest.Happend.Any()) //TODO skip if fixture is use for multiple tests
+					await Task.Delay(1000);
+
+				Assert.Collection(@case.ThenEvents, @event => Assert.True(nest.Happend.Any(e => e.GetType() == @event.GetType())));
+			}
+
+		}
+
 		public static UseCaseData UseCase(string name, IEnumerable<IEvent> given, HttpRequestMessage when = null, object thenResponse = null,
 			IEnumerable<IEvent> thenEvents = null)
-		{
-			return new UseCaseData(name, given, when, thenResponse, thenEvents);
-		}
+				=>  new UseCaseData(name, given, when, thenResponse, thenEvents);
+		
 
 		public class UseCaseData
 		{
