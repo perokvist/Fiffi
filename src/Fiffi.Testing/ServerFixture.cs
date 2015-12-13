@@ -15,7 +15,7 @@ namespace Fiffi.Testing
 	{
 		private TestServer server;
 		private HttpClient client;
-		private Lodge lodge;
+		private Dam dam;
 
 		private ServerFixture(Action<IApplicationBuilder> a, Action<IServiceCollection> a2)
 		{
@@ -25,7 +25,7 @@ namespace Fiffi.Testing
 			{
 				a2(collection);
 				//TODO get from startup as property ? or via create as param
-				lodge = (Lodge) collection.Single(x => x.ServiceType == typeof (Lodge)).ImplementationInstance;
+				dam = (Dam) collection.Single(x => x.ServiceType == typeof (Dam)).ImplementationInstance;
 			});
 			client = server.CreateClient();
 		}
@@ -33,17 +33,17 @@ namespace Fiffi.Testing
 		internal static ServerFixture Create(Action<IApplicationBuilder> a, Action<IServiceCollection> a2)	
 			=> new ServerFixture(a, a2);
 
-		public Task RunAsync(Func<HttpClient, Lodge, Task> @case)
-			=> @case(client, lodge);
+		public Task RunAsync(Func<HttpClient, Dam, Task> @case)
+			=> @case(client, dam);
 
 		public static async Task UseAsync(
 			Action<IApplicationBuilder> a, 
 			Action<IServiceCollection> a2, 
-			Func<HttpClient, Lodge, Task> f)
+			Func<HttpClient, Dam, Task> f)
 		{
 			using (var s = new ServerFixture(a, a2))
 			{
-				await f(s.client, s.lodge);
+				await f(s.client, s.dam);
 			}
 		}
 

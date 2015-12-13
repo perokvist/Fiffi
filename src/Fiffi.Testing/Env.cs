@@ -25,11 +25,11 @@ namespace Fiffi.Testing
 				fixture = ServerFixture.Create(a, a2);
 			}
 
-			public Task RunAsync(Func<HttpClient, Lodge, Task> @case)
+			public Task RunAsync(Func<HttpClient, Dam, Task> @case)
 				=> fixture.RunAsync(@case);
 
 			public Task RunAsync(UseCaseData @case) 
-				=> fixture.RunAsync((client, lodge) => RunCaseAsync(@case, lodge, client));
+				=> fixture.RunAsync((client, dam) => RunCaseAsync(@case, dam, client));
 
 			public void Dispose() => fixture.Dispose();
 		}
@@ -39,22 +39,22 @@ namespace Fiffi.Testing
 			Action<IServiceCollection> a2,
 			params UseCaseData[] @cases)
 		{
-			await ServerFixture.UseAsync(a, a2, async (client, lodge) =>
+			await ServerFixture.UseAsync(a, a2, async (client, dam) =>
 			{
 				foreach (var @case in @cases)
 				{
-					await RunCaseAsync(@case, lodge , client);
+					await RunCaseAsync(@case, dam , client);
 				}
 			});
 		}
 
-		private static async Task RunCaseAsync(UseCaseData @case, Lodge lodge, HttpClient client)
+		private static async Task RunCaseAsync(UseCaseData @case, Dam dam, HttpClient client)
 		{
 			var assertEvents = @case.ThenEvents != null && @case.ThenEvents.Any();
 			var apiInteraction = @case.When != null;
 			Nest nest = null;
 
-			lodge.AddModules(bus =>
+			dam.AddModules(bus =>
 			{
 				nest = Nest.InitializeAsync(bus, @case.Given.ToArray()).Result;
 				return Task.FromResult(0);

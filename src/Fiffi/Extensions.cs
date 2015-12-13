@@ -30,9 +30,9 @@ namespace Fiffi
 			return environment.IsEnvironment("Test");
 		}
 					
-		public static IServiceCollection AddFiffi(this IServiceCollection services, Lodge lodge)
+		public static IServiceCollection AddFiffi(this IServiceCollection services, Dam dam)
 		{
-			lodge.Register(services);
+			dam.Register(services);
 			return services;
 		}
 

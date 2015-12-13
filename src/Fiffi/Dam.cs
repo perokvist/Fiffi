@@ -11,7 +11,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Fiffi
 {
-	public class Lodge
+	public class Dam
 	{
 		private readonly IConfiguration _configuration;
 		private readonly ILoggerFactory _loggerFactory;
@@ -20,7 +20,7 @@ namespace Fiffi
 		public IEventBus Pub { get; }
 		public CommandDispatcher Dispatcher { get; }
 
-		private Lodge(IEventBus pub, CommandDispatcher dispatcher, ILoggerFactory loggerFactory)
+		private Dam(IEventBus pub, CommandDispatcher dispatcher, ILoggerFactory loggerFactory)
 		{
 			_loggerFactory = loggerFactory;
 			Pub = pub;
@@ -28,15 +28,15 @@ namespace Fiffi
 			_modules = new Dictionary<Type, IDisposable>();
 		}
 
-		public static Lodge CreateMemoryContext(IConfiguration configuration, ILoggerFactory loggerFactory)
-			=>  new Lodge(
+		public static Dam CreateMemoryDam(IConfiguration configuration, ILoggerFactory loggerFactory)
+			=>  new Dam(
 				new MessageVaultEventBus(new MemoryClient(), new MemoryCheckpointReaderWriter(), configuration["fiffi::stream-name"] ?? "test-stream"),	//TODO fix null
 				new CommandDispatcher(),
 				loggerFactory
 				);
 
-		public static Lodge CreateCloudContext(IConfiguration configuration, ILoggerFactory loggerFactory)
-			=> new Lodge(
+		public static Dam CreateCloudDam(IConfiguration configuration, ILoggerFactory loggerFactory)
+			=> new Dam(
 				new MessageVaultEventBus(new Client(null, null, null), new CloudCheckpointWriter(null), configuration["fiffi::stream-name"]),
 				new CommandDispatcher(),
 				loggerFactory
@@ -58,7 +58,7 @@ namespace Fiffi
 			.ForEach(m => m(Pub, Dispatcher, _loggerFactory)
 			.Tap(x => _modules[x.GetType()] = x));	 //Disposable not used, and duplication trouble - hook to run ?
 
-		public void Run(CancellationToken token) =>
-			Pub.Run(token, _loggerFactory.CreateLogger<Context>());
+		public void ListenToStream(CancellationToken token) =>
+			Pub.Run(token, _loggerFactory.CreateLogger<IEventBus>());
 	}
 }
