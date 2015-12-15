@@ -8,28 +8,34 @@ using MessageVault.Api;
 using Microsoft.Extensions.Logging;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 
-namespace Fiffi
+namespace Fiffi.Streams
 {
 	public class MessageVaultEventBus : IEventBus
 	{
 		private readonly IClient _client;
 		private readonly ICheckpointWriter _checkpoint;
 		private readonly string _streamName;
+		private readonly Func<MessageWithId, IEvent> _toEvent;
+		private readonly Func<IEvent, Message> _toMessage;
 		private readonly List<Func<IEvent[], Task>> _processors = new List<Func<IEvent[], Task>>();
 
 		public MessageVaultEventBus(
 			IClient client,
 			ICheckpointWriter checkpoint,
-			string streamName)
+			string streamName,
+			Func<MessageWithId, IEvent> toEvent,
+			Func<IEvent, Message> toMessage)
 		{
 			_client = client;
 			_checkpoint = checkpoint;
 			_streamName = streamName;
+			_toEvent = toEvent;
+			_toMessage = toMessage;
 		}
 
 		public void Run(CancellationToken ct, ILogger l)
 		{
-			Task.Factory.StartNew<Task>(async () =>
+			Task.Factory.StartNew(async () =>
 			{
 				var current = _checkpoint.GetOrInitPosition();
 				var reader = await _client.GetMessageReaderAsync(_streamName);
@@ -42,7 +48,7 @@ namespace Fiffi
 					if (result.HasMessages())
 					{
 						var m = result.Messages
-							.Select(Transformation.ToEvent)
+							.Select(_toEvent)
 							.ToArray();
 
 						var h = _processors.Select(p => p(m));
@@ -68,15 +74,12 @@ namespace Fiffi
 
 	public async Task PublishAsync(params IEvent[] events)
 	{
-		//TODO envelope - maps
 		var messages = events
-			.Select(Transformation.ToMessage)
+			.Select(_toMessage)
 			.ToList();
 
 		if (!messages.Any())
-		{
 			return;
-		}
 
 		await _client.PostMessagesAsync(_streamName, messages);
 	}

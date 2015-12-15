@@ -25,16 +25,19 @@ namespace Fiffi
 
 			await @lock.Item2.WaitAsync(TimeSpan.FromSeconds(5));
 
-			await Execute(factory, executeUsingThis, pub);
+			await Execute(factory, executeUsingThis, pub, command.CorrelationId);
 		}
 
-		public static async Task Execute<TAggregate>(
-			Func<TAggregate> factory,
-			Func<TAggregate, IEnumerable<IEvent>> executeUsingThis,
-			Func<IEvent[], Task> pub
-			)
-		{
-			await pub(executeUsingThis(factory()).ToArray());
-		}
+		public static async Task Execute<TAggregate>(Func<TAggregate> factory, 
+			Func<TAggregate, IEnumerable<IEvent>> executeUsingThis, 
+			Func<IEvent[], Task> pub, Guid correlationId)
+			=> await pub(executeUsingThis(factory()).ToArray());
+
+		//private static void AddMetaData(IEnumerable<IEvent> events, Guid correlationId) =>
+		//{
+			
+		//}
+			//=> events.ForEach(e => e.CorrelationId = correlationId);
+
 	}
 }

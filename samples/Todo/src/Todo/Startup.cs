@@ -27,8 +27,11 @@ namespace Todo
 			configurationBuilder.AddJsonFile($"config.{Environment.EnvironmentName}.json", true);
 			configurationBuilder.AddEnvironmentVariables();
 			Configuration = configurationBuilder.Build();
-			Dam = Dam.CreateMemoryDam(Configuration, loggerFactory);
 
+			if(environment.IsTest())
+				Dam = Dam.CreateDam(() => Fiffi.Streams.MessageVault.Memory(Configuration), loggerFactory);
+			if(environment.IsProduction())
+				Dam = Dam.CreateDam(() => Fiffi.Streams.MessageVault.Cloud(Configuration), loggerFactory);
 
 			Dam.AddModules((bus, dispatcher, lf) => TodoModule.Initialize(bus));
 	    }

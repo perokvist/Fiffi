@@ -11,11 +11,11 @@ namespace Fiffi.Testing
 	{
 		public static IEnumerable<IEvent> GivenEvents(params IEvent[] es) => es ?? Enumerable.Empty<IEvent>();
 
-		public static HttpRequestMessage PostJSON(string url, string values)
+		public static HttpRequestMessage PostJSON(string url, object values)
 		{
 			return new HttpRequestMessage(HttpMethod.Post, new Uri(url))
 			{
-				Content = new StringContent(values ?? string.Empty, Encoding.UTF8, "application/json")
+				Content = new StringContent(JsonConvert.SerializeObject(values), Encoding.UTF8, "application/json")
 			};
 		}
 

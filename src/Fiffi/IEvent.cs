@@ -5,11 +5,11 @@ namespace Fiffi
 {
 	public interface IEvent
 	{
-		Dictionary<string, object> Meta { get; set; }
-		Dictionary<string, object> Values { get; set; }
+		IReadOnlyDictionary<string, object> Meta { get;}
+		IReadOnlyDictionary<string, object> Values { get; }
 
-		Guid AggregateId { get; set; }
-		Guid CorrelationId { get; set; }
-		Guid EventId { get; set; }
+		Guid AggregateId { get; }
+		Guid CorrelationId { get; }
+		Guid EventId { get; }
 	}
 }

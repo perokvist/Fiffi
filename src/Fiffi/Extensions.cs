@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using MessageVault.Memory;
 using Microsoft.AspNet.Builder;
@@ -16,6 +17,9 @@ namespace Fiffi
 			=> app.ApplicationServices.GetRequiredService<IApplicationLifetime>()
 				.Tap(x => x.ApplicationStarted.Register(() => f(x.ApplicationStopping)));
 
+		public static T GetAs<T>(this IEnumerable<KeyValuePair<string, object>> d, string name)
+			=> (T) d.Single(x => x.Key == name).Value; //TODO fix types
+
 		public static IEnumerable<T> ForEach<T>(this IEnumerable<T> self, Action<T> f)
 		{
 			foreach (var item in self)
@@ -26,9 +30,7 @@ namespace Fiffi
 		}
 
 		public static bool IsTest(this IHostingEnvironment environment)
-		{
-			return environment.IsEnvironment("Test");
-		}
+			=> environment.IsEnvironment("Test");
 					
 		public static IServiceCollection AddFiffi(this IServiceCollection services, Dam dam)
 		{

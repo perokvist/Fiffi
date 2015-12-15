@@ -31,8 +31,8 @@ namespace Todo.Todo
 
 	public class TaskCreated : IEvent
 	{
-		public Dictionary<string, object> Meta { get; set; }
-		public Dictionary<string, object> Values { get; set; }
+		public IReadOnlyDictionary<string, object> Meta { get; set; }
+		public IReadOnlyDictionary<string, object> Values { get; set; }
 		public Guid AggregateId { get; set; }
 		public Guid CorrelationId { get; set; }
 		public Guid EventId { get; set; }
