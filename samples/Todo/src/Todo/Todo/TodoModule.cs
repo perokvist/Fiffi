@@ -1,6 +1,7 @@
 ﻿using Fiffi;
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Threading.Tasks;
 
 namespace Todo.Todo
@@ -31,6 +32,13 @@ namespace Todo.Todo
 
 	public class TaskCreated : IEvent
 	{
+		public IEvent Create(IImmutableDictionary<string, object> meta, IImmutableDictionary<string, object> values)
+		{
+			throw new NotImplementedException();
+		}
+
+		IImmutableDictionary<string, object> IEvent.Meta { get; }
+		IImmutableDictionary<string, object> IEvent.Values { get; }
 		public IReadOnlyDictionary<string, object> Meta { get; set; }
 		public IReadOnlyDictionary<string, object> Values { get; set; }
 		public Guid AggregateId { get; set; }

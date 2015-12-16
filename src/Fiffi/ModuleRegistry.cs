@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 
 namespace Fiffi
 {
 	public class ModuleRegistry : IDisposable
 	{
 		private readonly IDictionary<Type, object> _modules = new Dictionary<Type, object>();
+
 
 		private static void DisposeModules(IDictionary<Type, object> modules)
 		=> modules

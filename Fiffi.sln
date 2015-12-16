@@ -15,6 +15,8 @@ Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Fiffi", "src\Fiffi\Fiffi.xp
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Fiffi.Testing", "src\Fiffi.Testing\Fiffi.Testing.xproj", "{398AB591-A0EA-43E1-9C6F-A2E976AE7F59}"
 EndProject
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Fiffi.MessageVault", "src\Fiffi.MessageVault\Fiffi.MessageVault.xproj", "{03FF8382-A945-4775-8617-0788566C39AC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -29,6 +31,10 @@ Global
 		{398AB591-A0EA-43E1-9C6F-A2E976AE7F59}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{398AB591-A0EA-43E1-9C6F-A2E976AE7F59}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{398AB591-A0EA-43E1-9C6F-A2E976AE7F59}.Release|Any CPU.Build.0 = Release|Any CPU
+		{03FF8382-A945-4775-8617-0788566C39AC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{03FF8382-A945-4775-8617-0788566C39AC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{03FF8382-A945-4775-8617-0788566C39AC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{03FF8382-A945-4775-8617-0788566C39AC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -36,5 +42,6 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{E8F3C844-8C6E-4668-9098-3A271A9B63E6} = {66C8D8BF-8E1E-4C89-82AA-73512249561B}
 		{398AB591-A0EA-43E1-9C6F-A2E976AE7F59} = {66C8D8BF-8E1E-4C89-82AA-73512249561B}
+		{03FF8382-A945-4775-8617-0788566C39AC} = {66C8D8BF-8E1E-4C89-82AA-73512249561B}
 	EndGlobalSection
 EndGlobal

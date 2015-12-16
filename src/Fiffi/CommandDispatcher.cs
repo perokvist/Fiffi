@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace Fiffi
@@ -25,7 +26,7 @@ namespace Fiffi
 			}
 
 			var aggregateMakers = m.GetType().GetInterfaces()
-			   .Where(x => !(x == typeof(ICommand)));
+			   .Where(x => x != typeof(ICommand));
 
 			if (aggregateMakers.Any(aggregateMaker => _dictionary.TryGetValue(aggregateMaker, out handler)))
 			{

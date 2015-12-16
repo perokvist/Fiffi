@@ -1,12 +1,15 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 
 namespace Fiffi
 {
 	public interface IEvent
 	{
-		IReadOnlyDictionary<string, object> Meta { get;}
-		IReadOnlyDictionary<string, object> Values { get; }
+		IEvent Create(IImmutableDictionary<string, object> meta, IImmutableDictionary<string, object> values);
+
+		IImmutableDictionary<string, object> Meta { get;}
+		IImmutableDictionary<string, object> Values { get; }
 
 		Guid AggregateId { get; }
 		Guid CorrelationId { get; }

@@ -1,4 +1,4 @@
-﻿{
+{
   "version": "0.1.0-alpha-*",
   "description": "Exploration kit for eventdriven services",
   "authors": [ "Per Ökvist" ],
@@ -12,10 +12,21 @@
     "Microsoft.AspNet.Http.Abstractions": "1.0.0-rc1-final",
     "Microsoft.AspNet.Hosting.Abstractions": "1.0.0-rc1-final",
     "Microsoft.Extensions.DependencyInjection.Abstractions": "1.0.0-rc1-final",
-    "MessageVault.Client": "3.0.2",
-    "Microsoft.CSharp": "4.0.0"
+    "System.Collections.Immutable": "1.1.37"
   },
   "frameworks": {
-    "dnx451": { }
+    "dnx451": {
+      "frameworkAssemblies": { "System.Runtime": "4.0.10.0" },
+      "dependencies": {}
+    },
+    "dotnet5.4": {
+      "dependencies": {
+        "Microsoft.CSharp": "4.0.1-beta-23516",
+        "System.Collections": "4.0.11-beta-23516",
+        "System.Linq": "4.0.1-beta-23516",
+        "System.Threading": "4.0.11-beta-23516",
+        "System.Runtime": "4.0.21-beta-22816"
+      }
+    }
   }
 }

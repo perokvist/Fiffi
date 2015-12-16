@@ -13,46 +13,46 @@ using Todo.Todo;
 
 namespace Todo
 {
-    public class Startup
-    {
-	    public IHostingEnvironment Environment { get; }
+	public class Startup
+	{
+		public IHostingEnvironment Environment { get; }
 		public IConfigurationRoot Configuration { get; }
 		public Dam Dam { get; }
 
 
 		public Startup(IHostingEnvironment environment, ILoggerFactory loggerFactory)
-	    {
-		    Environment = environment;
-		    var configurationBuilder = new ConfigurationBuilder();
+		{
+			Environment = environment;
+			var configurationBuilder = new ConfigurationBuilder();
 			configurationBuilder.AddJsonFile($"config.{Environment.EnvironmentName}.json", true);
 			configurationBuilder.AddEnvironmentVariables();
 			Configuration = configurationBuilder.Build();
 
 			if(environment.IsTest())
-				Dam = Dam.CreateDam(() => Fiffi.Streams.MessageVault.Memory(Configuration), loggerFactory);
+				Dam = Dam.CreateDam(() => Fiffi.MessageVault.Stream.Memory(Configuration), loggerFactory);
 			if(environment.IsProduction())
-				Dam = Dam.CreateDam(() => Fiffi.Streams.MessageVault.Cloud(Configuration), loggerFactory);
+				Dam = Dam.CreateDam(() => Fiffi.MessageVault.Stream.Cloud(Configuration), loggerFactory);
 
 			Dam.AddModules((bus, dispatcher, lf) => TodoModule.Initialize(bus));
-	    }
+		}
 
-	    public void ConfigureServices(IServiceCollection services)
-	    {
-		    services.AddFiffi(Dam);
-	    }
+		public void ConfigureServices(IServiceCollection services)
+		{
+			services.AddFiffi(Dam);
+		}
 
-        public void Configure(IApplicationBuilder app)
-        {
-            app.UseIISPlatformHandler();
+		public void Configure(IApplicationBuilder app)
+		{
+			app.UseIISPlatformHandler();
 
 			app.Start(Dam.ListenToStream);
 
-            app.Run(async (context) =>
-            {
-                await context.Response.WriteAsync("Hello World!");
-            });
-        }
+			app.Run(async (context) =>
+			{
+				await context.Response.WriteAsync("Hello World!");
+			});
+		}
 
-        public static void Main(string[] args) => WebApplication.Run<Startup>(args);
-    }
+		public static void Main(string[] args) => WebApplication.Run<Startup>(args);
+	}
 }

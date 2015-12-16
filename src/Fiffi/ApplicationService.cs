@@ -31,13 +31,10 @@ namespace Fiffi
 		public static async Task Execute<TAggregate>(Func<TAggregate> factory, 
 			Func<TAggregate, IEnumerable<IEvent>> executeUsingThis, 
 			Func<IEvent[], Task> pub, Guid correlationId)
-			=> await pub(executeUsingThis(factory()).ToArray());
+			=> await pub(executeUsingThis(factory()).Tap(x => AddMetaData(x, correlationId)).ToArray());
 
-		//private static void AddMetaData(IEnumerable<IEvent> events, Guid correlationId) =>
-		//{
-			
-		//}
-			//=> events.ForEach(e => e.CorrelationId = correlationId);
+		private static IEnumerable<IEvent> AddMetaData(IEnumerable<IEvent> events, Guid correlationId)
+			=> events.Select(e => e.With(nameof(IEvent.CorrelationId), correlationId));
 
 	}
 }
