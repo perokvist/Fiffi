@@ -1,0 +1,16 @@
+﻿{
+  "version": "0.1.0-alpha*",
+  "description": "Fiffi.MessageVault Class Library",
+  "authors": [ "perokvi621" ],
+  "tags": [ "" ],
+  "projectUrl": "",
+  "licenseUrl": "",
+
+  "dependencies": {
+    "Fiffi": "0.1.0-alpha-*",
+    "MessageVault.Client": "3.0.2"
+  },
+  "frameworks": {
+    "dnx451": { }
+    }
+  }
