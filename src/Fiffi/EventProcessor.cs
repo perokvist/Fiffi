@@ -20,9 +20,7 @@ namespace Fiffi
 
 		public void Register<T>(Func<T, Task> f)
 			where T : IEvent
-		{
-			_h.Add(new Tuple<Type, Func<IEvent, Task>>(typeof(T), @event => f((T)@event)));
-		}
+			=> _h.Add(new Tuple<Type, Func<IEvent, Task>>(typeof(T), @event => f((T)@event)));
 
 
 		public async Task PublishAsync(params IEvent[] events)

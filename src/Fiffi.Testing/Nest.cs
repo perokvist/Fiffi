@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace Fiffi.Testing
 {
-	public class Nest : IDisposable
+	public class Nest
 	{
 
 		public static async Task<Nest> InitializeAsync(IEventBus pub, IEvent[] given)
@@ -13,7 +13,7 @@ namespace Fiffi.Testing
 
 			await pub.PublishAsync(given);
 
-			pub.Register<IEvent>(@event =>
+			pub.Subscribe<IEvent>(@event =>
 			{
 				nest.Happend.Add(@event);
 				return Task.FromResult(0);
@@ -23,7 +23,5 @@ namespace Fiffi.Testing
 		}
 
 		public List<IEvent> Happend = new List<IEvent>(); 
-
-		public void Dispose(){}	 // clear list ? :)
 	}
 }

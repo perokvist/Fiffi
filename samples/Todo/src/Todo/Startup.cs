@@ -39,11 +39,14 @@ namespace Todo
 		public void ConfigureServices(IServiceCollection services)
 		{
 			services.AddFiffi(Dam);
+			services.AddMvc();
 		}
 
 		public void Configure(IApplicationBuilder app)
 		{
 			app.UseIISPlatformHandler();
+
+			app.UseMvc();
 
 			app.Start(Dam.ListenToStream);
 

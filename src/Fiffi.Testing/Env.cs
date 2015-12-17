@@ -12,13 +12,12 @@ namespace Fiffi.Testing
 {
 	public static class Env
 	{
-
 		public static Context CreateContext(Action<IApplicationBuilder> a, Action<IServiceCollection> a2)
 			=>	new Context(a, a2);
 
 		public class Context : IDisposable
 		{
-			private ServerFixture fixture;
+			private readonly ServerFixture fixture;
 
 			internal Context(Action<IApplicationBuilder> a, Action<IServiceCollection> a2)
 			{
@@ -29,7 +28,7 @@ namespace Fiffi.Testing
 				=> fixture.RunAsync(@case);
 
 			public Task RunAsync(UseCaseData @case) 
-				=> fixture.RunAsync((client, dam) => RunCaseAsync(@case, dam, client));
+				=> fixture.RunAsync((client, dam) => Assertion.RunCaseAsync(@case, dam, client));
 
 			public void Dispose() => fixture.Dispose();
 		}
@@ -43,50 +42,16 @@ namespace Fiffi.Testing
 			{
 				foreach (var @case in @cases)
 				{
-					await RunCaseAsync(@case, dam , client);
+					await Assertion.RunCaseAsync(@case, dam , client);
 				}
 			});
 		}
 
-		private static async Task RunCaseAsync(UseCaseData @case, Dam dam, HttpClient client)
-		{
-			var assertEvents = @case.ThenEvents != null && @case.ThenEvents.Any();
-			var apiInteraction = @case.When != null;
-			Nest nest = null;
 
-			dam.AddModules(bus =>
-			{
-				nest = Nest.InitializeAsync(bus, @case.Given.ToArray()).Result;
-				return Task.FromResult(0);
-			});
 
-			if (apiInteraction)
-			{
-				var r = await client.SendAsync(@case.When);
-				string expectedString;
-
-				if (@case.ThenResponse is string)
-					expectedString = @case.ThenResponse.ToString();
-				else
-					expectedString = JsonConvert.SerializeObject(@case.ThenResponse);
-
-				Assert.Equal(expectedString, await r.Content.ReadAsStringAsync());
-			}
-
-			if (assertEvents)
-			{
-				// MessageVault.MessageReader sleeps for 1sec :I
-				if (!nest.Happend.Any()) //TODO skip if fixture is use for multiple tests
-					await Task.Delay(1000);
-
-				Assert.Collection(@case.ThenEvents, @event => Assert.True(nest.Happend.Any(e => e.GetType() == @event.GetType())));
-			}
-
-		}
-
-		public static UseCaseData UseCase(string name, IEnumerable<IEvent> given, HttpRequestMessage when = null, object thenResponse = null,
+		public static UseCaseData UseCase(string name, IEnumerable<IEvent> given = null, HttpRequestMessage when = null, object thenResponse = null,
 			IEnumerable<IEvent> thenEvents = null)
-				=>  new UseCaseData(name, given, when, thenResponse, thenEvents);
+				=>  new UseCaseData(name, given ?? Spec.GivenEvents(null), when, thenResponse, thenEvents);
 		
 
 		public class UseCaseData

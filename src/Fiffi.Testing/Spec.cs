@@ -19,7 +19,7 @@ namespace Fiffi.Testing
 			};
 		}
 
-		public static HttpRequestMessage GetJSON(string url, object values)
+		public static HttpRequestMessage GetJSON(string url, object values = null)
 		{
 			return new HttpRequestMessage(HttpMethod.Get, new Uri(url))
 			{

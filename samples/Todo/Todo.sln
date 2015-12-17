@@ -16,6 +16,12 @@ Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Fiffi", "..\..\src\Fiffi\Fi
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Fiffi.MessageVault", "..\..\src\Fiffi.MessageVault\Fiffi.MessageVault.xproj", "{03FF8382-A945-4775-8617-0788566C39AC}"
 EndProject
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Todo.Tests", "test\Todo.Tests\Todo.Tests.xproj", "{CD5EC92C-B504-4507-9A01-C81CD064F7C2}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{1EA4ED1B-E7B1-4582-A993-55E2BD47422A}"
+EndProject
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Fiffi.Testing", "..\..\src\Fiffi.Testing\Fiffi.Testing.xproj", "{398AB591-A0EA-43E1-9C6F-A2E976AE7F59}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -34,11 +40,20 @@ Global
 		{03FF8382-A945-4775-8617-0788566C39AC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{03FF8382-A945-4775-8617-0788566C39AC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{03FF8382-A945-4775-8617-0788566C39AC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CD5EC92C-B504-4507-9A01-C81CD064F7C2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CD5EC92C-B504-4507-9A01-C81CD064F7C2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CD5EC92C-B504-4507-9A01-C81CD064F7C2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CD5EC92C-B504-4507-9A01-C81CD064F7C2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{398AB591-A0EA-43E1-9C6F-A2E976AE7F59}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{398AB591-A0EA-43E1-9C6F-A2E976AE7F59}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{398AB591-A0EA-43E1-9C6F-A2E976AE7F59}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{398AB591-A0EA-43E1-9C6F-A2E976AE7F59}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{54FF5DB7-CCBE-4B64-94F6-266C44D50268} = {86FE7B51-2867-44E0-BF41-096D9DBAE4FF}
+		{CD5EC92C-B504-4507-9A01-C81CD064F7C2} = {1EA4ED1B-E7B1-4582-A993-55E2BD47422A}
 	EndGlobalSection
 EndGlobal

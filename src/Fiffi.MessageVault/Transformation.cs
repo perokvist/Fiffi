@@ -12,58 +12,39 @@ namespace Fiffi.MessageVault
 {
 	public static class Transformation
 	{
-		private class Key
+		public class Key
 		{
-			public Type Type { get; }
-			public string Version => Type != null ? Assembly.GetAssembly(Type).GetName().Version.ToString() : string.Empty;
-
-			private static readonly IDictionary<string, Type> typeCache = new ConcurrentDictionary<string, Type>();
-
-			public Key(string key)
+			private Key(string eventName, Guid eventId)
 			{
-				var name = key.Split('|').First();
-
-				if (typeCache.ContainsKey(name))
-					Type = typeCache[name];
-				else
-				{
-					Type = FindEventType(name);
-					if (!typeCache.ContainsKey(name))
-						typeCache.Add(name, Type);
-				}
+				EventName = eventName;
+				EventId = eventId;
 			}
 
-			public Key(Type type)
-			{
-				Type = type;
-			}
+			public Guid EventId { get; }
+			public string EventName { get; }
 
-			public override string ToString() => $"{Type.Name}|{Version}|{Type.FullName}";
+			public static Key FromString(string key)
+				=> new Key(key.Split('|').First(), Guid.Parse(key.Split('|').Last()));
 
-			private static Type FindEventType(string eventName) 
-				=> AppDomain
-						.CurrentDomain.GetAssemblies()
-						.SelectMany(a => a.GetTypes())
-						.FirstOrDefault(t => t.FullName.EndsWith(eventName));
+			public static string CreateKey(Type type, Guid eventId)
+				=> $"{type.Name}|{GetVersion(type)}|{type.FullName}|{eventId}";
 		}
 
 		public static Message ToMessage(IEvent @event)
 		{
-			var json = JsonConvert.SerializeObject(new { @event.Meta, @event.Values }, Formatting.None, new JsonSerializerSettings
+			var json = JsonConvert.SerializeObject(@event, Formatting.None, new JsonSerializerSettings
 			{
 				ContractResolver = new CamelCasePropertyNamesContractResolver()
 			});
 
-			return Message.Create(new Key(@event.GetType()).ToString(), Encoding.Default.GetBytes(json));
+			return Message.Create(Key.CreateKey(@event.GetType(), @event.EventId), Encoding.Default.GetBytes(json));
 		}
 
-		public static IEvent ToEvent(MessageWithId message)
-		{
-			var key = new Key(Encoding.Default.GetString(message.Key));
-			if (key.Type == null)
-				return null;
+		public static IEvent ToEvent(MessageWithId message, Type type)
+			=> JsonConvert.DeserializeObject(Encoding.Default.GetString(message.Value), type) as IEvent;
 
-			return JsonConvert.DeserializeObject(Encoding.Default.GetString(message.Value), key.Type) as IEvent;
-		}
+		private static string GetVersion(Type type)
+			=> type != null ? Assembly.GetAssembly(type).GetName().Version.ToString() : string.Empty;
+
 	}
 }

@@ -15,22 +15,6 @@ namespace Fiffi
 			=> app.ApplicationServices.GetRequiredService<IApplicationLifetime>()
 				.Tap(x => x.ApplicationStarted.Register(() => f(x.ApplicationStopping)));
 
-		public static T GetAs<T>(this IEnumerable<KeyValuePair<string, object>> d, string name)
-			=> (T) d.Single(x => x.Key == name).Value; //TODO fix types
-
-
-		public static IEvent With(this IEvent e, string name, object value)
-		{
-			var m = e.Meta;
-			var v = e.Values;
-
-			if (m.ContainsKey(name))
-				m = m.SetItem(name, value);
-			if (v.ContainsKey(name))
-				v = v.SetItem(name, value);
-
-			return e.Create(m, v);
-		}
 
 		public static IEnumerable<T> ForEach<T>(this IEnumerable<T> self, Action<T> f)
 		{

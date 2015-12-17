@@ -2,9 +2,10 @@
   "version": "0.1.0-alpha-*",
   "description": "Exploration kit for eventdriven services",
   "authors": [ "Per Ökvist" ],
-  "tags": [ "" ],
-  "projectUrl": "",
-  "licenseUrl": "",
+  "tags": [ "event driven, microservices, infrastructure" ],
+  "projectUrl": "https://github.com/perokvist/Fiffi/",
+  "licenseUrl": "http://opensource.org/licenses/MS-PL",
+  "iconUrl": "https://github.com/perokvist/Fiffi/raw/master/fiffi.ico",
 
 
   "dependencies": {
@@ -16,8 +17,8 @@
   },
   "frameworks": {
     "dnx451": {
-      "frameworkAssemblies": { "System.Runtime": "4.0.10.0" },
-      "dependencies": {}
+      "frameworkAssemblies": { "System.Runtime": "4.0.10.0", "System.Collections" : "4.0.0.0"},
+      "dependencies": { }
     },
     "dotnet5.4": {
       "dependencies": {

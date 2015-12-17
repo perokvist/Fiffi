@@ -1,10 +1,11 @@
 ﻿{
   "version": "0.0.1-*",
-  "description": "Fiffi.Testing Class Library",
+  "description": "Fiffi.Testing utils",
   "authors": [ "Per Ökvist" ],
-  "tags": [ "" ],
-  "projectUrl": "",
-  "licenseUrl": "",
+  "tags": [ "event driven, microservices, infrastructure" ],
+  "projectUrl": "https://github.com/perokvist/Fiffi/",
+  "licenseUrl": "http://opensource.org/licenses/MS-PL",
+  "iconUrl": "https://github.com/perokvist/Fiffi/raw/master/fiffi.ico",
 
   "dependencies": {
     "Microsoft.AspNet.TestHost": "1.0.0-rc1-final",

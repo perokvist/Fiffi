@@ -18,7 +18,7 @@ namespace Fiffi
 
 		public void Register(Action<Type, object> f) => _modules.ForEach(m => f(m.Key, m.Value));
 
-		public void AddOrUpdate<T>(T module) => _modules[typeof(T)] = module;
+		public void AddOrUpdate<T>(T module) => _modules[module.GetType()] = module;
 		public void Dispose() => DisposeModules(_modules);
 	}
 }
