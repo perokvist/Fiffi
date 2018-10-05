@@ -23,13 +23,16 @@ namespace SampleWeb
 
 		public static CartModule Initialize(IReliableStateManager stateManager, Func<ITransaction, IEventStore> store, Func<IEvent[], Task> pub)
 		{
-			Func<ITransaction, IEvent[], Task> publish = async (tx, events) => {
+			Func<ITransaction, IEvent[], Task> publish = async (tx, events) =>
+			{
 				await stateManager.EnqueuAsync(tx, events);
 				await pub(events);
 			};
 
+			var context = new ApplicationServiceContext(stateManager, store, publish);
+
 			var commandDispatcher = new Dispatcher<ICommand, Task>();
-			commandDispatcher.Register<AddItemCommand>(cmd => AddItemApplicationService.Execute(stateManager, store, publish, cmd));
+			commandDispatcher.Register<AddItemCommand>(cmd => AddItemApplicationService.Execute(context, cmd));
 
 			return new CartModule(commandDispatcher);
 

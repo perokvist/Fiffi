@@ -114,11 +114,6 @@ namespace Fiffi.ServiceFabric
 			}
 		}
 
-		//TODO custom event serialization ?
-		static EventData Map(IEvent e) => new EventData(e.EventId(), e, e.Meta);
 
-		static Guid EventId(this IEvent e) => Guid.Parse(e.Meta["eventId"]);
-
-		static IEvent ToEvent(StorageEvent storageEvent) => (IEvent)storageEvent.EventBody;
 	}
 }
