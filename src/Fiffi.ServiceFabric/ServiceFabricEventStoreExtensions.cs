@@ -20,24 +20,21 @@ namespace Fiffi.ServiceFabric
 		{
 			using (var tx = stateManager.CreateTransaction())
 			{
-				var streams = await stateManager.GetOrAddAsync<IReliableDictionary<string, List<StorageEvent>>>(tx, streamsName);
-				var result = await streams.AppendToStreamAsync(tx, streamName, version, events);
-				var queue = await stateManager.GetOrAddAsync<IReliableQueue<StorageEvent>>(tx, queueName);
-				await Task.WhenAll(result.Item1.Select(e => queue.EnqueueAsync(tx, e)));
+				var result = await stateManager.AppendAndMapToStreamAsync(tx, streamName, version, events, streamsName);
+				await stateManager.EnqueuAsync(tx, result.Item1, queueName);
 				await tx.CommitAsync();
 				return result.Item2;
 			}
 		}
 
-		public static async Task<(IEnumerable<IEvent>, long)> LoadEventStreamAsync(this IReliableStateManager stateManager, string streamName, int version)
+		public static async Task<long> AppendToStreamAsync(this IReliableStateManager stateManager, ITransaction tx, string streamName, long version, IEvent[] events, string streamsName = defaultStreamsName)
+			=> (await stateManager.AppendAndMapToStreamAsync(tx, streamName, version, events, streamsName)).Item2;
+
+		static async Task<(IEnumerable<StorageEvent>, long)> AppendAndMapToStreamAsync(this IReliableStateManager stateManager, ITransaction tx, string streamName, long version, IEvent[] events, string streamsName = defaultStreamsName)
 		{
-			using (var tx = stateManager.CreateTransaction())
-			{
-				var streams = await stateManager.GetOrAddAsync<IReliableDictionary<string, List<StorageEvent>>>(tx, "streams");
-				var result = await streams.LoadEventStreamAsync(tx, streamName, version);
-				await tx.CommitAsync();
-				return result;
-			}
+			var streams = await stateManager.GetOrAddAsync<IReliableDictionary<string, List<StorageEvent>>>(tx, streamsName);
+			var result = await streams.AppendToStreamAsync(tx, streamName, version, events);
+			return result;
 		}
 
 		public static async Task<(IEnumerable<StorageEvent>, long)> AppendToStreamAsync(this IReliableDictionary<string, List<StorageEvent>> streams, ITransaction tx, string streamName, long version, IEvent[] events)
@@ -62,6 +59,24 @@ namespace Fiffi.ServiceFabric
 			return (storageEvents, (long)storageEvents.Last().EventNumber);
 		}
 
+
+		public static async Task<(IEnumerable<IEvent>, long)> LoadEventStreamAsync(this IReliableStateManager stateManager, string streamName, int version, string streamsName = defaultStreamsName)
+		{
+			using (var tx = stateManager.CreateTransaction())
+			{
+				var result = await stateManager.LoadEventStreamAsync(tx, streamName, version, streamsName);
+				await tx.CommitAsync();
+				return result;
+			}
+		}
+
+		public static async Task<(IEnumerable<IEvent>, long)> LoadEventStreamAsync(this IReliableStateManager stateManager, ITransaction tx, string streamName, int version, string streamsName = defaultStreamsName)
+		{
+			var streams = await stateManager.GetOrAddAsync<IReliableDictionary<string, List<StorageEvent>>>(tx, streamsName);
+			var result = await streams.LoadEventStreamAsync(tx, streamName, version);
+			return result;
+		}
+
 		public static async Task<(IEnumerable<IEvent>, long)> LoadEventStreamAsync(this IReliableDictionary<string, List<StorageEvent>> streams, ITransaction tx, string streamName, int version)
 		{
 			var streamResult = await streams.TryGetValueAsync(tx, streamName);
@@ -73,14 +88,21 @@ namespace Fiffi.ServiceFabric
 
 			var stream = streamResult.Value;
 
-			return (stream.Skip(version).Select(x => blaj(x)), stream.Count);
+			return (stream.Skip(version).Select(x => ToEvent(x)), stream.Count);
 		}
 
-		public static async Task DequeueAsync(this IReliableStateManager stateManager, Func<StorageEvent, Task> action, CancellationToken cancellationToken, string queueName = defaultQueueName)
+		public static async Task EnqueuAsync<T>(this IReliableStateManager stateManager, ITransaction tx, IEnumerable<T> events, string queueName = defaultQueueName)
+		{
+			var queue = await stateManager.GetOrAddAsync<IReliableQueue<T>>(tx, queueName);
+			await Task.WhenAll(events.Select(e => queue.EnqueueAsync(tx, e)));
+		}
+
+
+		public static async Task DequeueAsync<T>(this IReliableStateManager stateManager, Func<T, Task> action, CancellationToken cancellationToken, string queueName = defaultQueueName)
 		{
 			using (var tx = stateManager.CreateTransaction())
 			{
-				var queue = await stateManager.GetOrAddAsync<IReliableQueue<StorageEvent>>(tx, queueName);
+				var queue = await stateManager.GetOrAddAsync<IReliableQueue<T>>(tx, queueName);
 				var result = await queue.TryDequeueAsync(tx, TimeSpan.FromSeconds(3), cancellationToken);
 				if (result.HasValue)
 				{
@@ -90,8 +112,11 @@ namespace Fiffi.ServiceFabric
 			}
 		}
 
-		static EventData Map(IEvent e) => new EventData(Guid.Empty, null, null);
+		//TODO custom event serialization ?
+		static EventData Map(IEvent e) => new EventData(e.EventId(), e, e.Meta);
 
-		static IEvent blaj(StorageEvent storageEvent) => (IEvent)null;
+		static Guid EventId(this IEvent e) => Guid.Parse(e.Meta["EventId"]);
+
+		static IEvent ToEvent(StorageEvent storageEvent) => (IEvent)storageEvent.EventBody;
 	}
 }
