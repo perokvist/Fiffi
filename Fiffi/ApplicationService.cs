@@ -19,6 +19,8 @@ namespace Fiffi
 			events.ForEach(x => x.Meta["version"] = (happend.Item2 + 1).ToString());
 			events.ForEach(x => x.Meta["streamname"] = streamName);
 			events.ForEach(x => x.Meta["aggregatename"] = aggregateName);
+			events.ForEach(x => x.Meta["eventId"] = Guid.NewGuid().ToString());
+
 
 			//TODO add metadata
 			await store.AppendToStreamAsync(streamName, long.Parse(events.Last().Meta["version"]), events);

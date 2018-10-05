@@ -8,11 +8,12 @@ namespace Fiffi.ServiceFabric
 {
 	public static class Extensions
 	{
-		public static async Task UseTransactionAsync(this IReliableStateManager stateManager, Func<ITransaction, Task> f)
+		public static async Task UseTransactionAsync(this IReliableStateManager stateManager, Func<ITransaction, Task> f, bool autoCommit = true)
 		{
 			using (var tx = stateManager.CreateTransaction())
 			{
 				await f(tx);
+				if (autoCommit) await tx.CommitAsync();
 			}
 		}
 

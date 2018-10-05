@@ -91,31 +91,33 @@ namespace Fiffi.ServiceFabric
 			return (stream.Skip(version).Select(x => ToEvent(x)), stream.Count);
 		}
 
+		public static Task EnqueuAsync<T>(this IReliableStateManager stateManager, IEnumerable<T> events, string queueName = defaultQueueName)
+			=> stateManager.UseTransactionAsync(tx => stateManager.EnqueuAsync(tx, events, queueName));
+
 		public static async Task EnqueuAsync<T>(this IReliableStateManager stateManager, ITransaction tx, IEnumerable<T> events, string queueName = defaultQueueName)
 		{
 			var queue = await stateManager.GetOrAddAsync<IReliableQueue<T>>(tx, queueName);
 			await Task.WhenAll(events.Select(e => queue.EnqueueAsync(tx, e)));
 		}
 
+		public static Task DequeueAsync<T>(this IReliableStateManager stateManager, Func<T, Task> action, CancellationToken cancellationToken, string queueName = defaultQueueName)
+			=> stateManager.UseTransactionAsync(tx => stateManager.DequeueAsync(tx, action, cancellationToken, true, queueName), autoCommit: false);
 
-		public static async Task DequeueAsync<T>(this IReliableStateManager stateManager, Func<T, Task> action, CancellationToken cancellationToken, string queueName = defaultQueueName)
+		public static async Task DequeueAsync<T>(this IReliableStateManager stateManager, ITransaction tx, Func<T, Task> action, CancellationToken cancellationToken, bool commitOnAction = false, string queueName = defaultQueueName)
 		{
-			using (var tx = stateManager.CreateTransaction())
+			var queue = await stateManager.GetOrAddAsync<IReliableQueue<T>>(tx, queueName);
+			var result = await queue.TryDequeueAsync(tx, TimeSpan.FromSeconds(3), cancellationToken);
+			if (result.HasValue)
 			{
-				var queue = await stateManager.GetOrAddAsync<IReliableQueue<T>>(tx, queueName);
-				var result = await queue.TryDequeueAsync(tx, TimeSpan.FromSeconds(3), cancellationToken);
-				if (result.HasValue)
-				{
-					await action(result.Value);
-					await tx.CommitAsync();
-				}
+				await action(result.Value);
+				if(commitOnAction) await tx.CommitAsync();
 			}
 		}
 
 		//TODO custom event serialization ?
 		static EventData Map(IEvent e) => new EventData(e.EventId(), e, e.Meta);
 
-		static Guid EventId(this IEvent e) => Guid.Parse(e.Meta["EventId"]);
+		static Guid EventId(this IEvent e) => Guid.Parse(e.Meta["eventId"]);
 
 		static IEvent ToEvent(StorageEvent storageEvent) => (IEvent)storageEvent.EventBody;
 	}

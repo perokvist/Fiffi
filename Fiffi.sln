@@ -15,6 +15,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{5BBB
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fiffi.ServiceFabric.Tests", "Fiffi.ServiceFabric.Tests\Fiffi.ServiceFabric.Tests.csproj", "{3F845945-5100-48A8-A46D-B0AD516C8757}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SampleWeb.Tests", "SampleWeb.Tests\SampleWeb.Tests.csproj", "{B8FDF432-D135-4A6E-912B-09DADCE591AE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -63,6 +65,14 @@ Global
 		{3F845945-5100-48A8-A46D-B0AD516C8757}.Release|Any CPU.Build.0 = Release|Any CPU
 		{3F845945-5100-48A8-A46D-B0AD516C8757}.Release|x64.ActiveCfg = Release|Any CPU
 		{3F845945-5100-48A8-A46D-B0AD516C8757}.Release|x64.Build.0 = Release|Any CPU
+		{B8FDF432-D135-4A6E-912B-09DADCE591AE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B8FDF432-D135-4A6E-912B-09DADCE591AE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B8FDF432-D135-4A6E-912B-09DADCE591AE}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{B8FDF432-D135-4A6E-912B-09DADCE591AE}.Debug|x64.Build.0 = Debug|Any CPU
+		{B8FDF432-D135-4A6E-912B-09DADCE591AE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B8FDF432-D135-4A6E-912B-09DADCE591AE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B8FDF432-D135-4A6E-912B-09DADCE591AE}.Release|x64.ActiveCfg = Release|Any CPU
+		{B8FDF432-D135-4A6E-912B-09DADCE591AE}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -70,6 +80,7 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{27BF076B-B409-4D0D-B0AF-F636C237DCC9} = {5BBB9DDA-4A64-4EF7-9ED5-7605FA4A6C10}
 		{14AA394F-0DC7-4BEC-9A43-DB1A26DED22D} = {5BBB9DDA-4A64-4EF7-9ED5-7605FA4A6C10}
+		{B8FDF432-D135-4A6E-912B-09DADCE591AE} = {5BBB9DDA-4A64-4EF7-9ED5-7605FA4A6C10}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {92773AE5-DB12-492F-A90E-87CA692A34C9}

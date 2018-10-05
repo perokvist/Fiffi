@@ -21,10 +21,15 @@ namespace SampleWeb
 
 		//public static CartModule Initialize() => Initialize(new InMemoryEventStore(), evts => Task.CompletedTask);
 
-		public static CartModule Initialize(IReliableStateManager stateManager, IEventStore store, Func<IEvent[], Task> pub)
+		public static CartModule Initialize(IReliableStateManager stateManager, Func<ITransaction, IEventStore> store, Func<IEvent[], Task> pub)
 		{
+			Func<ITransaction, IEvent[], Task> publish = async (tx, events) => {
+				await stateManager.EnqueuAsync(tx, events);
+				await pub(events);
+			};
+
 			var commandDispatcher = new Dispatcher<ICommand, Task>();
-			commandDispatcher.Register<AddItemCommand>(cmd => AddItemApplicationService.Execute(stateManager, tx => new ReliableEventStore(stateManager, tx), (tx, events) => stateManager.EnqueuAsync(tx, events), cmd));
+			commandDispatcher.Register<AddItemCommand>(cmd => AddItemApplicationService.Execute(stateManager, store, publish, cmd));
 
 			return new CartModule(commandDispatcher);
 

@@ -11,12 +11,15 @@ namespace SampleWeb
 	{
 		public static Task Execute(IReliableStateManager stateManager, Func<ITransaction, IEventStore> store, Func<ITransaction, IEvent[], Task> pub, AddItemCommand command)
 			=> stateManager.UseTransactionAsync(
-				tx => ApplicationService.ExecuteAsync<CartState>(
+				tx => ApplicationService.ExecuteAsync(
 					store(tx), command,
-					state => new[] { new ItemAddedEvent() },
+					Execute(command),
 					events => pub(tx, events)
 					)
 				);
+
+		public static Func<CartState, IEvent[]> Execute(AddItemCommand command)
+			=> state =>  new[] { new ItemAddedEvent(command.AggregateId) };
 
 
 	}

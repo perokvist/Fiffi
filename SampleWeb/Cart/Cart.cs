@@ -16,8 +16,12 @@ namespace SampleWeb
 
 	public class ItemAddedEvent : IEvent
 	{
-		public Guid AggregateId => throw new NotImplementedException();
+		public ItemAddedEvent(Guid aggregateId)
+		{
+			this.AggregateId = aggregateId;
+		}
+		public Guid AggregateId { get;  }
 
-		public IDictionary<string, string> Meta { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+		public IDictionary<string, string> Meta { get; set; } = new Dictionary<string, string>();
 	}
 }
