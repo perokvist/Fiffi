@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Fiffi.ServiceFabric
 {
-	public static class MappingExtansions
+	public static class MappingExtensions
 	{
 		//TODO custom event serialization ?
 		static EventData MapObject(IEvent e) => new EventData(e.EventId(), e, e.Meta);
