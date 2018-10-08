@@ -10,31 +10,21 @@ using System.Threading.Tasks;
 
 namespace SampleWeb.Cart
 {
-	public class Publisher : IHostedService
+	public class Publisher : BackgroundService
 	{
 		readonly IReliableStateManager stateManager;
-		readonly CancellationTokenSource cancellationTokenSource;
-
 
 		public Publisher(IReliableStateManager stateManager)
 		{
 			this.stateManager = stateManager;
-			this.cancellationTokenSource = new CancellationTokenSource();
 		}
 
-		public async Task StartAsync(CancellationToken cancellationToken)
+		protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 		{
-			var source = CancellationTokenSource.CreateLinkedTokenSource(this.cancellationTokenSource.Token, cancellationToken);
-
-			while (!cancellationToken.IsCancellationRequested)
+			while (!stoppingToken.IsCancellationRequested)
 			{
-				await stateManager.DequeueAsync<IEvent>(e => Task.CompletedTask, source.Token);
+				await stateManager.DequeueAsync<IEvent>(e => Task.CompletedTask, stoppingToken);
 			}
-		}
-		public Task StopAsync(CancellationToken cancellationToken)
-		{
-			this.cancellationTokenSource.Cancel();
-			return Task.CompletedTask;
 		}
 	}
 }
