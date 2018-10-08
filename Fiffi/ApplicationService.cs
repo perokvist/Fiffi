@@ -16,10 +16,13 @@ namespace Fiffi
 			var happend = await store.LoadEventStreamAsync(streamName, 0);
 			var state = happend.Item1.Rehydrate<TState>();
 			var events = action(state);
+
+			//TODO prettify
 			events.ForEach(x => x.Meta["version"] = (happend.Item2 + 1).ToString());
 			events.ForEach(x => x.Meta["streamname"] = streamName);
 			events.ForEach(x => x.Meta["aggregatename"] = aggregateName);
 			events.ForEach(x => x.Meta["eventId"] = Guid.NewGuid().ToString());
+			events.ForEach(x => x.Meta[nameof(EventMetaData.CorrelationId)] = Guid.NewGuid().ToString()); //TODO set from command
 
 
 			//TODO add metadata
