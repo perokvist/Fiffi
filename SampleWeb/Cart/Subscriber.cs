@@ -10,15 +10,18 @@ using System.Threading.Tasks;
 
 namespace SampleWeb.Cart
 {
-	public class Publisher : IHostedService
+	public class Subscriber : IHostedService
 	{
+		readonly Func<IEvent, Task>[] whens;
+
 		readonly IReliableStateManager stateManager;
+
 		readonly CancellationTokenSource cancellationTokenSource;
 
-
-		public Publisher(IReliableStateManager stateManager)
+		public Subscriber(IReliableStateManager stateManager,  params Func<IEvent, Task>[] whens)
 		{
 			this.stateManager = stateManager;
+			this.whens = whens;
 			this.cancellationTokenSource = new CancellationTokenSource();
 		}
 
@@ -28,11 +31,11 @@ namespace SampleWeb.Cart
 
 			while (!cancellationToken.IsCancellationRequested)
 			{
-				await stateManager.DequeueAsync<IEvent>(e => Task.CompletedTask, source.Token);
+				await stateManager.DequeueAsync<IEvent>(e => Task.WhenAll(whens.Select(when => when(e))), source.Token);
 			}
 		}
-		public Task StopAsync(CancellationToken cancellationToken)
-		{
+
+		public Task StopAsync(CancellationToken cancellationToken) {
 			this.cancellationTokenSource.Cancel();
 			return Task.CompletedTask;
 		}

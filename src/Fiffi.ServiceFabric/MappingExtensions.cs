@@ -8,7 +8,7 @@ namespace Fiffi.ServiceFabric
 	public static class MappingExtensions
 	{
 		//TODO custom event serialization ?
-		static EventData MapObject(IEvent e) => new EventData(e.EventId(), e, e.Meta);
+		public static EventData MapObject(this IEvent e) => new EventData(e.EventId(), e, e.Meta);
 
 		static EventData MapJson(IEvent e)
 			=> new EventData(e.EventId(),
@@ -25,6 +25,6 @@ namespace Fiffi.ServiceFabric
 
 		static Guid EventId(this IEvent e) => Guid.Parse(e.Meta["eventId"]);
 
-		static IEvent ToEvent(StorageEvent storageEvent) => (IEvent)storageEvent.EventBody;
+		public static IEvent ToEvent(this StorageEvent storageEvent) => (IEvent)storageEvent.EventBody;
 	}
 }

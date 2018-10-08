@@ -39,7 +39,7 @@ namespace Fiffi.ServiceFabric
 
 		public static async Task<(IEnumerable<StorageEvent>, long)> AppendToStreamAsync(this IReliableDictionary<string, List<StorageEvent>> streams, ITransaction tx, string streamName, long version, IEvent[] events)
 		{
-			var storageEvents = events.Select((x, i) => new StorageEvent(streamName, Map(x), (int)(version + i + 1)));
+			var storageEvents = events.Select((x, i) => new StorageEvent(streamName, x.MapObject(), (int)(version + i + 1)));
 
 			var streamResult = await streams.TryGetValueAsync(tx, streamName);
 			if (!streamResult.HasValue)
@@ -88,7 +88,7 @@ namespace Fiffi.ServiceFabric
 
 			var stream = streamResult.Value;
 
-			return (stream.Skip(version).Select(x => ToEvent(x)), stream.Count);
+			return (stream.Skip(version).Select(x => x.ToEvent()), stream.Count);
 		}
 
 		public static Task EnqueuAsync<T>(this IReliableStateManager stateManager, IEnumerable<T> events, string queueName = defaultQueueName)

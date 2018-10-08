@@ -12,30 +12,40 @@ namespace SampleWeb
 	{
 		Dispatcher<ICommand, Task> Dispatcher { get; }
 
-		public CartModule(Dispatcher<ICommand, Task> dispatcher)
+		readonly EventProcessor eventProcessor;
+
+		public CartModule(Dispatcher<ICommand, Task> dispatcher, EventProcessor eventProcessor)
 		{
+			this.eventProcessor = eventProcessor;
 			Dispatcher = dispatcher;
 		}
 
 		public Task DispatchAsync(ICommand command) => this.Dispatcher.Dispatch(command);
 
+		public Task WhenAsync(IEvent @event) => this.eventProcessor.PublishAsync(@event);
+
 		//public static CartModule Initialize() => Initialize(new InMemoryEventStore(), evts => Task.CompletedTask);
 
 		public static CartModule Initialize(IReliableStateManager stateManager, Func<ITransaction, IEventStore> store, Func<IEvent[], Task> pub)
 		{
+			
+			var commandDispatcher = new Dispatcher<ICommand, Task>();
+			var policies = new EventProcessor();
+
+			//TODO prettyfy
 			Func<ITransaction, IEvent[], Task> publish = async (tx, events) =>
 			{
 				await stateManager.EnqueuAsync(tx, events);
+				await policies.PublishAsync(events);
 				await pub(events);
 			};
 
 			var context = new ApplicationServiceContext(stateManager, store, publish);
 
-			var commandDispatcher = new Dispatcher<ICommand, Task>();
 			commandDispatcher.Register<AddItemCommand>(cmd => AddItemApplicationService.Execute(context, cmd));
 
-			return new CartModule(commandDispatcher);
 
+			return new CartModule(commandDispatcher, policies);
 		}
 
 	}
