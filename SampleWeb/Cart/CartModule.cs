@@ -32,7 +32,7 @@ namespace SampleWeb
 			var commandDispatcher = new Dispatcher<ICommand, Task>();
 			var policies = new EventProcessor();
 
-			//TODO prettyfy
+			//TODO prettify
 			Func<ITransaction, IEvent[], Task> publish = async (tx, events) =>
 			{
 				await stateManager.EnqueuAsync(tx, events);
@@ -43,7 +43,6 @@ namespace SampleWeb
 			var context = new ApplicationServiceContext(stateManager, store, publish);
 
 			commandDispatcher.Register<AddItemCommand>(cmd => AddItemApplicationService.Execute(context, cmd));
-
 
 			return new CartModule(commandDispatcher, policies);
 		}
