@@ -10,17 +10,17 @@ namespace Fiffi
 {
 	public class EventProcessor
 	{
-		private readonly IDictionary<IAggregateId, Tuple<Guid, SemaphoreSlim>> _locks;
+		private readonly CommandLocks _locks;
 		private readonly Action<string> _logger;
 		private readonly List<Tuple<Type, Func<IEvent, Task>>> _h = new List<Tuple<Type, Func<IEvent, Task>>>();
 
-		public EventProcessor() : this(new Dictionary<IAggregateId, Tuple<Guid, SemaphoreSlim>>(), s => { })
+		public EventProcessor() : this(new CommandLocks(), s => { })
 		{ }
 
-		public EventProcessor(IDictionary<IAggregateId, Tuple<Guid, SemaphoreSlim>> locks) : this(locks, s => { })
+		public EventProcessor(CommandLocks locks) : this(locks, s => { })
 		{ }
 
-		public EventProcessor(IDictionary<IAggregateId, Tuple<Guid, SemaphoreSlim>> locks, Action<string> logger)
+		public EventProcessor(CommandLocks locks, Action<string> logger)
 		{
 			_locks = locks;
 			_logger = logger;
@@ -47,7 +47,7 @@ namespace Fiffi
 			//Only release once per aggregate
 			h.GroupBy(x => x.Item3)
 			.Select(x => x.First())
-			.ForEach(x => ReleaseIfPresent(_locks, x.Item2, x.Item3, _logger));
+			.ForEach(x => _locks.ReleaseIfPresent(x.Item2, x.Item3, _logger));
 		}
 
 		private static Func<Tuple<Type, Func<IEvent, Task>>, Tuple<Task, IAggregateId, Guid>> ExecuteDelegate(IEvent e)
@@ -56,26 +56,7 @@ namespace Fiffi
 		private static Func<Tuple<Type, Func<IEvent, Task>>, bool> DelegatefForTypeOrInterface(IEvent e)
 			=> kv => kv.Item1 == e.GetType() || e.GetType().GetTypeInfo().GetInterfaces().Any(t => t == kv.Item1);
 
-		private static void ReleaseIfPresent(IDictionary<IAggregateId, Tuple<Guid, SemaphoreSlim>> locks,
-			IAggregateId aggregateId, Guid correlationId, Action<string> logger)
-		{
-			if (!locks.ContainsKey(aggregateId))
-			{
-				logger($"Lock for {aggregateId.Id} not found.");
-				return;
-			}
-
-			if (locks[aggregateId].Item1 != correlationId)
-			{
-				logger($"Lock for {aggregateId.Id} with correlation {correlationId} not found.");
-				return;
-			}
-
-			logger($"Lock for {aggregateId.Id} with correlation {correlationId} about to release.");
-			locks[aggregateId].Item2.Release();
-			logger($"Lock for {aggregateId.Id} with correlation {correlationId} released.");
-
-		}
+	
 	}
 
 	internal class EventMetaData

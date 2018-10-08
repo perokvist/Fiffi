@@ -12,21 +12,22 @@ namespace SampleWeb.Cart
 {
 	public class Subscriber : BackgroundService
 	{
-		readonly Func<IEvent, Task>[] whens;
+		readonly Func<IEvent, Task>[] subscribers;
 
 		readonly IReliableStateManager stateManager;
 
-		public Subscriber(IReliableStateManager stateManager, params Func<IEvent, Task>[] whens)
+		public Subscriber(IReliableStateManager stateManager, params Func<IEvent, Task>[] subscribers)
 		{
 			this.stateManager = stateManager;
-			this.whens = whens;
+			this.subscribers = subscribers;
 		}
 
 		protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 		{
 			while (!stoppingToken.IsCancellationRequested)
 			{
-				await stateManager.DequeueAsync<IEvent>(e => Task.WhenAll(whens.Select(when => when(e))), stoppingToken);
+				//TODO "external" queue
+				await stateManager.DequeueAsync<IEvent>(e => Task.WhenAll(subscribers.Select(when => when(e))), stoppingToken);
 			}
 		}
 	}
