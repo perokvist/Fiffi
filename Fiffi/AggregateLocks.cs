@@ -1,21 +1,30 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading;
 
 namespace Fiffi
 {
-	public class CommandLocks
+	public class AggregateLocks
 	{
 		readonly Dictionary<IAggregateId, (Guid, SemaphoreSlim)> locks;
+		readonly Action<string> logger;
 
-		public CommandLocks()
+		public AggregateLocks() : this(s => { })
+		{}
+
+		public AggregateLocks(Action<string> logger)
 		{
+			this.logger = logger;
 			this.locks = new Dictionary<IAggregateId, (Guid, SemaphoreSlim)>();
 		}
+		
+		//Only release once per aggregate
+		public void ReleaseIfPresent(params (IAggregateId AggregateId, Guid CorrelationId)[] executionContexts)
+		=> executionContexts.GroupBy(x => x.CorrelationId).Select(x => x.First()).ForEach(x => ReleaseIfPresent(x.AggregateId, x.CorrelationId));
 
-
-		public void ReleaseIfPresent(IAggregateId aggregateId, Guid correlationId, Action<string> logger)
+		void ReleaseIfPresent(IAggregateId aggregateId, Guid correlationId)
 		{
 			if (!locks.ContainsKey(aggregateId))
 			{
