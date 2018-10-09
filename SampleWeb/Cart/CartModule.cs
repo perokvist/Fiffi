@@ -32,15 +32,8 @@ namespace SampleWeb
 			var commandDispatcher = new Dispatcher<ICommand, Task>();
 			var policies = new EventProcessor();
 
-			//TODO prettify
-			Func<ITransaction, IEvent[], Task> publish = async (tx, events) =>
-			{
-				await stateManager.EnqueuAsync(tx, events);
-				await policies.PublishAsync(events);
-				await pub(events);
-			};
-
-			var context = new ApplicationServiceContext(stateManager, store, publish);
+			var publisher = new EventPublisher((tx, events) => stateManager.EnqueuAsync(tx, events), policies.PublishAsync, pub);
+			var context = new ApplicationServiceContext(stateManager, store, publisher);
 
 			commandDispatcher.Register<AddItemCommand>(cmd => AddItemApplicationService.Execute(context, cmd));
 
