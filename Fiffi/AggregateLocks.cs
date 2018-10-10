@@ -3,23 +3,55 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Fiffi
 {
 	public class AggregateLocks
 	{
-		readonly Dictionary<IAggregateId, (Guid, SemaphoreSlim)> locks;
+		readonly Dictionary<IAggregateId, (Guid CorrelationId, SemaphoreSlim Semaphore)> locks;
 		readonly Action<string> logger;
 
 		public AggregateLocks() : this(s => { })
-		{}
+		{ }
 
 		public AggregateLocks(Action<string> logger)
 		{
 			this.logger = logger;
 			this.locks = new Dictionary<IAggregateId, (Guid, SemaphoreSlim)>();
 		}
-		
+
+		public async Task UseLockAsync(IAggregateId aggregateId, Guid correlationId, Func<IEvent[], Task> pub, Func<Func<IEvent[], Task>, Task> executeAction, bool waitForLockRelease = true, int timeout = 2000)
+		{
+			if (!locks.ContainsKey(aggregateId))
+				locks.Add(aggregateId, (correlationId, new SemaphoreSlim(1)));
+
+			var @lock = locks[aggregateId];
+
+			await @lock.Semaphore.WaitAsync(TimeSpan.FromMilliseconds(timeout));
+
+			locks[aggregateId] = (correlationId, @lock.Semaphore);
+
+			await executeAction(async events => {
+
+				if (!events.Any())
+				{
+					locks[aggregateId].Semaphore.Release();
+					return;
+				}
+
+				await pub(events);
+
+				if (waitForLockRelease)
+				{
+					if (!@lock.Semaphore.AvailableWaitHandle.WaitOne(timeout))
+						throw new TimeoutException();  //TODO timeoutHandler();
+				}
+			});
+
+		}
+
+
 		//Only release once per aggregate
 		public void ReleaseIfPresent(params (IAggregateId AggregateId, Guid CorrelationId)[] executionContexts)
 		=> executionContexts.GroupBy(x => x.CorrelationId).Select(x => x.First()).ForEach(x => ReleaseIfPresent(x.AggregateId, x.CorrelationId));

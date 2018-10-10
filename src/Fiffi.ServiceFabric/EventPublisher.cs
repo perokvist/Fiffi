@@ -29,7 +29,7 @@ namespace Fiffi.ServiceFabric
 				case PublishMode.InProcess:
 					return Task.WhenAll(Task.WhenAll(inProcess.Select(x => x(events))), spy(events));
 				default:
-					return Task.WhenAll(outBoxQueue(tx, events), spy(events) ,Task.WhenAll(inProcess.Select(x => x(events))));
+					return Task.WhenAll(outBoxQueue(tx, events), spy(events), Task.WhenAll(inProcess.Select(x => x(events))));
 			}
 		}
 	}

@@ -6,6 +6,8 @@ namespace Fiffi
 {
 	public interface ICommand
 	{
-		Guid AggregateId { get; }
+		IAggregateId AggregateId { get; }
+
+		Guid CorrelationId { get;  }
 	}
 }

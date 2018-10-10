@@ -20,7 +20,7 @@ namespace SampleWeb.Tests
 
 
 			//When
-			await context.When(new AddItemCommand());
+			await context.When(new AddItemCommand(Guid.NewGuid()));
 
 			//Then
 			context.Then(events => Assert.True(events.OfType<ItemAddedEvent>().Count() == 1));

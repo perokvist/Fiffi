@@ -11,14 +11,21 @@ namespace SampleWeb
 
 	public class AddItemCommand : ICommand
 	{
-		public Guid AggregateId { get; set; } = Guid.NewGuid();
+		public AddItemCommand(Guid aggregateId)
+		{
+			this.AggregateId = new AggregateId(aggregateId.ToString());
+		}
+
+		public Guid CorrelationId { get; } = Guid.NewGuid();
+
+		public IAggregateId AggregateId { get; private set; }
 	}
 
 	public class ItemAddedEvent : IEvent
 	{
-		public ItemAddedEvent(Guid aggregateId)
+		public ItemAddedEvent(IAggregateId aggregateId)
 		{
-			this.AggregateId = aggregateId;
+			this.AggregateId = Guid.Parse(aggregateId.ToString());
 		}
 		public Guid AggregateId { get;  }
 

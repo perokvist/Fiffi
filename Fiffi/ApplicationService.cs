@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Fiffi
@@ -29,5 +30,11 @@ namespace Fiffi
 			await store.AppendToStreamAsync(streamName, long.Parse(events.Last().Meta["version"]), events);
 			await pub(events);
 		}
+
+		public static async Task ExecuteAsync<TState>(IEventStore store, ICommand command, Func<TState, IEvent[]> action, Func<IEvent[], Task> pub, AggregateLocks aggregateLocks)
+			where TState : class, new()
+			=> await aggregateLocks.UseLockAsync(command.AggregateId, command.CorrelationId, pub, async (publisher) =>
+				 await ExecuteAsync(store, command, action, publisher)
+			);
 	}
 }
