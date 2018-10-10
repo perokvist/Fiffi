@@ -11,7 +11,11 @@ namespace Fiffi
 			Id = aggregateId;
 		}
 
+		public int CompareTo(IAggregateId other) => string.Compare(Id, other.Id, StringComparison.Ordinal);
+
 		public string Id { get; }
+
+		public override string ToString() => Id;
 	}
 	public interface IAggregateId
 	{
