@@ -28,9 +28,10 @@ namespace SampleWeb
 
 		public static CartModule Initialize(IReliableStateManager stateManager, Func<ITransaction, IEventStore> store, Func<IEvent[], Task> spy)
 		{
-
 			var commandDispatcher = new Dispatcher<ICommand, Task>();
 			var policies = new EventProcessor();
+			var projections = new EventProcessor();
+
 
 			var publisher = new EventPublisher((tx, events) => stateManager.EnqueuAsync(tx, events), spy, policies.PublishAsync);
 			var context = new ApplicationServiceContext(stateManager, store, publisher);

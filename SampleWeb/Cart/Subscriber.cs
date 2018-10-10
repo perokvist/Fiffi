@@ -13,12 +13,10 @@ namespace SampleWeb.Cart
 	public class Subscriber : BackgroundService
 	{
 		readonly Func<IEvent, Task>[] subscribers;
+		readonly Func<Func<IEvent, Task>, CancellationToken, Task> fakeQueue;
 
-		readonly IReliableStateManager stateManager;
-
-		public Subscriber(IReliableStateManager stateManager, params Func<IEvent, Task>[] subscribers)
+		public Subscriber(params Func<IEvent, Task>[] subscribers)
 		{
-			this.stateManager = stateManager;
 			this.subscribers = subscribers;
 		}
 
@@ -26,8 +24,7 @@ namespace SampleWeb.Cart
 		{
 			while (!stoppingToken.IsCancellationRequested)
 			{
-				//TODO "external" queue
-				await stateManager.DequeueAsync<IEvent>(e => Task.WhenAll(subscribers.Select(when => when(e))), stoppingToken);
+				await fakeQueue(e => Task.WhenAll(subscribers.Select(when => when(e))), stoppingToken);
 			}
 		}
 	}
