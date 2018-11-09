@@ -5,19 +5,19 @@ VisualStudioVersion = 15.0.28010.2026
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fiffi.ServiceFabric", "src\Fiffi.ServiceFabric\Fiffi.ServiceFabric.csproj", "{277065CE-2A6F-4D11-8C24-69939828BD1A}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fiffi", "Fiffi\Fiffi.csproj", "{A0A6A33E-CEAF-47EE-8236-E9431C7CAC54}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fiffi", "src\Fiffi\Fiffi.csproj", "{A0A6A33E-CEAF-47EE-8236-E9431C7CAC54}"
 EndProject
-Project("{A07B5EB6-E848-4116-A8D0-A826331D98C6}") = "Sample", "Sample\Sample.sfproj", "{27BF076B-B409-4D0D-B0AF-F636C237DCC9}"
+Project("{A07B5EB6-E848-4116-A8D0-A826331D98C6}") = "Sample", "src\Sample\Sample.sfproj", "{27BF076B-B409-4D0D-B0AF-F636C237DCC9}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SampleWeb", "SampleWeb\SampleWeb.csproj", "{14AA394F-0DC7-4BEC-9A43-DB1A26DED22D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SampleWeb", "src\SampleWeb\SampleWeb.csproj", "{14AA394F-0DC7-4BEC-9A43-DB1A26DED22D}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{5BBB9DDA-4A64-4EF7-9ED5-7605FA4A6C10}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "src\Samples", "{5BBB9DDA-4A64-4EF7-9ED5-7605FA4A6C10}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fiffi.ServiceFabric.Tests", "Fiffi.ServiceFabric.Tests\Fiffi.ServiceFabric.Tests.csproj", "{3F845945-5100-48A8-A46D-B0AD516C8757}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fiffi.ServiceFabric.Tests", "src\Fiffi.ServiceFabric.Tests\Fiffi.ServiceFabric.Tests.csproj", "{3F845945-5100-48A8-A46D-B0AD516C8757}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SampleWeb.Tests", "SampleWeb.Tests\SampleWeb.Tests.csproj", "{B8FDF432-D135-4A6E-912B-09DADCE591AE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SampleWeb.Tests", "src\SampleWeb.Tests\SampleWeb.Tests.csproj", "{B8FDF432-D135-4A6E-912B-09DADCE591AE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gateway", "Gateway\Gateway.csproj", "{CADBDB3A-8EFA-43EB-95A3-00343BE9D3AA}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gateway", "src\Gateway\Gateway.csproj", "{CADBDB3A-8EFA-43EB-95A3-00343BE9D3AA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

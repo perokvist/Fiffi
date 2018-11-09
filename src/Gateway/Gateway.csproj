@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\src\Fiffi.ServiceFabric\Fiffi.ServiceFabric.csproj" />
+    <ProjectReference Include="..\Fiffi.ServiceFabric\Fiffi.ServiceFabric.csproj" />
   </ItemGroup>
 
 </Project>

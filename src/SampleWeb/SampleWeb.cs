@@ -23,7 +23,6 @@ namespace SampleWeb
 		public SampleWeb(StatefulServiceContext context)
 			: base(context)
 		{
-			this.StateManager.TryAddStateSerializer(new )
 		}
 
 		/// <summary>
