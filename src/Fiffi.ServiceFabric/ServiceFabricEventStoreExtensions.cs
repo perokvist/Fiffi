@@ -39,7 +39,7 @@ namespace Fiffi.ServiceFabric
 
 		public static async Task<(IEnumerable<StorageEvent>, long)> AppendToStreamAsync(this IReliableDictionary<string, List<StorageEvent>> streams, ITransaction tx, string streamName, long version, IEvent[] events)
 		{
-			var storageEvents = events.Select((x, i) => new StorageEvent(streamName, x.MapObject(), (int)(version + i + 1)));
+			var storageEvents = events.Select((x, i) => new StorageEvent(streamName, x.MapJson(), (int)(version + i + 1)));
 
 			var streamResult = await streams.TryGetValueAsync(tx, streamName);
 			if (!streamResult.HasValue)
@@ -72,7 +72,9 @@ namespace Fiffi.ServiceFabric
 
 		public static async Task<(IEnumerable<IEvent>, long)> LoadEventStreamAsync(this IReliableStateManager stateManager, ITransaction tx, string streamName, int version, string streamsName = defaultStreamsName)
 		{
-			var streams = await stateManager.GetOrAddAsync<IReliableDictionary<string, List<StorageEvent>>>(tx, streamsName);
+			//var streams = await stateManager.GetOrAddAsync<IReliableDictionary<string, List<StorageEvent>>>(tx, streamsName);
+			//https://github.com/Azure/service-fabric-issues/issues/24
+			var streams = await stateManager.GetOrAddAsync<IReliableDictionary<string, List<StorageEvent>>>(streamsName);
 			var result = await streams.LoadEventStreamAsync(tx, streamName, version);
 			return result;
 		}
@@ -96,7 +98,8 @@ namespace Fiffi.ServiceFabric
 
 		public static async Task EnqueuAsync<T>(this IReliableStateManager stateManager, ITransaction tx, IEnumerable<T> events, string queueName = defaultQueueName)
 		{
-			var queue = await stateManager.GetOrAddAsync<IReliableQueue<T>>(tx, queueName);
+			//var queue = await stateManager.GetOrAddAsync<IReliableQueue<T>>(tx, queueName);
+			var queue = await stateManager.GetOrAddAsync<IReliableQueue<T>>(queueName);
 			await Task.WhenAll(events.Select(e => queue.EnqueueAsync(tx, e)));
 		}
 

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Fiffi
 {
@@ -39,6 +40,10 @@ namespace Fiffi
 
 		public static TState Apply<TState>(this IEnumerable<IEvent> events, TState currentState) where TState : new()
 			=> events.Aggregate(currentState, (s, @event) => s.Tap(x => ((dynamic)x).When((dynamic)@event)));
+
+		public static void RegisterReceptor<T>(this EventProcessor processor, Dispatcher<ICommand, Task> d, Func<T, ICommand> receptor)
+			where T : IEvent
+			=> processor.Register<T>(e => d.Dispatch(receptor(e)));
 
 	}
 }

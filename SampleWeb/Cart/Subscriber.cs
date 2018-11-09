@@ -22,6 +22,7 @@ namespace SampleWeb.Cart
 
 		protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 		{
+			//partiotioning ?
 			while (!stoppingToken.IsCancellationRequested)
 			{
 				await fakeQueue(e => Task.WhenAll(subscribers.Select(when => when(e))), stoppingToken);

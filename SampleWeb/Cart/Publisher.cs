@@ -23,7 +23,11 @@ namespace SampleWeb.Cart
 		{
 			while (!stoppingToken.IsCancellationRequested)
 			{
-				await stateManager.DequeueAsync<IEvent>(e => Task.CompletedTask, stoppingToken);
+				await stateManager.DequeueAsync<IEvent>(e => {
+
+					var b = e;
+					return Task.CompletedTask;
+				}, stoppingToken);
 			}
 		}
 	}

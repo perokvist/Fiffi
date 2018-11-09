@@ -10,7 +10,7 @@ namespace Fiffi.ServiceFabric
 		//TODO custom event serialization ?
 		public static EventData MapObject(this IEvent e) => new EventData(e.EventId(), e, e.Meta);
 
-		static EventData MapJson(IEvent e)
+		public static EventData MapJson(this IEvent e)
 			=> new EventData(e.EventId(),
 			JsonConvert.SerializeObject(e, new JsonSerializerSettings
 			{

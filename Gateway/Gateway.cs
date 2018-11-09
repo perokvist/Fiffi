@@ -11,31 +11,28 @@ using Microsoft.ServiceFabric.Services.Communication.AspNetCore;
 using Microsoft.ServiceFabric.Services.Communication.Runtime;
 using Microsoft.ServiceFabric.Services.Runtime;
 using Microsoft.ServiceFabric.Data;
-using Fiffi;
 
-namespace SampleWeb
+namespace Gateway
 {
 	/// <summary>
 	/// The FabricRuntime creates an instance of this class for each service type instance. 
 	/// </summary>
-	internal sealed class SampleWeb : StatefulService
+	internal sealed class Gateway : StatelessService
 	{
-		public SampleWeb(StatefulServiceContext context)
+		public Gateway(StatelessServiceContext context)
 			: base(context)
-		{
-			this.StateManager.TryAddStateSerializer(new )
-		}
+		{ }
 
 		/// <summary>
 		/// Optional override to create listeners (like tcp, http) for this service instance.
 		/// </summary>
 		/// <returns>The collection of listeners.</returns>
-		protected override IEnumerable<ServiceReplicaListener> CreateServiceReplicaListeners()
+		protected override IEnumerable<ServiceInstanceListener> CreateServiceInstanceListeners()
 		{
-			return new ServiceReplicaListener[]
+			return new ServiceInstanceListener[]
 			{
-				new ServiceReplicaListener(serviceContext =>
-					new KestrelCommunicationListener(serviceContext, (url, listener) =>
+				new ServiceInstanceListener(serviceContext =>
+					new KestrelCommunicationListener(serviceContext, "ServiceEndpoint", (url, listener) =>
 					{
 						ServiceEventSource.Current.ServiceMessage(serviceContext, $"Starting Kestrel on {url}");
 
@@ -43,11 +40,10 @@ namespace SampleWeb
 									.UseKestrel()
 									.ConfigureServices(
 										services => services
-											.AddSingleton<StatefulServiceContext>(serviceContext)
-											.AddSingleton<IReliableStateManager>(this.StateManager))
+											.AddSingleton<StatelessServiceContext>(serviceContext))
 									.UseContentRoot(Directory.GetCurrentDirectory())
 									.UseStartup<Startup>()
-									.UseServiceFabricIntegration(listener, ServiceFabricIntegrationOptions.UseUniqueServiceUrl)
+									.UseServiceFabricIntegration(listener, ServiceFabricIntegrationOptions.None)
 									.UseUrls(url)
 									.Build();
 					}))

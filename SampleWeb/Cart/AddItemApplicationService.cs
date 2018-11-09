@@ -9,7 +9,7 @@ namespace SampleWeb
 {
 	public static class AddItemApplicationService
 	{
-		public static Task Execute(ApplicationServiceContext context, AddItemCommand command)
+		public static Task ExecuteAsync(ApplicationServiceContext context, AddItemCommand command)
 		=> context.ExecuteAsync<CartState>(command, state => new[] { new ItemAddedEvent(command.AggregateId) });
 	}
 }

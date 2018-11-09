@@ -39,7 +39,6 @@ namespace Fiffi.ServiceFabric
 			Func<CancellationToken, Task> f, string functionName, CancellationToken cancellationToken, ILogger logger)
 		{
 			logger.LogInformation($"Run {functionName}");
-			var retryDelay = TimeSpan.FromMinutes(1);
 
 			while (true)
 			{
@@ -73,9 +72,6 @@ namespace Fiffi.ServiceFabric
 				{
 					logger.LogError(e, $"Application Exception in {functionName}");
 				}
-
-				await Task.Delay(retryDelay, cancellationToken);
-				logger.LogInformation($"Retrying task {functionName}");
 			}
 		}
 

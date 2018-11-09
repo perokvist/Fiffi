@@ -11,7 +11,6 @@ namespace SampleWeb
 	public class CartModule
 	{
 		readonly Dispatcher<ICommand, Task> dispatcher;
-
 		readonly EventProcessor eventProcessor;
 		readonly QueryDispatcher queryDispatcher;
 
@@ -28,8 +27,6 @@ namespace SampleWeb
 
 		public Task WhenAsync(IEvent @event) => this.eventProcessor.PublishAsync(@event);
 
-		//public static CartModule Initialize() => Initialize(new InMemoryEventStore(), evts => Task.CompletedTask);
-
 		public static CartModule Initialize(IReliableStateManager stateManager, Func<ITransaction, IEventStore> store, Func<IEvent[], Task> spy)
 		{
 			var commandDispatcher = new Dispatcher<ICommand, Task>();
@@ -37,11 +34,12 @@ namespace SampleWeb
 			var projections = new EventProcessor();
 			var queryDispatcher = new QueryDispatcher();
 
+			//TODO join projections and polics publish
 
-			var publisher = new EventPublisher((tx, events) => stateManager.EnqueuAsync(tx, events), spy, policies.PublishAsync);
+			var publisher = new EventPublisher((tx, events) => stateManager.EnqueuAsync(tx, events), spy, projections.PublishAsync);
 			var context = new ApplicationServiceContext(stateManager, store, publisher);
 
-			commandDispatcher.Register<AddItemCommand>(cmd => AddItemApplicationService.Execute(context, cmd));
+			commandDispatcher.Register<AddItemCommand>(cmd => AddItemApplicationService.ExecuteAsync(context, cmd));
 
 			return new CartModule(commandDispatcher, policies, queryDispatcher);
 		}
