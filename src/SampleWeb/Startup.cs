@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Fiffi;
 using Fiffi.ServiceFabric;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -18,9 +19,9 @@ namespace SampleWeb
 		// For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
 		public void ConfigureServices(IServiceCollection services)
 		{
-			services.AddSingleton(sc => 
+			services.AddSingleton(sc =>
 				CartModule.Initialize(sc.GetService<IReliableStateManager>(), tx =>
-					new ReliableEventStore(sc.GetService<IReliableStateManager>(), tx), events => Task.CompletedTask));
+					new ReliableEventStore(sc.GetService<IReliableStateManager>(), tx, TypeResolver.FromMap(TypeResolver.GetEventsFromTypes(typeof(ItemAddedEvent))), Serialization.Json()), events => Task.CompletedTask));
 			services.AddSingleton<Microsoft.Extensions.Hosting.IHostedService>(sc => new Publisher(sc.GetService<IReliableStateManager>()));
 			services.AddMvc();
 		}

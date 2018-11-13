@@ -24,7 +24,6 @@ namespace SampleWeb
 		public IAggregateId AggregateId { get; private set; }
 	}
 
-	[DataContract]
 	public class ItemAddedEvent : IEvent
 	{
 		public ItemAddedEvent(IAggregateId aggregateId)
@@ -32,10 +31,9 @@ namespace SampleWeb
 			this.AggregateId = Guid.Parse(aggregateId.ToString());
 		}
 
-		[DataMember]
 		public Guid AggregateId { get; set; }
 
-		[DataMember]
 		public IDictionary<string, string> Meta { get; set; } = new Dictionary<string, string>();
+
 	}
 }

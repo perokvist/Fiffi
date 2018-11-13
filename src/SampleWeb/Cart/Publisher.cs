@@ -27,7 +27,7 @@ namespace SampleWeb.Cart
 
 					var b = e;
 					return Task.CompletedTask;
-				}, stoppingToken);
+				}, Serialization.ObjectDeserialization() ,stoppingToken); //TODO json deserializetion
 			}
 		}
 	}

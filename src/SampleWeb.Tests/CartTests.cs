@@ -37,8 +37,8 @@ namespace SampleWeb.Tests
 		public TestContext()
 		{
 			this.stateManager = new MockReliableStateManager();
-			this.store = new ReliableEventStore(this.stateManager);
-			this.module = CartModule.Initialize(stateManager, tx => new ReliableEventStore(stateManager, tx),evts => {
+			this.store = new ReliableEventStore(this.stateManager, TypeResolver.Default(), Serialization.ObjectSerialization());
+			this.module = CartModule.Initialize(stateManager, tx => new ReliableEventStore(stateManager, tx, TypeResolver.Default(), Serialization.ObjectSerialization()),evts => {
 				events = evts;
 				return Task.CompletedTask;
 			});

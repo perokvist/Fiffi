@@ -24,9 +24,8 @@ namespace Fiffi
 			events.ForEach(x => x.Meta["aggregatename"] = aggregateName);
 			events.ForEach(x => x.Meta["eventId"] = Guid.NewGuid().ToString());
 			events.ForEach(x => x.Meta[nameof(EventMetaData.CorrelationId)] = Guid.NewGuid().ToString()); //TODO set from command
+			events.ForEach(x => x.Meta.AddTypeInfo(x));
 
-
-			//TODO add metadata
 			await store.AppendToStreamAsync(streamName, long.Parse(events.Last().Meta["version"]), events);
 			await pub(events);
 		}

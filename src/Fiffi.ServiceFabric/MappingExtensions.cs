@@ -1,30 +1,34 @@
 ﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace Fiffi.ServiceFabric
 {
 	public static class MappingExtensions
 	{
-		//TODO custom event serialization ?
 		public static EventData MapObject(this IEvent e) => new EventData(e.EventId(), e, e.Meta);
 
-		public static EventData MapJson(this IEvent e)
-			=> new EventData(e.EventId(),
-			JsonConvert.SerializeObject(e, new JsonSerializerSettings
-			{
-				Formatting = Formatting.Indented,
-				TypeNameHandling = TypeNameHandling.Auto
-			}),
-			JsonConvert.SerializeObject(e.Meta, new JsonSerializerSettings
-			{
-				Formatting = Formatting.Indented,
-				TypeNameHandling = TypeNameHandling.None
-			}));
+		public static IEvent MapObject(this EventData e) => (IEvent)e.Body;
 
-		static Guid EventId(this IEvent e) => Guid.Parse(e.Meta["eventId"]);
+		public static Guid EventId(this IEvent e) => Guid.Parse(e.Meta["eventId"]);
 
-		public static IEvent ToEvent(this StorageEvent storageEvent) => (IEvent)storageEvent.EventBody;
+		//TODO pass deserializtion and detect
+		public static IEvent ToEvent(this StorageEvent storageEvent, Func<string, Type> typeResolver)
+		{
+			if (storageEvent.EventBody is string)
+			{
+				var meta = JsonConvert.DeserializeObject<Dictionary<string, string>>(storageEvent.Metadata.ToString());
+				var t = meta.GetEventType(typeResolver);
+				return (IEvent)JsonConvert.DeserializeObject(storageEvent.EventBody.ToString(), t);
+			}
+			else
+			{
+				return (IEvent)storageEvent.EventBody;
+			}
+
+		}
+
+		public static EventData ToEventData(this StorageEvent storageEvent)
+			=> new EventData(storageEvent.EventId, storageEvent.EventBody, storageEvent.Metadata);
 	}
 }

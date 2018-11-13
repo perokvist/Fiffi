@@ -19,12 +19,12 @@ namespace Fiffi.ServiceFabric.Tests
 			var aggregateId = Guid.NewGuid();
 			var dequeued = false;
 			var events = new[] { new TestEvent(aggregateId), new TestEvent(aggregateId), new TestEvent(aggregateId) };
-			await stateManager.EnqueuAsync(events);
-			await stateManager.DequeueAsync<TestEvent>(e => {
+			await stateManager.EnqueuAsync(events, Serialization.ObjectSerialization());
+			await stateManager.DequeueAsync(e => {
 				Assert.Equal(events.First(), e);
 				dequeued = true;
 				return Task.CompletedTask;
-			}
+			}, Serialization.ObjectDeserialization()
 			, CancellationToken.None);
 
 			Assert.True(dequeued);

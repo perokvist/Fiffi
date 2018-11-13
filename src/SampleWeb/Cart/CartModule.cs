@@ -33,10 +33,11 @@ namespace SampleWeb
 			var policies = new EventProcessor();
 			var projections = new EventProcessor();
 			var queryDispatcher = new QueryDispatcher();
+			var queueSerializer = Serialization.Json();
 
 			//TODO join projections and polics publish
 
-			var publisher = new EventPublisher((tx, events) => stateManager.EnqueuAsync(tx, events), spy, projections.PublishAsync);
+			var publisher = new EventPublisher((tx, events) => stateManager.EnqueuAsync(tx, events, queueSerializer), spy, projections.PublishAsync);
 			var context = new ApplicationServiceContext(stateManager, store, publisher);
 
 			commandDispatcher.Register<AddItemCommand>(cmd => AddItemApplicationService.ExecuteAsync(context, cmd));
