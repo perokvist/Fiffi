@@ -19,12 +19,16 @@ namespace SampleWeb
 		// For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
 		public void ConfigureServices(IServiceCollection services)
 		{
+			var deserializer = Serialization.JsonDeserialization(TypeResolver.FromMap(TypeResolver.GetEventsFromTypes(typeof(ItemAddedEvent))));
 			services.AddSingleton(sc =>
 				CartModule.Initialize(sc.GetService<IReliableStateManager>(), tx =>
-					new ReliableEventStore(sc.GetService<IReliableStateManager>(), tx, Serialization.Json(), Serialization.JsonDeserialization(Serialization.JsonMetaAccessor(
-					TypeResolver.FromMap(TypeResolver.GetEventsFromTypes(typeof(ItemAddedEvent)))), Serialization.JsonDeserialization())
+					new ReliableEventStore(
+						sc.GetService<IReliableStateManager>(),
+						tx,
+						Serialization.Json(),
+						deserializer
 				 	), events => Task.CompletedTask));
-			services.AddSingleton<Microsoft.Extensions.Hosting.IHostedService>(sc => new Publisher(sc.GetService<IReliableStateManager>()));
+			services.AddSingleton<Microsoft.Extensions.Hosting.IHostedService>(sc => new Publisher(sc.GetService<IReliableStateManager>(), deserializer));
 			services.AddMvc();
 		}
 

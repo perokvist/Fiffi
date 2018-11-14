@@ -13,9 +13,11 @@ namespace SampleWeb.Cart
 	public class Publisher : BackgroundService
 	{
 		readonly IReliableStateManager stateManager;
+		readonly Func<EventData, IEvent> deserializer;
 
-		public Publisher(IReliableStateManager stateManager)
+		public Publisher(IReliableStateManager stateManager, Func<EventData, IEvent> deserializer)
 		{
+			this.deserializer = deserializer;
 			this.stateManager = stateManager;
 		}
 
@@ -23,11 +25,11 @@ namespace SampleWeb.Cart
 		{
 			while (!stoppingToken.IsCancellationRequested)
 			{
-				await stateManager.DequeueAsync<IEvent>(e => {
-
+				await stateManager.DequeueAsync<IEvent>(e =>
+				{
 					var b = e;
 					return Task.CompletedTask;
-				}, Serialization.FabricDeserialization() ,stoppingToken); //TODO json deserializetion
+				}, deserializer, stoppingToken); 
 			}
 		}
 	}

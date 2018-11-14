@@ -15,7 +15,6 @@ namespace Fiffi.ServiceFabric
 		const string defaultQueueName = "outbox";
 		const string defaultStreamsName = "streams";
 
-
 		public static Task<long> AppendToStreamAsync(this IReliableStateManager stateManager,
 			string streamName, long version, IEvent[] events,
 			string queueName = defaultQueueName, string streamsName = defaultStreamsName) =>

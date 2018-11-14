@@ -37,7 +37,8 @@ namespace SampleWeb.Tests
 		public TestContext()
 		{
 			this.stateManager = new MockReliableStateManager();
-			this.store = new ReliableEventStore(this.stateManager, Serialization.FabricSerialization(), Serialization.FabricDeserialization());
+			//TODO fix double store
+			this.store = new PublishingReliableEventStore(this.stateManager, Serialization.FabricSerialization(), Serialization.FabricDeserialization());
 			this.module = CartModule.Initialize(stateManager, tx => new ReliableEventStore(stateManager, tx, Serialization.FabricSerialization(), Serialization.FabricDeserialization()), evts =>
 			{
 				events = evts;
