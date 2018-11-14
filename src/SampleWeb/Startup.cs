@@ -21,7 +21,9 @@ namespace SampleWeb
 		{
 			services.AddSingleton(sc =>
 				CartModule.Initialize(sc.GetService<IReliableStateManager>(), tx =>
-					new ReliableEventStore(sc.GetService<IReliableStateManager>(), tx, TypeResolver.FromMap(TypeResolver.GetEventsFromTypes(typeof(ItemAddedEvent))), Serialization.Json()), events => Task.CompletedTask));
+					new ReliableEventStore(sc.GetService<IReliableStateManager>(), tx, Serialization.Json(), Serialization.JsonDeserialization(Serialization.JsonMetaAccessor(
+					TypeResolver.FromMap(TypeResolver.GetEventsFromTypes(typeof(ItemAddedEvent)))), Serialization.JsonDeserialization())
+				 	), events => Task.CompletedTask));
 			services.AddSingleton<Microsoft.Extensions.Hosting.IHostedService>(sc => new Publisher(sc.GetService<IReliableStateManager>()));
 			services.AddMvc();
 		}

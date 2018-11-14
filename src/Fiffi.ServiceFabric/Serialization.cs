@@ -7,7 +7,7 @@ namespace Fiffi.ServiceFabric
 {
 	public static class Serialization
 	{
-		public static Func<IEvent, EventData> ObjectSerialization() => e => e.MapObject();
+		public static Func<IEvent, EventData> FabricSerialization() => e => e.MapObject();
 
 		public static Func<IEvent, EventData> Json() => e => e.ToJson();
 
@@ -24,7 +24,17 @@ namespace Fiffi.ServiceFabric
 			TypeNameHandling = TypeNameHandling.None
 		}));
 
-		public static Func<EventData, IEvent> ObjectDeserialization() => e => e.MapObject();
+
+		public static Func<EventData, Type> JsonMetaAccessor(Func<string, Type> typeResolver) => ed =>
+			JsonConvert.DeserializeObject<Dictionary<string, string>>(ed.Metadata.ToString()).GetEventType(typeResolver);
+
+		public static Func<EventData, Type, IEvent> JsonDeserialization() => (ed, t) => 
+			(IEvent)JsonConvert.DeserializeObject(ed.Body.ToString(), t);
+
+		public static Func<EventData, IEvent> JsonDeserialization(Func<EventData, Type> metaAccessor, Func<EventData, Type, IEvent> deserializer) => ed =>
+			deserializer(ed, metaAccessor(ed));
+
+		public static Func<EventData, IEvent> FabricDeserialization() => ed => ed.MapObject();
 
 	}
 }

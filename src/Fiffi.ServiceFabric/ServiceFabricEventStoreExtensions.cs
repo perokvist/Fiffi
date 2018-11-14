@@ -19,7 +19,7 @@ namespace Fiffi.ServiceFabric
 		public static Task<long> AppendToStreamAsync(this IReliableStateManager stateManager,
 			string streamName, long version, IEvent[] events,
 			string queueName = defaultQueueName, string streamsName = defaultStreamsName) =>
-			stateManager.AppendToStreamAsync(streamName, version, events, Serialization.ObjectSerialization(), queueName, streamsName);
+			stateManager.AppendToStreamAsync(streamName, version, events, Serialization.FabricSerialization(), queueName, streamsName);
 
 		public static async Task<long> AppendToStreamAsync(this IReliableStateManager stateManager,
 			string streamName, long version, IEvent[] events, Func<IEvent, EventData> serializer,
@@ -70,26 +70,29 @@ namespace Fiffi.ServiceFabric
 		}
 
 
-		public static async Task<(IEnumerable<IEvent>, long)> LoadEventStreamAsync(this IReliableStateManager stateManager, string streamName, int version, Func<string, Type> typeResolver, string streamsName = defaultStreamsName)
+		public static async Task<(IEnumerable<IEvent>, long)> LoadEventStreamAsync(this IReliableStateManager stateManager, string streamName, 
+			int version, Func<EventData, IEvent> deserializer, string streamsName = defaultStreamsName)
 		{
 			using (var tx = stateManager.CreateTransaction())
 			{
-				var result = await stateManager.LoadEventStreamAsync(tx, streamName, version, typeResolver, streamsName);
+				var result = await stateManager.LoadEventStreamAsync(tx, streamName, version, deserializer, streamsName);
 				await tx.CommitAsync();
 				return result;
 			}
 		}
 
-		public static async Task<(IEnumerable<IEvent>, long)> LoadEventStreamAsync(this IReliableStateManager stateManager, ITransaction tx, string streamName, int version, Func<string, Type> typeResolver, string streamsName = defaultStreamsName)
+		public static async Task<(IEnumerable<IEvent>, long)> LoadEventStreamAsync(this IReliableStateManager stateManager, 
+			ITransaction tx, string streamName, int version, Func<EventData, IEvent> deserializer, string streamsName = defaultStreamsName)
 		{
 			//var streams = await stateManager.GetOrAddAsync<IReliableDictionary<string, List<StorageEvent>>>(tx, streamsName);
 			//https://github.com/Azure/service-fabric-issues/issues/24
 			var streams = await stateManager.GetOrAddAsync<IReliableDictionary<string, List<StorageEvent>>>(streamsName);
-			var result = await streams.LoadEventStreamAsync(tx, streamName, version, typeResolver);
+			var result = await streams.LoadEventStreamAsync(tx, streamName, version, deserializer);
 			return result;
 		}
 
-		public static async Task<(IEnumerable<IEvent>, long)> LoadEventStreamAsync(this IReliableDictionary<string, List<StorageEvent>> streams, ITransaction tx, string streamName, int version, Func<string, Type> typeResolver)
+		public static async Task<(IEnumerable<IEvent>, long)> LoadEventStreamAsync(this IReliableDictionary<string, List<StorageEvent>> streams, 
+			ITransaction tx, string streamName, int version, Func<EventData, IEvent> deserializer)
 		{
 			var streamResult = await streams.TryGetValueAsync(tx, streamName);
 
@@ -100,7 +103,7 @@ namespace Fiffi.ServiceFabric
 
 			var stream = streamResult.Value;
 
-			return (stream.Skip(version).Select(x => x.ToEvent(typeResolver)), stream.Count);
+			return (stream.Skip(version).Select(x => x.ToEventData().ToEvent(deserializer)), stream.Count);
 		}
 
 		public static Task EnqueuAsync<T>(this IReliableStateManager stateManager, IEnumerable<T> events, Func<T, EventData> serialzer, string queueName = defaultQueueName)

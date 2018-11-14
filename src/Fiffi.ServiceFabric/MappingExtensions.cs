@@ -12,21 +12,15 @@ namespace Fiffi.ServiceFabric
 
 		public static Guid EventId(this IEvent e) => Guid.Parse(e.Meta["eventId"]);
 
-		//TODO pass deserializtion and detect
-		public static IEvent ToEvent(this StorageEvent storageEvent, Func<string, Type> typeResolver)
+		public static IEvent ToEvent(this EventData eventData, Func<EventData, IEvent> deserializer)
 		{
-			if (storageEvent.EventBody is string)
+			if (eventData.Body is string)
 			{
-				var meta = JsonConvert.DeserializeObject<Dictionary<string, string>>(storageEvent.Metadata.ToString());
-				var t = meta.GetEventType(typeResolver);
-				return (IEvent)JsonConvert.DeserializeObject(storageEvent.EventBody.ToString(), t);
+				return deserializer(eventData);
 			}
-			else
-			{
-				return (IEvent)storageEvent.EventBody;
-			}
-
+			return (IEvent)eventData.Body; //TODO not needed check
 		}
+
 
 		public static EventData ToEventData(this StorageEvent storageEvent)
 			=> new EventData(storageEvent.EventId, storageEvent.EventBody, storageEvent.Metadata);

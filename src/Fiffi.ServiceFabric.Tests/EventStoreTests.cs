@@ -67,7 +67,7 @@ namespace Fiffi.ServiceFabric.Tests
 			var @event = new TestEvent(aggregateId);
 			await stateManager.AppendToStreamAsync("testStream", 0, new[] { @event });
 
-			var events = await stateManager.LoadEventStreamAsync("testStream", 0, TypeResolver.Default());
+			var events = await stateManager.LoadEventStreamAsync("testStream", 0, Serialization.FabricDeserialization());
 
 			Assert.Equal(@event, events.Item1.First());
 		}
@@ -80,7 +80,7 @@ namespace Fiffi.ServiceFabric.Tests
 			var events = new[] { new TestEvent(aggregateId), new TestEvent(aggregateId), new TestEvent(aggregateId) };
 			await stateManager.AppendToStreamAsync("testStream", 0, events);
 
-			var loadedEvents = await stateManager.LoadEventStreamAsync("testStream", 2, TypeResolver.Default());
+			var loadedEvents = await stateManager.LoadEventStreamAsync("testStream", 2, Serialization.FabricDeserialization());
 
 			Assert.Equal(events.Last(), loadedEvents.Item1.First());
 		}
