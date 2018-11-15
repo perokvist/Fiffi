@@ -29,17 +29,16 @@ namespace SampleWeb.Tests
 
 	public class TestContext
 	{
-		IEventStore store;
 		IReliableStateManager stateManager;
 		CartModule module;
 		IEvent[] events;
+		Func<ITransaction, IEventStore> factory;
 
 		public TestContext()
 		{
 			this.stateManager = new MockReliableStateManager();
-			//TODO fix double store
-			this.store = new PublishingReliableEventStore(this.stateManager, Serialization.FabricSerialization(), Serialization.FabricDeserialization());
-			this.module = CartModule.Initialize(stateManager, tx => new ReliableEventStore(stateManager, tx, Serialization.FabricSerialization(), Serialization.FabricDeserialization()), evts =>
+			this.factory = tx => new ReliableEventStore(stateManager, tx, Serialization.FabricSerialization(), Serialization.FabricDeserialization());
+			this.module = CartModule.Initialize(stateManager, factory, evts =>
 			{
 				events = evts;
 				return Task.CompletedTask;
@@ -49,13 +48,13 @@ namespace SampleWeb.Tests
 		public void Given(params IEvent[] events)
 		{
 			var streamName = $"{events.First().Meta["aggregatename"]}-{events.First().AggregateId}";
-			store.AppendToStreamAsync(streamName, 0, events);
+			UseStore(store => store.AppendToStreamAsync(streamName, 0, events));
 		}
 
 		public Task When(ICommand command) => module.DispatchAsync(command);
 
 		public void Then(Action<IEvent[]> f) => f(this.events);
-
-
+			
+		void UseStore(Func<IEventStore, Task> f) => this.stateManager.UseTransactionAsync(tx => f(factory(tx))).GetAwaiter().GetResult();
 	}
 }
