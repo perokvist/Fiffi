@@ -37,5 +37,14 @@ namespace Fiffi.ServiceFabric
 			return new Uri(url);
 
 		}
+
+		public static Action<Action<ApplicationServiceContext, Dispatcher<ICommand, Task>>> WithContext(this Dispatcher<ICommand, Task> dispatcher, ApplicationServiceContext context)
+			=> (f) => f(context, dispatcher);
+
+		public static Action<Action<ApplicationServiceContext, Dispatcher<ICommand, Task>>> Register<T>(this Action<Action<ApplicationServiceContext, Dispatcher<ICommand, Task>>> withContext, Func<ApplicationServiceContext, T, Task> registerWithContext)
+			where T : ICommand
+			=> withContext.Tap(x => x((ctx, dispatcher) => dispatcher.Register<T>(cmd => registerWithContext(ctx, cmd))));
+
+		public static Func<IEvent[], Task> Merge(this EventProcessor eventProcessor, Func<IEvent[], Task> pub) => events => Task.WhenAll(new[] { eventProcessor.PublishAsync, pub }.Select(x => x(events.ToArray())));
 	}
 }

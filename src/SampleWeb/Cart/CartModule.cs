@@ -11,23 +11,23 @@ namespace SampleWeb
 	public class CartModule
 	{
 		readonly Dispatcher<ICommand, Task> dispatcher;
-		readonly EventProcessor eventProcessor;
 		readonly QueryDispatcher queryDispatcher;
+		readonly Func<IEvent[], Task> publish;
 
-		public CartModule(Dispatcher<ICommand, Task> dispatcher, EventProcessor eventProcessor, QueryDispatcher queryDispatcher)
+		public CartModule(Dispatcher<ICommand, Task> dispatcher, Func<IEvent[], Task> publish, QueryDispatcher queryDispatcher)
 		{
-			this.queryDispatcher = queryDispatcher;
-			this.eventProcessor = eventProcessor;
 			this.dispatcher = dispatcher;
+			this.publish = publish;
+			this.queryDispatcher = queryDispatcher;
 		}
 
 		public Task DispatchAsync(ICommand command) => this.dispatcher.Dispatch(command);
 
-		public async Task<T> QueryAsync<T>(IQuery<T> q)	=> (T)await queryDispatcher.HandleAsync(q);
+		public async Task<T> QueryAsync<T>(IQuery<T> q) => (T)await queryDispatcher.HandleAsync(q);
 
-		public Task WhenAsync(IEvent @event) => this.eventProcessor.PublishAsync(@event);
+		public Task WhenAsync(IEvent @event) => publish(new[] { @event });
 
-		public static CartModule Initialize(IReliableStateManager stateManager, Func<ITransaction, IEventStore> store, Func<IEvent[], Task> spy)
+		public static CartModule Initialize(IReliableStateManager stateManager, Func<ITransaction, IEventStore> store, Func<IEvent[], Task> eventLogger)
 		{
 			var commandDispatcher = new Dispatcher<ICommand, Task>();
 			var policies = new EventProcessor();
@@ -35,14 +35,14 @@ namespace SampleWeb
 			var queryDispatcher = new QueryDispatcher();
 			var queueSerializer = Serialization.Json();
 
-			//TODO join projections and polics publish
-
-			var publisher = new EventPublisher((tx, events) => stateManager.EnqueuAsync(tx, events, queueSerializer), spy, projections.PublishAsync);
+			var publisher = new EventPublisher((tx, events) => stateManager.EnqueuAsync(tx, events, queueSerializer), eventLogger, projections.PublishAsync);
 			var context = new ApplicationServiceContext(stateManager, store, publisher);
 
-			commandDispatcher.Register<AddItemCommand>(cmd => AddItemApplicationService.ExecuteAsync(context, cmd));
+			commandDispatcher
+				.WithContext(context)
+				.Register<AddItemCommand>(AddItemApplicationService.ExecuteAsync);
 
-			return new CartModule(commandDispatcher, policies, queryDispatcher);
+			return new CartModule(commandDispatcher, policies.Merge(projections.PublishAsync), queryDispatcher);
 		}
 
 	}
