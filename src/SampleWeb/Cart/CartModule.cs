@@ -35,7 +35,7 @@ namespace SampleWeb
 			var queryDispatcher = new QueryDispatcher();
 			var queueSerializer = Serialization.Json();
 
-			var publisher = new EventPublisher((tx, events) => stateManager.EnqueuAsync(tx, events, queueSerializer), eventLogger, projections.PublishAsync);
+			var publisher = new EventPublisher((tx, events) => stateManager.EnqueuAsync(tx, events, queueSerializer), eventLogger, (evts, tx) => projections.PublishAsync(evts));
 			var context = new ApplicationServiceContext(stateManager, store, publisher);
 
 			commandDispatcher
