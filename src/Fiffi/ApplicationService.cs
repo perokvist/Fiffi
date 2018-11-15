@@ -15,18 +15,20 @@ namespace Fiffi
 			var aggregateName = typeof(TState).Name.Replace("State", "Aggregate").ToLower();
 			var streamName = $"{aggregateName}-{command.AggregateId}";
 			var happend = await store.LoadEventStreamAsync(streamName, 0);
-			var state = happend.Item1.Rehydrate<TState>();
+			var state = happend.Events.Rehydrate<TState>();
 			var events = action(state);
 
-			//TODO prettify
-			events.ForEach(x => x.Meta["version"] = (happend.Item2 + 1).ToString());
-			events.ForEach(x => x.Meta["streamname"] = streamName);
-			events.ForEach(x => x.Meta["aggregatename"] = aggregateName);
-			events.ForEach(x => x.Meta["eventId"] = Guid.NewGuid().ToString());
-			events.ForEach(x => x.Meta[nameof(EventMetaData.CorrelationId)] = Guid.NewGuid().ToString()); //TODO set from command
-			events.ForEach(x => x.Meta.AddTypeInfo(x));
+			events
+				.Where(x => x.Meta == null)
+				.ForEach(x => x.Meta = new Dictionary<string, string>());
 
-			await store.AppendToStreamAsync(streamName, long.Parse(events.Last().Meta["version"]), events);
+			events
+				.ForEach(x => x
+						.Tap(e => e.Meta.AddMetaData(happend.Version + 1, streamName, aggregateName, Guid.NewGuid())) //TODO correlation from command
+						.Tap(e => e.Meta.AddTypeInfo(e))
+					);
+
+			await store.AppendToStreamAsync(streamName, events.Last().GetVersion(), events);
 			await pub(events);
 		}
 

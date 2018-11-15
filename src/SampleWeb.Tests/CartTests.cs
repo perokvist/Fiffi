@@ -47,7 +47,7 @@ namespace SampleWeb.Tests
 
 		public void Given(params IEvent[] events)
 		{
-			var streamName = $"{events.First().Meta["aggregatename"]}-{events.First().AggregateId}";
+			var streamName = events.First().GetStreamName();
 			UseStore(store => store.AppendToStreamAsync(streamName, 0, events));
 		}
 

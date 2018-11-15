@@ -50,10 +50,5 @@ namespace Fiffi
 			=> kv => kv.Type == e.GetType() || e.GetType().GetTypeInfo().GetInterfaces().Any(t => t == kv.Type);
 	}
 
-	internal class EventMetaData
-	{
-		internal static readonly object CorrelationId;
-		internal static readonly object EventId;
 
-	}
 }

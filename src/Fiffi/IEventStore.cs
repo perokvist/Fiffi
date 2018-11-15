@@ -7,6 +7,6 @@ namespace Fiffi
 	{
 		Task<long> AppendToStreamAsync(string streamName, long version, IEvent[] events);
 
-		Task<(IEnumerable<IEvent>, long)> LoadEventStreamAsync(string streamName, int version);
+		Task<(IEnumerable<IEvent> Events, long Version)> LoadEventStreamAsync(string streamName, int version);
 	}
 }
