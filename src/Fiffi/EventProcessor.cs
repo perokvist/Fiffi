@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Fiffi;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -6,12 +7,16 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
+
 namespace Fiffi
 {
+
+	using EventHandle = Func<IEvent, Task>;
+
 	public class EventProcessor
 	{
 		readonly AggregateLocks _locks;
-		readonly List<(Type Type, Func<IEvent, Task> EventHandler)> _handlers = new List<(Type, Func<IEvent, Task>)>();
+		readonly List<(Type Type, EventHandle EventHandler)> _handlers = new List<(Type, EventHandle)>();
 
 		public EventProcessor() : this(new AggregateLocks())
 		{ }
@@ -43,10 +48,10 @@ namespace Fiffi
 			_locks.ReleaseIfPresent(executionContext.Select(x => (x.AggregateId, x.CorrelationId)).ToArray());
 		}
 
-		static Func<(Type Type, Func<IEvent, Task> EventHandler), (Task EventHandler, IAggregateId AggregateId, Guid CorrelationId)> BuildExecutionContext(IEvent e)
+		static Func<(Type Type, EventHandle EventHandler), (Task EventHandler, IAggregateId AggregateId, Guid CorrelationId)> BuildExecutionContext(IEvent e)
 		 => f => (f.EventHandler(e), new AggregateId(e.AggregateId.ToString()), Guid.Parse(e.Meta[nameof(EventMetaData.CorrelationId)]));
 
-		static Func<(Type Type, Func<IEvent, Task> EventHandler), bool> DelegatefForTypeOrInterface(IEvent e)
+		static Func<(Type Type, EventHandle EventHandler), bool> DelegatefForTypeOrInterface(IEvent e)
 			=> kv => kv.Type == e.GetType() || e.GetType().GetTypeInfo().GetInterfaces().Any(t => t == kv.Type);
 	}
 
