@@ -8,10 +8,10 @@ namespace Fiffi.ServiceFabric
 	public class EventPublisher
 	{
 		readonly Func<ITransaction, IEvent[], Task> outBoxQueue;
-		readonly Func<IEvent[], ITransaction, Task>[] inProcess;
+		readonly Func<ITransaction, IEvent[], Task>[] inProcess;
 		readonly Func<IEvent[], Task> eventLogger;
 
-		public EventPublisher(Func<ITransaction, IEvent[], Task> outBoxQueue, Func<IEvent[], Task> eventLogger, params Func<IEvent[], ITransaction ,Task>[] inProcess)
+		public EventPublisher(Func<ITransaction, IEvent[], Task> outBoxQueue, Func<IEvent[], Task> eventLogger, params Func<ITransaction, IEvent[], Task>[] inProcess)
 		{
 			this.outBoxQueue = outBoxQueue;
 			this.eventLogger = eventLogger;
@@ -23,13 +23,13 @@ namespace Fiffi.ServiceFabric
 			switch (mode)
 			{
 				case PublishMode.All:
-					return Task.WhenAll(outBoxQueue(tx, events), eventLogger(events), Task.WhenAll(inProcess.Select(x => x(events, tx))));
+					return Task.WhenAll(outBoxQueue(tx, events), eventLogger(events), Task.WhenAll(inProcess.Select(x => x(tx, events))));
 				case PublishMode.OutBoxQueue:
 					return Task.WhenAll(outBoxQueue(tx, events), eventLogger(events));
 				case PublishMode.InProcess:
-					return Task.WhenAll(Task.WhenAll(inProcess.Select(x => x(events, tx))), eventLogger(events));
+					return Task.WhenAll(Task.WhenAll(inProcess.Select(x => x(tx, events))), eventLogger(events));
 				default:
-					return Task.WhenAll(outBoxQueue(tx, events), eventLogger(events), Task.WhenAll(inProcess.Select(x => x(events, tx))));
+					return Task.WhenAll(outBoxQueue(tx, events), eventLogger(events), Task.WhenAll(inProcess.Select(x => x(tx, events))));
 			}
 		}
 	}

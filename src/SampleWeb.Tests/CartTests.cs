@@ -41,7 +41,7 @@ namespace SampleWeb.Tests
 			this.module = CartModule.Initialize(stateManager, factory, evts =>
 			{
 				events = evts;
-				return Task.CompletedTask;
+				return Task.WhenAll(events.Select(e => this.module.WhenAsync(e)));
 			});
 		}
 

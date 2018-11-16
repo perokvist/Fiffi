@@ -73,7 +73,7 @@ namespace Fiffi
 			Func<IEvent, Func<(Type Type, T EventHandler), (Task EventHandler, IAggregateId AggregateId, Guid CorrelationId)>> f,
 			AggregateLocks locks)
 		{
-			if (!events.All(e => e.Meta.ContainsKey(nameof(EventMetaData.CorrelationId))))
+			if (!events.All(e => e.HasCorrelation()))
 				throw new ArgumentException("CorrelationId required");
 
 			var executionContext = events.SelectMany(e => handlers

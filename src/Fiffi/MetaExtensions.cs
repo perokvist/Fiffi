@@ -17,7 +17,7 @@ namespace Fiffi
 				{ "type.name", t.Name },
 				{ "type.assemblyqualifiedname", t.AssemblyQualifiedName },
 				{ "type.fullname", t.FullName },
-				{ "type.version", e.GetType().Assembly.GetCustomAttribute<AssemblyFileVersionAttribute>().Version }
+				{ "type.version", e.GetType().Assembly.GetName().Version.ToString() }
 			};
 			typeProperties.ForEach(x => meta.TryAdd(x.Key, x.Value));
 		}
@@ -26,7 +26,9 @@ namespace Fiffi
 
 		public static long GetVersion(this IEvent @event) => long.Parse(@event.Meta[nameof(EventMetaData.Version).ToLower()]);
 
+		public static Guid EventId(this IEvent e) => Guid.Parse(e.Meta[nameof(EventMetaData.EventId).ToLower()]);
 
+		public static bool HasCorrelation(this IEvent @event) => @event.Meta.ContainsKey(nameof(EventMetaData.CorrelationId).ToLower());
 		public static Type GetEventType(this IDictionary<string, string> meta, Func<string, Type> f)
 			=> f(meta["type.name"]);
 

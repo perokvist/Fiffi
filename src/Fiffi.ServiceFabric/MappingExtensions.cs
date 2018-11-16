@@ -10,8 +10,6 @@ namespace Fiffi.ServiceFabric
 
 		public static IEvent MapObject(this EventData e) => (IEvent)e.Body;
 
-		public static Guid EventId(this IEvent e) => Guid.Parse(e.Meta["eventId"]);
-
 		public static IEvent ToEvent(this EventData eventData, Func<EventData, IEvent> deserializer)
 		{
 			if (eventData.Body is string)
