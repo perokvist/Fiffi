@@ -10,13 +10,14 @@ using System.Threading.Tasks;
 
 namespace Fiffi
 {
-
 	using EventHandle = Func<IEvent, Task>;
 
 	public class EventProcessor
 	{
+
 		readonly AggregateLocks _locks;
 		readonly List<(Type Type, EventHandle EventHandler)> _handlers = new List<(Type, EventHandle)>();
+
 
 		public EventProcessor() : this(new AggregateLocks())
 		{ }
@@ -33,27 +34,59 @@ namespace Fiffi
 			=> _handlers.Add((typeof(T), @event => f((T)@event)));
 
 
-		public async Task PublishAsync(params IEvent[] events)
+		public Task PublishAsync(params IEvent[] events)
+			=> events.ExecuteHandlersAsync(_handlers, BuildExecutionContext,_locks);
+
+		static Func<(Type Type, EventHandle EventHandler), (Task EventHandler, IAggregateId AggregateId, Guid CorrelationId)> BuildExecutionContext(IEvent e)
+		=> f => (f.EventHandler(e), new AggregateId(e.AggregateId.ToString()), e.GetCorrelation());
+
+	}
+
+	public class EventProcessor<TAdditional>
+	{
+		readonly AggregateLocks _locks;
+		readonly List<(Type Type, Func<IEvent, TAdditional, Task>)> _handlers = new List<(Type, Func<IEvent, TAdditional, Task>)>();
+
+		public EventProcessor()
+		{ }
+
+		public EventProcessor(AggregateLocks locks)
+		{
+			_locks = locks;
+		}
+
+		public void Register<T>(Func<T, TAdditional, Task> f)
+			where T : IEvent
+			=> _handlers.Add((typeof(T), (@event, additional) => f((T)@event, additional)));
+
+		public Task PublishAsync(TAdditional additional, params IEvent[] events)
+		=> events.ExecuteHandlersAsync(_handlers, e => BuildExecutionContext(e, additional), _locks);
+
+		static Func<(Type Type, Func<IEvent, TAdditional, Task> EventHandler), (Task EventHandler, IAggregateId AggregateId, Guid CorrelationId)> BuildExecutionContext(IEvent e, TAdditional additional)
+			=> f => (f.EventHandler(e, additional), new AggregateId(e.AggregateId.ToString()), e.GetCorrelation());
+	}
+
+	public static class EventProcessorExtensions
+	{
+		public static async Task ExecuteHandlersAsync<T>(this IEvent[] events,
+			List<(Type, T)> handlers,
+			Func<IEvent, Func<(Type Type, T EventHandler), (Task EventHandler, IAggregateId AggregateId, Guid CorrelationId)>> f,
+			AggregateLocks locks)
 		{
 			if (!events.All(e => e.Meta.ContainsKey(nameof(EventMetaData.CorrelationId))))
 				throw new ArgumentException("CorrelationId required");
 
-			var executionContext = events.SelectMany(e => _handlers
-				.Where(DelegatefForTypeOrInterface(e))
-				.Select(BuildExecutionContext(e)))
+			var executionContext = events.SelectMany(e => handlers
+				.Where(e.DelegatefForTypeOrInterface<T>())
+				.Select(f(e)))
 				.ToArray();
 
 			await Task.WhenAll(executionContext.Select(x => x.EventHandler));
 
-			_locks.ReleaseIfPresent(executionContext.Select(x => (x.AggregateId, x.CorrelationId)).ToArray());
+			locks.ReleaseIfPresent(executionContext.Select(x => (x.AggregateId, x.CorrelationId)).ToArray());
 		}
-
-		static Func<(Type Type, EventHandle EventHandler), (Task EventHandler, IAggregateId AggregateId, Guid CorrelationId)> BuildExecutionContext(IEvent e)
-		 => f => (f.EventHandler(e), new AggregateId(e.AggregateId.ToString()), Guid.Parse(e.Meta[nameof(EventMetaData.CorrelationId)]));
-
-		static Func<(Type Type, EventHandle EventHandler), bool> DelegatefForTypeOrInterface(IEvent e)
-			=> kv => kv.Type == e.GetType() || e.GetType().GetTypeInfo().GetInterfaces().Any(t => t == kv.Type);
+		public static Func<(Type Type, THandle EventHandler), bool> DelegatefForTypeOrInterface<THandle>(this IEvent e)
+		=> kv => kv.Type == e.GetType() || e.GetType().GetTypeInfo().GetInterfaces().Any(t => t == kv.Type);
 	}
-
 
 }

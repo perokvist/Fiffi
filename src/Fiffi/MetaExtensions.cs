@@ -30,7 +30,8 @@ namespace Fiffi
 		public static Type GetEventType(this IDictionary<string, string> meta, Func<string, Type> f)
 			=> f(meta["type.name"]);
 
-
+		public static Guid GetCorrelation(this IEvent @event) =>
+			 Guid.Parse(@event.Meta[nameof(EventMetaData.CorrelationId)]);
 
 		public static void AddMetaData(this IDictionary<string, string> meta , long newVersion, string streamName, string aggregateName, Guid correlationId)
 		{
