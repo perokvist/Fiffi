@@ -48,6 +48,9 @@ namespace Fiffi.ServiceFabric
 		public static async Task<(IEnumerable<StorageEvent>, long)> AppendToStreamAsync(this IReliableDictionary<string, List<StorageEvent>> streams,
 			ITransaction tx, string streamName, long version, IEvent[] events, Func<IEvent, EventData> serializer)
 		{
+			if (!events.Any())
+				return (Enumerable.Empty<StorageEvent>(), version);
+
 			var storageEvents = events.Select((x, i) => new StorageEvent(streamName, serializer(x), (int)(version + i + 1)));
 
 			var streamResult = await streams.TryGetValueAsync(tx, streamName);

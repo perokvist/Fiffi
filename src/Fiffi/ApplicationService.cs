@@ -18,6 +18,9 @@ namespace Fiffi
 			var state = happend.Events.Rehydrate<TState>();
 			var events = action(state);
 
+			if (!events.Any())
+				return;
+
 			events
 				.Where(x => x.Meta == null)
 				.ForEach(x => x.Meta = new Dictionary<string, string>());

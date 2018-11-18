@@ -37,7 +37,6 @@ namespace Fiffi.ServiceFabric
 		public static Func<EventData, IEvent> JsonDeserialization(Func<string, Type> typeResolver) =>
 			 JsonDeserialization(JsonMetaAccessor(typeResolver), JsonDeserialization());
 
-
 		public static Func<EventData, IEvent> FabricDeserialization() => ed => ed.MapObject();
 
 	}
