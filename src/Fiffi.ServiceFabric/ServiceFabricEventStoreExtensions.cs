@@ -59,6 +59,10 @@ namespace Fiffi.ServiceFabric
 
 			var stream = streamResult.Value;
 
+			var duplicateEvent = stream.FirstOrDefault(se => events.Any(e => se.EventId == e.EventId()));
+			if(duplicateEvent != null)
+				throw new DuplicateNameException($"Event with id {duplicateEvent.EventId} already in stream {streamName}");
+
 			if (version != stream.Count)
 			{
 				throw new DBConcurrencyException($"Concurrency conflict when appending to stream {streamName}. Expected revision {version} : Actual revision {stream.Count}");
@@ -67,7 +71,6 @@ namespace Fiffi.ServiceFabric
 			stream.AddRange(storageEvents);
 			return (storageEvents, (long)storageEvents.Last().EventNumber);
 		}
-
 
 		public static async Task<(IEnumerable<IEvent>, long)> LoadEventStreamAsync(this IReliableStateManager stateManager, string streamName, 
 			int version, Func<EventData, IEvent> deserializer, string streamsName = defaultStreamsName)
@@ -138,7 +141,5 @@ namespace Fiffi.ServiceFabric
 				if (commitOnAction) await tx.CommitAsync();
 			}
 		}
-
-
 	}
 }
