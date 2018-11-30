@@ -12,6 +12,7 @@ using Microsoft.ServiceFabric.Services.Communication.Runtime;
 using Microsoft.ServiceFabric.Services.Runtime;
 using Microsoft.ServiceFabric.Data;
 using Fiffi;
+using Fiffi.ServiceFabric;
 
 namespace SampleWeb
 {

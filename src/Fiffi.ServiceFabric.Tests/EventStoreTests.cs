@@ -57,8 +57,6 @@ namespace Fiffi.ServiceFabric.Tests
 			await Assert.ThrowsAsync<DBConcurrencyException>(() => stateManager.AppendToStreamAsync("testStream", 0, new[] { new TestEvent(Guid.NewGuid()) }));
 		}
 
-		//TODO duplicate event detection
-
 		[Fact]
 		public async Task LoadEventsFormStreamWithEvents()
 		{
@@ -84,5 +82,18 @@ namespace Fiffi.ServiceFabric.Tests
 
 			Assert.Equal(events.Last(), loadedEvents.Item1.First());
 		}
+
+		[Fact]
+		public Task AppendDuplicatedEventThrows()
+		=> Assert.ThrowsAsync<DuplicateNameException>(async () =>
+		{
+			var stateManager = new MockReliableStateManager();
+			var aggregateId = Guid.NewGuid();
+			var @event = new TestEvent(aggregateId);
+			var events = new[] { @event };
+			await stateManager.AppendToStreamAsync("testStream", 0, events);
+			await stateManager.AppendToStreamAsync("testStream", 1, events);
+
+		});
 	}
 }

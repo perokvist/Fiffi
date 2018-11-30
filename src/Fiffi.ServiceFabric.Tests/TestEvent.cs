@@ -8,7 +8,7 @@ namespace Fiffi.ServiceFabric.Tests
 		public TestEvent(Guid id)
 		{
 			this.AggregateId = id;
-			this.Meta["eventId"] = Guid.NewGuid().ToString();
+			this.Meta["eventid"] = Guid.NewGuid().ToString();
 		}
 
 		public Guid AggregateId { get; set; }

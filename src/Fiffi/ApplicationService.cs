@@ -12,14 +12,14 @@ namespace Fiffi
 		public static async Task ExecuteAsync<TState>(IEventStore store, ICommand command, Func<TState, IEvent[]> action, Func<IEvent[], Task> pub)
 			where TState : class, new()
 		{
+			if (command.CorrelationId == default(Guid))
+				throw new ArgumentException("CorrelationId required");
+
 			var aggregateName = typeof(TState).Name.Replace("State", "Aggregate").ToLower();
 			var streamName = $"{aggregateName}-{command.AggregateId}";
 			var happend = await store.LoadEventStreamAsync(streamName, 0);
 			var state = happend.Events.Rehydrate<TState>();
 			var events = action(state);
-
-			if (!events.Any())
-				return;
 
 			events
 				.Where(x => x.Meta == null)
@@ -27,12 +27,14 @@ namespace Fiffi
 
 			events
 				.ForEach(x => x
-						.Tap(e => e.Meta.AddMetaData(happend.Version + 1, streamName, aggregateName, Guid.NewGuid())) //TODO correlation from command
+						.Tap(e => e.Meta.AddMetaData(happend.Version + 1, streamName, aggregateName, command.CorrelationId))
 						.Tap(e => e.Meta.AddTypeInfo(e))
 					);
 
-			await store.AppendToStreamAsync(streamName, events.Last().GetVersion(), events);
-			await pub(events);
+			if(events.Any())
+				await store.AppendToStreamAsync(streamName, events.Last().GetVersion(), events);
+
+			await pub(events); //need to always execute due to locks
 		}
 
 		public static async Task ExecuteAsync<TState>(IEventStore store, ICommand command, Func<TState, IEvent[]> action, Func<IEvent[], Task> pub, AggregateLocks aggregateLocks)
