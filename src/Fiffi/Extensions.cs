@@ -1,43 +1,49 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
-using System.Threading;
-using Microsoft.AspNet.Builder;
-using Microsoft.AspNet.Hosting;
-using Microsoft.Extensions.DependencyInjection;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace Fiffi
 {
 	public static class Extensions
 	{
-		public static void Start(this IApplicationBuilder app, Action<CancellationToken> f)
-			=> app.ApplicationServices.GetRequiredService<IApplicationLifetime>()
-				.Tap(x => x.ApplicationStarted.Register(() => f(x.ApplicationStopping)));
-
-
-		public static IEnumerable<T> ForEach<T>(this IEnumerable<T> self, Action<T> f)
-		{
-			foreach (var item in self)
-			{
-				f(item);
-			}
-			return self;
-		}
-
-		public static bool IsTest(this IHostingEnvironment environment)
-			=> environment.IsEnvironment("Test");
-					
-		public static IServiceCollection AddFiffi(this IServiceCollection services, Dam dam)
-		{
-			dam.Register(services);
-			return services;
-		}
-
 		public static T Tap<T>(this T self, Action<T> f)
 		{
 			f(self);
 			return self;
 		}
+
+		public static T2 Pipe<T, T2>(this T self, Func<T, T2> f) => f(self);
+
+		public static IEnumerable<T> ForEach<T>(this IEnumerable<T> self, Action<T> action)
+		{
+			foreach (var item in self)
+			{
+				action(item);
+			}
+			return self;
+		}
+
+		public static void ForEach<T>(this IEnumerable<T> self, Action<T, int> f)
+		{
+			var i = 0;
+			foreach (var item in self)
+			{
+				f(item, i);
+				i++;
+			}
+		}
+
+		public static TState Rehydrate<TState>(this IEnumerable<IEvent> events) where TState : new()
+			=> events.Aggregate(new TState(), (s, @event) => s.Tap(x => ((dynamic)x).When((dynamic)@event)));
+
+		public static TState Apply<TState>(this IEnumerable<IEvent> events, TState currentState) where TState : new()
+			=> events.Aggregate(currentState, (s, @event) => s.Tap(x => ((dynamic)x).When((dynamic)@event)));
+
+		public static void RegisterReceptor<T>(this EventProcessor processor, Dispatcher<ICommand, Task> d, Func<T, ICommand> receptor)
+			where T : IEvent
+			=> processor.Register<T>(e => d.Dispatch(receptor(e)));
+
 	}
 }

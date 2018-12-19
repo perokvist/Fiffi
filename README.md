@@ -1,85 +1,49 @@
 # Fiffi
 Exploration kit for eventdriven services.
 
+		[Fact]
+		public async Task AddItemToCartAsync()
+		{
+			var context = new TestContext();
 
+			//Given
+			context.Given(new IEvent[0]);
 
-### Dam Creation ASP.NET 5
+			//When
+			await context.When(new AddItemCommand(Guid.NewGuid()));
 
-			if(environment.IsTest())
-				Dam = Dam.CreateDam(() => Fiffi.Streams.MessageVault.Memory(Configuration), loggerFactory);
-			if(environment.IsProduction())
-				Dam = Dam.CreateDam(() => Fiffi.Streams.MessageVault.Cloud(Configuration), loggerFactory);
+			//Then
+			context.Then(events => Assert.True(events.OfType<ItemAddedEvent>().Count() == 1));
+		}
 
+At it's core is an defenition of an IEventStore and the IEvent.
 
-#### Module registeration
+```
+	public interface IEventStore
+	{
+		Task<long> AppendToStreamAsync(string streamName, long version, IEvent[] events);
 
-All modules created will be registered as thier type on the service colleciton, in service registration.
-This gives you the flexibility to handle each module as you see fit.
+		Task<(IEnumerable<IEvent> Events, long Version)> LoadEventStreamAsync(string streamName, int version);
+	}
+```
 
-			Dam.AddModules((bus, dispatcher, lf) => TodoModule.Initialize(bus));
+The kit then focuses on creating a module of usecases with eventdriven state and flows.
 
-Each module could expose publish, dispatch or store concepts for the controllers to use.
+The ApplicationService.ExecuteAsync is targeted on the infrastructure part of an application service.
 
-#### Register Services
+```
+ApplicationService.ExecuteAsync(
+					store,
+					command,
+					state => new IEvent[0],
+					events => pub(events)
+					)
+```
 
-Due to ASP.NET favour of IoC for controller creation, the following extension is used.
+The core Fiffi project also includes tools for handling command, query, event dispatching/routing, meta data and concurrecy options.
 
-	    public void ConfigureServices(IServiceCollection services)
-	    {
-		    services.AddFiffi(Dam);
-	    }
+The vision is to create a kit to get feedback/test from modeling/eventstorming sessions.
 
-This registers all Modules and infrastructure. This way you could pick if you want to create module via IoC or initializers.
+### Implementations
 
-#### Start listening to stream
-
-        public void Configure(IApplicationBuilder app)
-        {
-            app.UseIISPlatformHandler();
-
-			app.Start(Dam.ListenToStream);
-
-            app.Run(async (context) =>
-            {
-                await context.Response.WriteAsync("Hello World!");
-            });
-        }
-
-
-### Dam Creation Console App
-
-				Dam = Dam.CreateDam(() => Fiffi.Streams.MessageVault.Cloud(Configuration), loggerFactory);
-
-#### Run / ListenToSteam
-
-Create a token to gracefully shut down the app on console exit.
-
-			Dam.ListenToStream(token);
-
-### Modules
-
-Each module could handle/store state/views. The module could apply changes to state and publish to the stream using 2PC, or publishing to the steam and mutate state by subscribing to the stream.
-The option to lock on instance is provided by the ApplicationService util, and the EventProcessor util.
-
-Dummy example to show lock usage;
-
-#### FooModule
-
-Exctract from Initialize function;
-
-			var l = loggerFactory
-				.CreateLogger("FooModule");
-
-			l.LogDebug("Initializing...");
-
-			var locks = new ConcurrentDictionary<Guid, Tuple<Guid, SemaphoreSlim>>();
-			var ep = new EventProcessor(locks, l);
-			ep.Register<FooEvent>(@event => Task.FromResult(0));
-
-			pub.Register(ep.PublishAsync);
-
-			dispatcher.Register<FooCommand>(command => ApplicationService.Execute(command, () => string.Empty, s => Enumerable.Empty<IEvent>(), pub.PublishAsync, locks));
-
-### Events
-
-Event serilization and conventions - WIP.
+The project currenlty only includes a implementation of IEventStore for Service Fabric's reliable collections. Each implenmentation might add utils that suites that infrastrcuture.

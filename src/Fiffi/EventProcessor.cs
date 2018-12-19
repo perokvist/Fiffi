@@ -1,47 +1,92 @@
-﻿using System;
+﻿using Fiffi;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
+
 
 namespace Fiffi
 {
+	using EventHandle = Func<IEvent, Task>;
+
 	public class EventProcessor
 	{
-		private readonly IDictionary<Guid, Tuple<Guid, SemaphoreSlim>> _locks;
-		private readonly List<Tuple<Type, Func<IEvent, Task>>> _h = new List<Tuple<Type, Func<IEvent, Task>>>();
 
-		public EventProcessor(IDictionary<Guid, Tuple<Guid, SemaphoreSlim>> locks, ILogger logger)
+		readonly AggregateLocks _locks;
+		readonly List<(Type Type, EventHandle EventHandler)> _handlers = new List<(Type, EventHandle)>();
+
+
+		public EventProcessor() : this(new AggregateLocks())
+		{ }
+
+
+		public EventProcessor(AggregateLocks locks)
 		{
 			_locks = locks;
 		}
 
+
 		public void Register<T>(Func<T, Task> f)
 			where T : IEvent
-			=> _h.Add(new Tuple<Type, Func<IEvent, Task>>(typeof(T), @event => f((T)@event)));
+			=> _handlers.Add((typeof(T), @event => f((T)@event)));
 
 
-		public async Task PublishAsync(params IEvent[] events)
+		public Task PublishAsync(params IEvent[] events)
+			=> events.ExecuteHandlersAsync(_handlers, BuildExecutionContext,_locks);
+
+		static Func<(Type Type, EventHandle EventHandler), (Task EventHandler, IAggregateId AggregateId, Guid CorrelationId)> BuildExecutionContext(IEvent e)
+		=> f => (f.EventHandler(e), new AggregateId(e.AggregateId.ToString()), e.GetCorrelation());
+
+	}
+
+	public class EventProcessor<TAdditional>
+	{
+		readonly AggregateLocks _locks;
+		readonly List<(Type Type, Func<IEvent, TAdditional, Task>)> _handlers = new List<(Type, Func<IEvent, TAdditional, Task>)>();
+
+		public EventProcessor()
+		{ }
+
+		public EventProcessor(AggregateLocks locks)
 		{
-			var h = events.SelectMany(e => _h
-				.Where(kv => kv.Item1 == e.GetType() || e.GetType().GetInterfaces().Any(t => t == kv.Item1))
-				.Select(f => new Tuple<Task, Guid, Guid>(f.Item2(e), e.AggregateId, e.CorrelationId)))
+			_locks = locks;
+		}
+
+		public void Register<T>(Func<T, TAdditional, Task> f)
+			where T : IEvent
+			=> _handlers.Add((typeof(T), (@event, additional) => f((T)@event, additional)));
+
+		public Task PublishAsync(TAdditional additional, params IEvent[] events)
+		=> events.ExecuteHandlersAsync(_handlers, e => BuildExecutionContext(e, additional), _locks);
+
+		static Func<(Type Type, Func<IEvent, TAdditional, Task> EventHandler), (Task EventHandler, IAggregateId AggregateId, Guid CorrelationId)> BuildExecutionContext(IEvent e, TAdditional additional)
+			=> f => (f.EventHandler(e, additional), new AggregateId(e.AggregateId.ToString()), e.GetCorrelation());
+	}
+
+	public static class EventProcessorExtensions
+	{
+		public static async Task ExecuteHandlersAsync<T>(this IEvent[] events,
+			List<(Type, T)> handlers,
+			Func<IEvent, Func<(Type Type, T EventHandler), (Task EventHandler, IAggregateId AggregateId, Guid CorrelationId)>> f,
+			AggregateLocks locks)
+		{
+			if (!events.All(e => e.HasCorrelation()))
+				throw new ArgumentException("CorrelationId required");
+
+			var executionContext = events.SelectMany(e => handlers
+				.Where(e.DelegatefForTypeOrInterface<T>())
+				.Select(f(e)))
 				.ToArray();
 
-			await Task.WhenAll(h.Select(x => x.Item1));
+			await Task.WhenAll(executionContext.Select(x => x.EventHandler));
 
-			h.ForEach(x => ReleaseIfPresent(_locks, x.Item2, x.Item3));
+			locks.ReleaseIfPresent(executionContext.Select(x => (x.AggregateId, x.CorrelationId)).ToArray());
 		}
-
-		private static void ReleaseIfPresent(IDictionary<Guid, Tuple<Guid, SemaphoreSlim>> locks,
-			Guid aggregateId, Guid correlationId)
-		{
-			if (!locks.ContainsKey(aggregateId)) return;
-
-			if (locks[aggregateId].Item1 == correlationId)
-				locks[aggregateId].Item2.Release();
-		}
+		public static Func<(Type Type, THandle EventHandler), bool> DelegatefForTypeOrInterface<THandle>(this IEvent e)
+		=> kv => kv.Type == e.GetType() || e.GetType().GetTypeInfo().GetInterfaces().Any(t => t == kv.Type);
 	}
+
 }
