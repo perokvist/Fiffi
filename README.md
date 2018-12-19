@@ -39,3 +39,11 @@ ApplicationService.ExecuteAsync(
 					events => pub(events)
 					)
 ```
+
+The core Fiffi project also includes tools for handling command, query, event dispatching/routing, meta data and concurrecy options.
+
+The vision is to create a kit to get feedback/test from modeling/eventstorming sessions.
+
+### Implementations
+
+The project currenlty only includes a implementation of IEventStore for Service Fabric's reliable collections. Each implenmentation might add utils that suites that infrastrcuture.
