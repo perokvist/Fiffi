@@ -52,10 +52,10 @@ namespace Fiffi.Streamstone
 		=> new Partition(table, streamName).AppendToStreamAsync(version, events,
 			e => e.ToEventData(snapshot));
 
-		public static async Task<Tuple<IEnumerable<IEvent>, long>> ReadEventsFromStreamAsync(this CloudTable table, string streamName, TypeResolver typeResolver)
+		public static async Task<(IEnumerable<IEvent> Events, long Version)> ReadEventsFromStreamAsync(this CloudTable table, string streamName, TypeResolver typeResolver)
 			=> await ReadFromStreamAsync(new Partition(table, streamName), typeResolver.ToEvent);
 
-		public static async Task<Tuple<IEnumerable<IEvent>, long>> ReadEventsFromStreamAsync(this CloudTable table, string streamName, long fromVersion, TypeResolver typeResolver)
+		public static async Task<(IEnumerable<IEvent> Events, long Version)> ReadEventsFromStreamAsync(this CloudTable table, string streamName, long fromVersion, TypeResolver typeResolver)
 			=> await ReadFromStreamAsync(new Partition(table, streamName), typeResolver.ToEvent, fromVersion);
 
 		//public static Task<T> GetSnapshotAsync<T>(this CloudTable table, string streamName, string rowKey)
@@ -65,9 +65,9 @@ namespace Fiffi.Streamstone
 		//	.Where(x => x.RowKey == rowKey)
 		//	.SingleOrDefault());
 
-		static async Task<Tuple<IEnumerable<IEvent>, long>> ReadFromStreamAsync(Partition partition, Func<EventEntity, IEvent> mapper, long fromVersion = 1)
+		static async Task<(IEnumerable<IEvent> Events, long Version)> ReadFromStreamAsync(Partition partition, Func<EventEntity, IEvent> mapper, long fromVersion = 1)
 		{
-			if (! await Stream.ExistsAsync(partition)) return new Tuple<IEnumerable<IEvent>, long>(Enumerable.Empty<IEvent>(), 0);
+			if (! await Stream.ExistsAsync(partition)) return (Enumerable.Empty<IEvent>(), 0);
 
 			var events = new List<IEvent>();
 			
@@ -91,7 +91,7 @@ namespace Fiffi.Streamstone
 			}
 			while (!slice.IsEndOfStream);
 
-			return new Tuple<IEnumerable<IEvent>, long>(events, version);
+			return (events, version);
 		}
 
 		public static IEvent ToEvent(this TypeResolver typeResolver, EventEntity e) => ToEvent(e.Data, typeResolver(e.Type).Result);

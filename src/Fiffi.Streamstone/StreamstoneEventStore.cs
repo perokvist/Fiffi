@@ -20,15 +20,10 @@ namespace Fiffi.Streamstone
 		}
 
 		public Task<long> AppendToStreamAsync(string streamName, long version, IEvent[] events)
-		{
-			throw new NotImplementedException();
-		}
+			=> _table.AppendToEventStreamAsync(streamName, version, events);
 
 		public Task<(IEnumerable<IEvent> Events, long Version)> LoadEventStreamAsync(string streamName, int version)
-		{
-			throw new NotImplementedException();
-		}
-
+			=> _table.ReadEventsFromStreamAsync(streamName, version, _typeResolver);
 
 
 
