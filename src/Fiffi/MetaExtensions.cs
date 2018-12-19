@@ -88,6 +88,7 @@ namespace Fiffi
 
 	public class EventMetaData
 	{
+<<<<<<< HEAD
 		public Guid CorrelationId { get; set; }
 		public Guid EventId { get; set; }
 		public string StreamName { get; set; }
@@ -96,5 +97,12 @@ namespace Fiffi
 		public string TriggeredBy { get; set; }
 		public long OccuredAt { get; set; }
 		public int TriggeredById { get; set; }
+=======
+		public static readonly object CorrelationId;
+		public static readonly object EventId;
+		public static readonly object StreamName;
+		public static readonly object AggregateName;
+		public static readonly object Version;
+>>>>>>> streamstone init
 	}
 }
