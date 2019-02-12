@@ -63,7 +63,7 @@ namespace Fiffi.ServiceFabric
 			var stream = streamResult.Value;
 
 			var duplicateEvent = stream.FirstOrDefault(se => events.Any(e => se.EventId == e.EventId()));
-			if(duplicateEvent != null)
+			if (duplicateEvent != null)
 				throw new DuplicateNameException($"Event with id {duplicateEvent.EventId} already in stream {streamName}");
 
 			if (version != stream.Count)
@@ -75,7 +75,7 @@ namespace Fiffi.ServiceFabric
 			return (storageEvents, (long)storageEvents.Last().EventNumber);
 		}
 
-		public static async Task<(IEnumerable<IEvent>, long)> LoadEventStreamAsync(this IReliableStateManager stateManager, string streamName, 
+		public static async Task<(IEnumerable<IEvent>, long)> LoadEventStreamAsync(this IReliableStateManager stateManager, string streamName,
 			int version, Func<EventData, IEvent> deserializer, string streamsName = defaultStreamsName)
 		{
 			using (var tx = stateManager.CreateTransaction())
@@ -86,7 +86,7 @@ namespace Fiffi.ServiceFabric
 			}
 		}
 
-		public static async Task<(IEnumerable<IEvent>, long)> LoadEventStreamAsync(this IReliableStateManager stateManager, 
+		public static async Task<(IEnumerable<IEvent>, long)> LoadEventStreamAsync(this IReliableStateManager stateManager,
 			ITransaction tx, string streamName, int version, Func<EventData, IEvent> deserializer, string streamsName = defaultStreamsName)
 		{
 			//var streams = await stateManager.GetOrAddAsync<IReliableDictionary<string, List<StorageEvent>>>(tx, streamsName);
@@ -96,7 +96,7 @@ namespace Fiffi.ServiceFabric
 			return result;
 		}
 
-		public static async Task<(IEnumerable<IEvent>, long)> LoadEventStreamAsync(this IReliableDictionary<string, List<StorageEvent>> streams, 
+		public static async Task<(IEnumerable<IEvent>, long)> LoadEventStreamAsync(this IReliableDictionary<string, List<StorageEvent>> streams,
 			ITransaction tx, string streamName, int version, Func<EventData, IEvent> deserializer)
 		{
 			var streamResult = await streams.TryGetValueAsync(tx, streamName);

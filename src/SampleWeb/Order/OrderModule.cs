@@ -3,32 +3,27 @@ using Fiffi.ServiceFabric;
 using Microsoft.ServiceFabric.Data;
 using SampleWeb.Cart;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
-namespace SampleWeb
+namespace SampleWeb.Order
 {
-	public class CartModule
+	public class OrderModule
 	{
 		readonly Dispatcher<ICommand, Task> dispatcher;
 		readonly QueryDispatcher queryDispatcher;
 		readonly Func<IEvent[], Task> publish;
 
-		public CartModule(Dispatcher<ICommand, Task> dispatcher, Func<IEvent[], Task> publish, QueryDispatcher queryDispatcher)
+		public OrderModule(Dispatcher<ICommand, Task> dispatcher, Func<IEvent[], Task> publish, QueryDispatcher queryDispatcher)
 		{
 			this.dispatcher = dispatcher;
 			this.publish = publish;
 			this.queryDispatcher = queryDispatcher;
 		}
-
 		public Task DispatchAsync(ICommand command) => this.dispatcher.Dispatch(command);
-
-		public async Task<T> QueryAsync<T>(IQuery<T> q) => (T)await queryDispatcher.HandleAsync(q);
 
 		public Task WhenAsync(IEvent @event) => publish(new[] { @event });
 
-		public static CartModule Initialize(IReliableStateManager stateManager, Func<ITransaction, IEventStore> store, Func<IEvent[], Task> eventLogger)
+		public static OrderModule Initialize(IReliableStateManager stateManager, Func<ITransaction, IEventStore> store, Func<IEvent[], Task> eventLogger)
 		{
 			var commandDispatcher = new Dispatcher<ICommand, Task>();
 			var policies = new EventProcessor();
@@ -41,11 +36,11 @@ namespace SampleWeb
 
 			commandDispatcher
 				.WithContext(context)
-				.Register<AddItemCommand>(AddItemApplicationService.ExecuteAsync)
-				.Register<CheckoutCommand>(CheckoutApplicationService.ExecuteAsync);
+				.Register<CreateOrderCommand>(CreateOrderApplicationService.ExecuteAsync);
 
-			return new CartModule(commandDispatcher, policies.Merge(projections.PublishAsync), queryDispatcher);
+			policies.RegisterReceptor<CartCheckedoutEvent>(commandDispatcher, FooPolicy.When);
+
+			return new OrderModule(commandDispatcher, policies.Merge(projections.PublishAsync), queryDispatcher);
 		}
-
 	}
 }
