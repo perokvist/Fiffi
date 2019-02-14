@@ -30,7 +30,7 @@ namespace SampleWeb.Tests
 			await context.WhenAsync(new AddItemCommand(Guid.NewGuid()));
 
 			//Then
-			context.Then(events => Assert.True(events.OfType<ItemAddedEvent>().Count() == 1));
+			context.Then(events => Assert.True(events.OfType<ItemAddedEvent>().Happened()));
 		}
 
 		[Fact]
@@ -43,7 +43,7 @@ namespace SampleWeb.Tests
 			await context.WhenAsync(new CheckoutCommand(Guid.NewGuid()));
 
 			//Then
-			context.Then(events => Assert.True(events.OfType<OrderCreatedEvent>().Count() == 1));
+			context.Then(events => Assert.True(events.OfType<OrderCreatedEvent>().Happened()));
 		}
 
 	}

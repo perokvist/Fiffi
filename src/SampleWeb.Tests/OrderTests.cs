@@ -29,7 +29,7 @@ namespace SampleWeb.Tests
 			await context.WhenAsync(new CreateOrderCommand(Guid.NewGuid()));
 
 			//Then
-			context.Then(events => Assert.True(events.OfType<OrderCreatedEvent>().Count() == 1));
+			context.Then(events => Assert.True(events.OfType<OrderCreatedEvent>().Happened()));
 		}
 	}
 }

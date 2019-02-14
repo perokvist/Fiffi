@@ -26,7 +26,7 @@ namespace Fiffi
 			if (!locks.ContainsKey(aggregateId))
 				locks.Add(aggregateId, (correlationId, new SemaphoreSlim(1)));
 
-			var @lock = locks[aggregateId];
+			var @lock = locks[aggregateId]; //TODO let same correlation pass through, cycles
 
 			await @lock.Semaphore.WaitAsync(TimeSpan.FromMilliseconds(timeout));
 

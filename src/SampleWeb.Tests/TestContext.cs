@@ -11,12 +11,13 @@ namespace SampleWeb.Tests
 {
 	public class TestContextBuilder //TODO refactor into SF builder
 	{
-		public static TestContext Create(Func<IReliableStateManager, Func<ITransaction, IEventStore>, Queue<IEvent>, TestContext> a)
+		//TODO is transaction need, tx created for append
+		public static TestContext Create(Func<IReliableStateManager, Func<ITransaction, IEventStore>, Queue<IEvent>, TestContext> f)
 		{
 			var stateManager = new MockReliableStateManager();
 			Func<ITransaction, IEventStore> factory = tx => new ReliableEventStore(stateManager, tx, Serialization.FabricSerialization(), Serialization.FabricDeserialization());
 			var q = new Queue<IEvent>();
-			return a(stateManager, factory, q);
+			return f(stateManager, factory, q);
 		}
 	}
 
@@ -38,16 +39,16 @@ namespace SampleWeb.Tests
 
 		public void Given(params IEvent[] events)
 		=> this.init(store =>
-		   {
-			   var streamName = events.First().GetStreamName();
-			   return store.AppendToStreamAsync(streamName, 0, events);
-		   }).GetAwaiter().GetResult();
+			Task.WhenAll(events
+			  .GroupBy(x => x.GetStreamName())
+			  .Select(x => store.AppendToStreamAsync(x.Key, 0, x.ToArray())))
+		   ).GetAwaiter().GetResult();
 
 		public async Task WhenAsync(ICommand command)
 		{
 			await this.dispatch(command);
 
-			while (this.q.Count > 0)
+			while (this.q.Any())
 			{
 				var e = this.q.Dequeue();
 				await Task.WhenAll(this.whens.Select(w => w(e)));
@@ -56,7 +57,5 @@ namespace SampleWeb.Tests
 		}
 
 		public void Then(Action<IEvent[]> f) => f(this.events);
-
-
 	}
 }
