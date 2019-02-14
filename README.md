@@ -46,4 +46,4 @@ The vision is to create a kit to get feedback/test from modeling/eventstorming s
 
 ### Implementations
 
-The project currenlty only includes a implementation of IEventStore for Service Fabric's reliable collections. Each implenmentation might add utils that suites that infrastrcuture.
+The project currenlty only includes a implementation of IEventStore for Service Fabric's reliable collections. Each implementation might add utils that suites that infrastructure.
