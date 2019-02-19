@@ -33,7 +33,7 @@ namespace SampleWeb
 						stateManager,
 						tx,
 						Serialization.Json(),
-						Serialization.JsonDeserialization(TypeResolver.FromMap(TypeResolver.GetEventsFromTypes(typeof(ItemAddedEvent)))) //TODO "share" with publisher
+						Serialization.JsonDeserialization(TypeResolver.FromMap(TypeResolver.GetEventsFromTypes(typeof(ItemAddedEvent)))) //TODO "share" with publisher?
 				 	),
 			 (tx, events) => stateManager.EnqueuAsync(tx, events, Serialization.Json()),
 			 eventLogger);

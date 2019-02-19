@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Fiffi;
 using Fiffi.ServiceFabric;
 using Microsoft.AspNetCore.Builder;
@@ -15,19 +12,10 @@ namespace SampleWeb
 {
 	public class Startup
 	{
-		// This method gets called by the runtime. Use this method to add services to the container.
-		// For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
 		public void ConfigureServices(IServiceCollection services)
 		{
 			var deserializer = Serialization.JsonDeserialization(TypeResolver.FromMap(TypeResolver.GetEventsFromTypes(typeof(ItemAddedEvent))));
-			services.AddSingleton(sc =>
-				CartModule.Initialize(sc.GetService<IReliableStateManager>(), tx =>
-					new ReliableEventStore(
-						sc.GetService<IReliableStateManager>(),
-						tx,
-						Serialization.Json(),
-						deserializer
-				 	), null ,events => Task.CompletedTask)); //TODO setup outbox
+			services.AddSingleton(sc => CartModule.Initialize(sc.GetService<IReliableStateManager>(), events => Task.CompletedTask));
 			services.AddSingleton<Microsoft.Extensions.Hosting.IHostedService>(sc => new Publisher(sc.GetService<IReliableStateManager>(), deserializer));
 			services.AddMvc();
 		}
