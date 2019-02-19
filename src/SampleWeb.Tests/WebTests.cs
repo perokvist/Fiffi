@@ -9,23 +9,38 @@ using Microsoft.Extensions.DependencyInjection;
 using ServiceFabric.Mocks;
 using Xunit;
 using System.Threading.Tasks;
+using Fiffi;
+using Fiffi.ServiceFabric;
+using Microsoft.AspNetCore.Builder;
 
 namespace SampleWeb.Tests
 {
 	public class WebTests
 	{
 		private HttpClient client;
+		private TestContext context;
 
 		public WebTests()
-		{
-			var server = new TestServer(
-				new WebHostBuilder()
-				.UseEnvironment("Development")
-				.ConfigureServices(services => services.AddSingleton<IReliableStateManager>(new MockReliableStateManager()))
-				.UseStartup<Startup>());
+		=> this.context = TestContextBuilder.Create((stateManager, storeFactory, queue) =>
+		   {
+				//var orderModule = OrderModule.Initialize(stateManager, storeFactory, queue.Enqueue, events => Task.CompletedTask);
+				var module = CartModule.Initialize(stateManager, storeFactory, queue.Enqueue, events => Task.CompletedTask); //write to xunit output as logger
 
-			this.client = server.CreateClient();
-		}
+			   var server = new TestServer(
+				  new WebHostBuilder()
+				  .UseEnvironment("Development")
+				  .UseStartup<Startup>()
+				  .ConfigureTestServices(services =>
+				  {
+					  services.AddSingleton<IReliableStateManager>(new MockReliableStateManager());
+					  services.AddSingleton(module);
+				  }));
+
+			   this.client = server.CreateClient();
+
+			   return new TestContext(given => stateManager.UseTransactionAsync(tx => given(storeFactory(tx))),
+				   module.DispatchAsync, queue, module.WhenAsync);
+		   });
 
 		[Fact]
 		public async Task HelloAsync()
