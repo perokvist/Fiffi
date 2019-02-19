@@ -32,15 +32,15 @@ namespace Fiffi
 
 		public static Guid GetCorrelation(this IEvent @event) => @event.HasCorrelation() ? Guid.Parse(@event.Meta[nameof(EventMetaData.CorrelationId).ToLower()]) : throw new ArgumentException($"Correlation for {@event.GetType()} required");
 
-		public static void AddMetaData(this IDictionary<string, string> meta , long newVersion, string streamName, string aggregateName, Guid correlationId)
+		public static void AddMetaData(this IDictionary<string, string> meta , long newVersion, string streamName, string aggregateName, ICommand command)
 		{
 			meta[nameof(EventMetaData.Version).ToLower()] = newVersion.ToString();
 			meta[nameof(EventMetaData.StreamName).ToLower()] = streamName;
 			meta[nameof(EventMetaData.AggregateName).ToLower()] = aggregateName;
 			meta[nameof(EventMetaData.EventId).ToLower()] = Guid.NewGuid().ToString();
-			meta[nameof(EventMetaData.CorrelationId).ToLower()] = correlationId.ToString();
+			meta[nameof(EventMetaData.CorrelationId).ToLower()] = command.CorrelationId.ToString();
+			meta[nameof(EventMetaData.TriggeredBy).ToLower()] = command.GetType().Name;
 		}
-
 	}
 
 	internal class EventMetaData
@@ -50,5 +50,6 @@ namespace Fiffi
 		internal static readonly object StreamName;
 		internal static readonly object AggregateName;
 		internal static readonly object Version;
+		internal static readonly object TriggeredBy;
 	}
 }

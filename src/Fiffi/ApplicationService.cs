@@ -27,7 +27,7 @@ namespace Fiffi
 
 			events
 				.ForEach(x => x
-						.Tap(e => e.Meta.AddMetaData(happend.Version + 1, streamName, aggregateName, command.CorrelationId))
+						.Tap(e => e.Meta.AddMetaData(happend.Version + 1, streamName, aggregateName, command))
 						.Tap(e => e.Meta.AddTypeInfo(e))
 					);
 
