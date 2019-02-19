@@ -27,7 +27,7 @@ namespace SampleWeb
 						tx,
 						Serialization.Json(),
 						deserializer
-				 	), events => Task.CompletedTask));
+				 	), null ,events => Task.CompletedTask)); //TODO setup outbox
 			services.AddSingleton<Microsoft.Extensions.Hosting.IHostedService>(sc => new Publisher(sc.GetService<IReliableStateManager>(), deserializer));
 			services.AddMvc();
 		}

@@ -13,7 +13,7 @@ namespace SampleWeb.Tests
 		public OrderTests()
 		=> this.context = TestContextBuilder.Create((stateManager, storeFactory, queue) =>
 		{
-			var module = OrderModule.Initialize(stateManager, storeFactory, queue.ToEventLogger());
+			var module = OrderModule.Initialize(stateManager, storeFactory, queue.Enqueue, events => Task.CompletedTask);
 
 			return new TestContext(given => stateManager.UseTransactionAsync(tx => given(storeFactory(tx)))
 				, module.DispatchAsync, queue, module.WhenAsync);

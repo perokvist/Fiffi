@@ -44,6 +44,9 @@ namespace SampleWeb.Tests
 			  .Select(x => store.AppendToStreamAsync(x.Key, 0, x.ToArray())))
 		   ).GetAwaiter().GetResult();
 
+		public Task WhenAsync(IEvent @event)
+			=> Task.WhenAll(this.whens.Select(w => w(@event)));
+
 		public async Task WhenAsync(ICommand command)
 		{
 			await this.dispatch(command);

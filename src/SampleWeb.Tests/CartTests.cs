@@ -13,8 +13,8 @@ namespace SampleWeb.Tests
 		public CartTests()
 		=> this.context = TestContextBuilder.Create((stateManager, storeFactory, queue) =>
 		   {
-			   var orderModule = OrderModule.Initialize(stateManager, storeFactory, queue.ToEventLogger());
-			   var module = CartModule.Initialize(stateManager, storeFactory, queue.ToEventLogger());
+			   var orderModule = OrderModule.Initialize(stateManager, storeFactory, queue.Enqueue, events => Task.CompletedTask);
+			   var module = CartModule.Initialize(stateManager, storeFactory, queue.Enqueue, events => Task.CompletedTask); //write to xunit output as logger
 
 			   return new TestContext(given => stateManager.UseTransactionAsync(tx => given(storeFactory(tx)))
 				   , module.DispatchAsync, queue, module.WhenAsync, orderModule.WhenAsync);
