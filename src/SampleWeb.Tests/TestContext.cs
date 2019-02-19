@@ -47,10 +47,12 @@ namespace SampleWeb.Tests
 		public Task WhenAsync(IEvent @event)
 			=> Task.WhenAll(this.whens.Select(w => w(@event)));
 
-		public async Task WhenAsync(ICommand command)
-		{
-			await this.dispatch(command);
+		public Task WhenAsync(ICommand command)
+		 => WhenAsync(() => this.dispatch(command));
 
+		public async Task WhenAsync(Func<Task> f)
+		{
+			await f();
 			while (this.q.Any())
 			{
 				var e = this.q.Dequeue();

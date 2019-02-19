@@ -1,4 +1,5 @@
 ﻿using Fiffi;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,6 +22,7 @@ namespace SampleWeb
 
 		public Guid CorrelationId { get; } = Guid.NewGuid();
 
+		[JsonIgnore]
 		public IAggregateId AggregateId { get; private set; }
 	}
 

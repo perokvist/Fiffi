@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using Fiffi;
 using Fiffi.ServiceFabric;
 using Microsoft.AspNetCore.Builder;
+using System.Linq;
 
 namespace SampleWeb.Tests
 {
@@ -23,8 +24,8 @@ namespace SampleWeb.Tests
 		public WebTests()
 		=> this.context = TestContextBuilder.Create((stateManager, storeFactory, queue) =>
 		   {
-				//var orderModule = OrderModule.Initialize(stateManager, storeFactory, queue.Enqueue, events => Task.CompletedTask);
-				var module = CartModule.Initialize(stateManager, storeFactory, queue.Enqueue, events => Task.CompletedTask); //write to xunit output as logger
+			   //var orderModule = OrderModule.Initialize(stateManager, storeFactory, queue.Enqueue, events => Task.CompletedTask);
+			   var module = CartModule.Initialize(stateManager, storeFactory, queue.Enqueue, events => Task.CompletedTask); //write to xunit output as logger
 
 			   var server = new TestServer(
 				  new WebHostBuilder()
@@ -32,6 +33,7 @@ namespace SampleWeb.Tests
 				  .UseStartup<Startup>()
 				  .ConfigureTestServices(services =>
 				  {
+					  services.AddMvc();
 					  services.AddSingleton<IReliableStateManager>(new MockReliableStateManager());
 					  services.AddSingleton(module);
 				  }));
@@ -51,6 +53,20 @@ namespace SampleWeb.Tests
 
 			res.EnsureSuccessStatusCode();
 			Assert.Contains("Hello", await res.Content.ReadAsStringAsync());
+		}
+
+
+		[Fact]
+		public async Task AddItemAsync()
+		{
+			var req = new HttpRequestMessage(HttpMethod.Post, "/api/cart")
+			{
+				Content = new AddItemCommand(Guid.NewGuid()) { ItemId = Guid.NewGuid() }.ToContent(),
+			};
+
+			await this.context.WhenAsync(() => client.SendAsync(req));
+
+			this.context.Then(events => Assert.True(events.OfType<ItemAddedEvent>().Happened()));
 		}
 	}
 }

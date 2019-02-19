@@ -17,7 +17,7 @@ namespace SampleWeb.Cart
 		}
 
 		[HttpPost]
-		public async Task<IActionResult> PostAsync([FromBody]AddItemCommand command)
+		public async Task<IActionResult> PostAsync([FromBody] AddItemCommand command)
 		{
 			await module.DispatchAsync(command);
 			return Ok();
