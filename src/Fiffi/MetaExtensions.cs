@@ -44,9 +44,9 @@ namespace Fiffi
 			=> @event.Meta.ContainsKey(keyName.ToLower()) ? @event.Meta[keyName.ToLower()] : @default;
 
 		public static bool HasMeta(this IEvent @event, string keyName)
-			=> @event.Meta.ContainsKey(keyName.ToLower()); 
+			=> @event.Meta.ContainsKey(keyName.ToLower());
 
-		public static void AddMetaData(this IDictionary<string, string> meta , long newVersion, string streamName, string aggregateName, ICommand command)
+		public static void AddMetaData(this IDictionary<string, string> meta, long newVersion, string streamName, string aggregateName, ICommand command, string occuredAt = null)
 		{
 			meta[nameof(EventMetaData.Version).ToLower()] = newVersion.ToString();
 			meta[nameof(EventMetaData.StreamName).ToLower()] = streamName;
@@ -54,7 +54,7 @@ namespace Fiffi
 			meta[nameof(EventMetaData.EventId).ToLower()] = Guid.NewGuid().ToString();
 			meta[nameof(EventMetaData.CorrelationId).ToLower()] = command.CorrelationId.ToString();
 			meta[nameof(EventMetaData.TriggeredBy).ToLower()] = command.GetType().Name;
-			meta[nameof(EventMetaData.OccuredAt).ToLower()] = DateTime.UtcNow.Ticks.ToString();
+			meta[nameof(EventMetaData.OccuredAt).ToLower()] = occuredAt == null ? DateTime.UtcNow.Ticks.ToString() : occuredAt;
 		}
 	}
 
