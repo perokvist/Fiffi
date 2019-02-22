@@ -18,6 +18,7 @@ namespace SampleWeb.Cart
 		public Subscriber(params Func<IEvent, Task>[] subscribers)
 		{
 			this.subscribers = subscribers;
+			this.fakeQueue = null;
 		}
 
 		protected override async Task ExecuteAsync(CancellationToken stoppingToken)

@@ -20,17 +20,31 @@ namespace Fiffi
 			typeProperties.ForEach(x => meta.TryAdd(x.Key, x.Value));
 		}
 
-		public static string GetStreamName(this IEvent @event) => @event.Meta[nameof(EventMetaData.StreamName).ToLower()];
+		public static string GetStreamName(this IEvent @event) => @event.Require(nameof(EventMetaData.StreamName).ToLower());
 
-		public static long GetVersion(this IEvent @event) => long.Parse(@event.Meta[nameof(EventMetaData.Version).ToLower()]);
+		public static long GetVersion(this IEvent @event) => long.Parse(@event.Require(nameof(EventMetaData.Version).ToLower()));
 
-		public static Guid EventId(this IEvent e) => Guid.Parse(e.Meta[nameof(EventMetaData.EventId).ToLower()]);
+		public static Guid EventId(this IEvent e) => Guid.Parse(e.Require(nameof(EventMetaData.EventId).ToLower()));
 
-		public static bool HasCorrelation(this IEvent @event) => @event.Meta.ContainsKey(nameof(EventMetaData.CorrelationId).ToLower());
+		public static bool HasCorrelation(this IEvent @event) => @event.HasMeta(nameof(EventMetaData.CorrelationId));
+
 		public static Type GetEventType(this IDictionary<string, string> meta, Func<string, Type> f)
 			=> f(meta["type.name"]);
 
-		public static Guid GetCorrelation(this IEvent @event) => @event.HasCorrelation() ? Guid.Parse(@event.Meta[nameof(EventMetaData.CorrelationId).ToLower()]) : throw new ArgumentException($"Correlation for {@event.GetType()} required");
+		public static Guid GetCorrelation(this IEvent @event) => Guid.Parse(@event.Require(nameof(EventMetaData.CorrelationId)));
+
+		public static string GetTrigger(this IEvent @event) => @event.Require(nameof(EventMetaData.TriggeredBy));
+
+		public static DateTime OccuredAt(this IEvent @event) => new DateTime(long.Parse(@event.Require(nameof(EventMetaData.OccuredAt))));
+
+		internal static string Require(this IEvent @event, string keyName)
+			=> @event.Meta.ContainsKey(keyName.ToLower()) ? @event.Meta[keyName.ToLower()] : throw new ArgumentException($"{keyName} for {@event.GetType()} required");
+
+		public static string GetMetaOrDefault<T>(this IEvent @event, string keyName, string @default)
+			=> @event.Meta.ContainsKey(keyName.ToLower()) ? @event.Meta[keyName.ToLower()] : @default;
+
+		public static bool HasMeta(this IEvent @event, string keyName)
+			=> @event.Meta.ContainsKey(keyName.ToLower()); 
 
 		public static void AddMetaData(this IDictionary<string, string> meta , long newVersion, string streamName, string aggregateName, ICommand command)
 		{
@@ -40,10 +54,11 @@ namespace Fiffi
 			meta[nameof(EventMetaData.EventId).ToLower()] = Guid.NewGuid().ToString();
 			meta[nameof(EventMetaData.CorrelationId).ToLower()] = command.CorrelationId.ToString();
 			meta[nameof(EventMetaData.TriggeredBy).ToLower()] = command.GetType().Name;
+			meta[nameof(EventMetaData.OccuredAt).ToLower()] = DateTime.UtcNow.Ticks.ToString();
 		}
 	}
 
-	internal class EventMetaData
+	class EventMetaData
 	{
 		internal static readonly object CorrelationId;
 		internal static readonly object EventId;
@@ -51,5 +66,6 @@ namespace Fiffi
 		internal static readonly object AggregateName;
 		internal static readonly object Version;
 		internal static readonly object TriggeredBy;
+		internal static readonly object OccuredAt;
 	}
 }

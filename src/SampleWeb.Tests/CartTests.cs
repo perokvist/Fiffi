@@ -4,15 +4,18 @@ using System.Threading.Tasks;
 using Xunit;
 using SampleWeb.Order;
 using Fiffi.ServiceFabric;
+using Xunit.Abstractions;
 
 namespace SampleWeb.Tests
 {
 	public class CartTests
 	{
 		TestContext context;
-		public CartTests()
+		ITestOutputHelper output;
+		public CartTests(ITestOutputHelper output)
 		=> this.context = TestContextBuilder.Create((stateManager, storeFactory, queue) =>
 		   {
+			   this.output = output;
 			   var orderModule = OrderModule.Initialize(stateManager, storeFactory, queue.Enqueue, events => Task.CompletedTask);
 			   var module = CartModule.Initialize(stateManager, storeFactory, queue.Enqueue, events => Task.CompletedTask); //write to xunit output as logger
 
@@ -43,7 +46,11 @@ namespace SampleWeb.Tests
 			await context.WhenAsync(new CheckoutCommand(Guid.NewGuid()));
 
 			//Then
-			context.Then(events => Assert.True(events.OfType<OrderCreatedEvent>().Happened()));
+			context.Then((events, table) =>
+			{
+				this.output.WriteLine(table);
+				Assert.True(events.OfType<OrderCreatedEvent>().Happened());
+			});
 		}
 
 	}
