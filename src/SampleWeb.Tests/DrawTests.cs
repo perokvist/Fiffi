@@ -31,13 +31,13 @@ namespace SampleWeb.Tests
 				new FooEvent(Guid.NewGuid())
 					.Tap(x => x.Meta.AddMetaData(1, "Test", "Test", foocmd)),
 				new BarEvent(Guid.NewGuid())
-					.Tap(x => x.Meta.AddMetaData(1, "Test", "Test", barcmd)),
+					.Tap(x => x.Meta.AddMetaData(1, "Test", "Test", barcmd, DateTime.UtcNow.AddHours(1).Ticks)),
 				new BarEvent(Guid.NewGuid())
-					.Tap(x => x.Meta.AddMetaData(1, "Test", "Test", barcmd)),
+					.Tap(x => x.Meta.AddMetaData(1, "Test", "Test", barcmd, DateTime.UtcNow.AddHours(1).Ticks)),
 				new BarEvent(Guid.NewGuid())
-					.Tap(x => x.Meta.AddMetaData(1, "Test", "Test", barcmd2)),
+					.Tap(x => x.Meta.AddMetaData(1, "Test", "Test", barcmd2, DateTime.UtcNow.AddHours(1).Ticks)),
 				new BarEvent(Guid.NewGuid())
-					.Tap(x => x.Meta.AddMetaData(1, "Test", "Test", barcmd2)),
+					.Tap(x => x.Meta.AddMetaData(1, "Test", "Test", barcmd2, DateTime.UtcNow.AddHours(1).Ticks)),
 			};
 			this.output.WriteLine(events.Draw());
 			Assert.True(false, "Command not in line");

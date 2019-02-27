@@ -35,37 +35,67 @@ namespace Fiffi
 
 		public static string GetTrigger(this IEvent @event) => @event.Require(nameof(EventMetaData.TriggeredBy));
 
+		public static int GetTriggerId(this IEvent @event) => int.Parse(@event.Require(nameof(EventMetaData.TriggeredById)));
+
 		public static DateTime OccuredAt(this IEvent @event) => new DateTime(long.Parse(@event.Require(nameof(EventMetaData.OccuredAt))));
 
 		internal static string Require(this IEvent @event, string keyName)
 			=> @event.Meta.ContainsKey(keyName.ToLower()) ? @event.Meta[keyName.ToLower()] : throw new ArgumentException($"{keyName} for {@event.GetType()} required");
 
-		public static string GetMetaOrDefault<T>(this IEvent @event, string keyName, string @default)
-			=> @event.Meta.ContainsKey(keyName.ToLower()) ? @event.Meta[keyName.ToLower()] : @default;
+		public static string GetMetaOrDefault<T>(this IDictionary<string, string> meta, string keyName, T @default = default(T))
+			=> meta.ContainsKey(keyName.ToLower()) ? meta[keyName.ToLower()] : @default.ToString();
 
 		public static bool HasMeta(this IEvent @event, string keyName)
 			=> @event.Meta.ContainsKey(keyName.ToLower());
 
-		public static void AddMetaData(this IDictionary<string, string> meta, long newVersion, string streamName, string aggregateName, ICommand command, string occuredAt = null)
+		public static EventMetaData GetEventMetaData(this IDictionary<string, string> meta)
+		=> new EventMetaData {
+			AggregateName = meta.GetMetaOrDefault<string>(nameof(EventMetaData.AggregateName)),
+			CorrelationId = Guid.Parse(meta.GetMetaOrDefault<Guid>(nameof(EventMetaData.CorrelationId))),
+			EventId = Guid.Parse(meta.GetMetaOrDefault<Guid>(nameof(EventMetaData.EventId))),
+			OccuredAt = long.Parse(meta.GetMetaOrDefault<long>(nameof(EventMetaData.OccuredAt))),
+			StreamName = meta.GetMetaOrDefault<string>(nameof(EventMetaData.StreamName)),
+			TriggeredBy = meta.GetMetaOrDefault<string>(nameof(EventMetaData.TriggeredBy)),
+			Version = long.Parse(meta.GetMetaOrDefault<long>(nameof(EventMetaData.Version))),
+		};
+
+
+		public static void AddMetaData(this IDictionary<string, string> meta, long newVersion, string streamName, string aggregateName, ICommand command, long occuredAt = default(long))
+		=> meta.AddMetaData(new EventMetaData
 		{
-			meta[nameof(EventMetaData.Version).ToLower()] = newVersion.ToString();
-			meta[nameof(EventMetaData.StreamName).ToLower()] = streamName;
-			meta[nameof(EventMetaData.AggregateName).ToLower()] = aggregateName;
-			meta[nameof(EventMetaData.EventId).ToLower()] = Guid.NewGuid().ToString();
-			meta[nameof(EventMetaData.CorrelationId).ToLower()] = command.CorrelationId.ToString();
-			meta[nameof(EventMetaData.TriggeredBy).ToLower()] = command.GetType().Name;
-			meta[nameof(EventMetaData.OccuredAt).ToLower()] = occuredAt == null ? DateTime.UtcNow.Ticks.ToString() : occuredAt;
+			AggregateName = aggregateName,
+			CorrelationId = command.CorrelationId,
+			EventId = Guid.NewGuid(),
+			OccuredAt = occuredAt == default(long) ? DateTime.UtcNow.Ticks : occuredAt,
+			StreamName = streamName,
+			TriggeredBy = command.GetType().Name,
+			TriggeredById = command.GetHashCode(),
+			Version = newVersion
+		});
+
+		public static void AddMetaData(this IDictionary<string, string> meta, EventMetaData metaData)
+		{
+			meta[nameof(EventMetaData.Version).ToLower()] = metaData.Version.ToString();
+			meta[nameof(EventMetaData.StreamName).ToLower()] = metaData.StreamName;
+			meta[nameof(EventMetaData.AggregateName).ToLower()] = metaData.AggregateName;
+			meta[nameof(EventMetaData.EventId).ToLower()] = metaData.EventId.ToString();
+			meta[nameof(EventMetaData.CorrelationId).ToLower()] = metaData.CorrelationId.ToString();
+			meta[nameof(EventMetaData.TriggeredBy).ToLower()] = metaData.TriggeredBy;
+			meta[nameof(EventMetaData.TriggeredById).ToLower()] = metaData.TriggeredById.ToString();
+			meta[nameof(EventMetaData.OccuredAt).ToLower()] = metaData.OccuredAt.ToString();
 		}
 	}
 
-	class EventMetaData
+	public class EventMetaData
 	{
-		internal static readonly object CorrelationId;
-		internal static readonly object EventId;
-		internal static readonly object StreamName;
-		internal static readonly object AggregateName;
-		internal static readonly object Version;
-		internal static readonly object TriggeredBy;
-		internal static readonly object OccuredAt;
+		public Guid CorrelationId { get; set; }
+		public Guid EventId { get; set; }
+		public string StreamName { get; set; }
+		public string AggregateName { get; set; }
+		public long Version { get; set; }
+		public string TriggeredBy { get; set; }
+		public long OccuredAt { get; set; }
+
+		public int TriggeredById { get; set; }
 	}
 }

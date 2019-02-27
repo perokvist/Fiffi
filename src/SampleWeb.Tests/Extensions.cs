@@ -67,23 +67,42 @@ namespace SampleWeb.Tests
 		public static string Draw(this IEvent[] events)
 		{
 			var table = new AsciiTable();
-			table.Columns.Add(new AsciiColumn("Flow", 20));
-			table.Columns.Add(new AsciiColumn("Waterfall", 70));
-			table.Columns.Add(new AsciiColumn("Time", 10));
+			table.Columns.Add(new AsciiColumn("Flow", 15));
+			table.Columns.Add(new AsciiColumn("Waterfall", 65));
+			table.Columns.Add(new AsciiColumn("Time", 4));
+			table.Columns.Add(new AsciiColumn("Aggregate", 16));
 
-			var g = events.GroupBy(x => x.GetTrigger());
-			var blocks = new List<(string, int)>();
+			var blocks = events.BuildBlocks();
 
-			g.ForEach((x, i) => blocks.Tap(b => b.Add((x.Key, i * 2))).AddRange(x.Select(e => (e.GetType().Name, ((i * 2) + 1)))));
-
-			var total = blocks.Count + 1;
+			var total = events.GroupBy(x => x.OccuredAt().ToString()).Count() * 2;
 
 			blocks.ForEach((x, i) =>
-				table.Rows.Add(new List<string> { x.Item1, DrawBar(0, total, x.Item2, x.Item2 + 1, '\u2593', '\u2591', 80), x.Item2.ToString() })
+				table.Rows.Add(new List<string> { x.Name, DrawBar(0, total, x.Time, x.Time + 1, '\u2593', '\u2591', 60), x.Time.ToString(), x.AggregateId })
 			);
 
 			return table.ToString();
 		}
+
+		static IEnumerable<(string Name, int Time, string AggregateId)> BuildBlocks(this IEvent[] events)
+		{
+			var g = events.GroupBy(x => $"{x.GetTrigger()} : {x.GetTriggerId()}");
+			var blocks = new List<(string, int, string)>();
+
+			var commandPosition = 0;
+			var lastOccured = string.Empty;
+
+			g.ForEach((x, i) =>
+			{
+				var occured = x.First().OccuredAt().ToString();
+				commandPosition = lastOccured == occured ? commandPosition : i * 2;
+				lastOccured = occured;
+				blocks.Add((x.Key.Split(':')[0].Trim(), commandPosition, x.First().AggregateId.ToString()));
+				blocks.AddRange(x.Select(e => (e.GetType().Name, commandPosition + 1, e.AggregateId.ToString())));
+			});
+
+			return blocks;
+		}
+
 
 		static string DrawBar(
 			int totalStart, int totalEnd,
