@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using Fiffi;
 using Fiffi.ServiceFabric;
 using Microsoft.AspNetCore.Builder;
@@ -17,7 +18,7 @@ namespace SampleWeb
 		{
 			var deserializer = Serialization.JsonDeserialization(TypeResolver.FromMap(TypeResolver.GetEventsFromTypes(typeof(ItemAddedEvent))));
 			services.AddSingleton(sc => CartModule.Initialize(sc.GetService<IReliableStateManager>(), events => Task.CompletedTask));
-			services.AddSingleton<Microsoft.Extensions.Hosting.IHostedService>(sc => new Publisher(sc.GetService<IReliableStateManager>(), deserializer));
+			services.AddSingleton<Microsoft.Extensions.Hosting.IHostedService>(sc => new Publisher(Outbox.Reader(sc.GetRequiredService<IReliableStateManager>(), deserializer), Inbox.Publisher(Serialization.Json()), e => Task.CompletedTask));
 			services
 				.AddMvc()
 				.SetCompatibilityVersion(CompatibilityVersion.Version_2_2);

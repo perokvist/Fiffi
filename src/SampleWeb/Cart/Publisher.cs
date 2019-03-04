@@ -12,25 +12,30 @@ namespace SampleWeb.Cart
 {
 	public class Publisher : BackgroundService
 	{
-		readonly IReliableStateManager stateManager;
-		readonly Func<EventData, IEvent> deserializer;
+		readonly Func<IReliableStateManager, ITransaction, IEvent, Task> inboxPublisher;
+		readonly Func<IEvent, Task> outboundPublisher;
+		readonly Func<Func<IReliableStateManager, ITransaction, IEvent, Task>, CancellationToken, Task> outboxReader;
 
-		public Publisher(IReliableStateManager stateManager, Func<EventData, IEvent> deserializer)
+		public Publisher(
+			Func<Func<IReliableStateManager, ITransaction, IEvent, Task>, CancellationToken, Task> outboxReader,
+			Func<IReliableStateManager, ITransaction, IEvent, Task> inboxPublisher,
+			Func<IEvent, Task> outboundPublisher)
 		{
-			this.deserializer = deserializer;
-			this.stateManager = stateManager;
+			this.outboxReader = outboxReader;
+			this.inboxPublisher = inboxPublisher;
+			this.outboundPublisher = outboundPublisher;
 		}
 
 		protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 		{
+			var wait = true;
 			while (!stoppingToken.IsCancellationRequested)
 			{
-				await stateManager.DequeueAsync<IEvent>(e =>
-				{
-					var b = e;
-					return Task.CompletedTask;
-				}, deserializer, stoppingToken);
-				await Task.Delay(1000);
+				await outboxReader((sm, tx, e) => Task.WhenAll(Task.Factory.StartNew(() => wait = false), inboxPublisher(sm, tx, e), outboundPublisher(e)), stoppingToken);
+
+				if (wait) await Task.Delay(500);
+
+				wait = true;
 			}
 		}
 	}
