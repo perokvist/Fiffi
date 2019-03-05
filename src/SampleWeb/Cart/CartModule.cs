@@ -1,5 +1,6 @@
 ﻿using Fiffi;
 using Fiffi.ServiceFabric;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.ServiceFabric.Data;
 using SampleWeb.Cart;
 using System;
@@ -33,7 +34,7 @@ namespace SampleWeb
 						stateManager,
 						tx,
 						Serialization.Json(),
-						Serialization.JsonDeserialization(TypeResolver.FromMap(TypeResolver.GetEventsFromTypes(typeof(ItemAddedEvent)))) //TODO "share" with publisher?
+						Serialization.JsonDeserialization(TypeResolver.Default()) 
 					),
 			 Outbox.Writer(stateManager, Serialization.Json()),
 			 eventLogger);
@@ -60,6 +61,13 @@ namespace SampleWeb
 
 			return new CartModule(commandDispatcher, policies.Merge(projections.PublishAsync), queryDispatcher);
 		}
+
+	}
+	public static class CartModuleExtensions
+	{
+		public static IServiceCollection AddCart(this IServiceCollection services)
+		=> services.AddSingleton(sc => CartModule.Initialize(sc.GetService<IReliableStateManager>(), events => Task.CompletedTask)); //TODO global eventlogger
+			
 
 	}
 }

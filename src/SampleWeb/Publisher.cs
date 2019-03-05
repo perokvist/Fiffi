@@ -8,7 +8,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace SampleWeb.Cart
+namespace SampleWeb
 {
 	public class Publisher : BackgroundService
 	{

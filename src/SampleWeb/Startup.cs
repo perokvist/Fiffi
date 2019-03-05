@@ -16,9 +16,9 @@ namespace SampleWeb
 	{
 		public void ConfigureServices(IServiceCollection services)
 		{
-			var deserializer = Serialization.JsonDeserialization(TypeResolver.FromMap(TypeResolver.GetEventsFromTypes(typeof(ItemAddedEvent))));
-			services.AddSingleton(sc => CartModule.Initialize(sc.GetService<IReliableStateManager>(), events => Task.CompletedTask));
-			services.AddSingleton<Microsoft.Extensions.Hosting.IHostedService>(sc => new Publisher(Outbox.Reader(sc.GetRequiredService<IReliableStateManager>(), deserializer), Inbox.Publisher(Serialization.Json()), e => Task.CompletedTask));
+			services.AddCart();
+			services.AddMailboxes(sp => new Func<IEvent, Task>[] { sp.GetRequiredService<CartModule>().WhenAsync });
+
 			services
 				.AddMvc()
 				.SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
