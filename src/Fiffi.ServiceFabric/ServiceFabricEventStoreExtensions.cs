@@ -112,6 +112,7 @@ namespace Fiffi.ServiceFabric
 			return (stream.Skip(version).Select(x => x.ToEventData().ToEvent(deserializer)), stream.Count);
 		}
 
+		//TODO move to queue etx
 		public static Task EnqueuAsync(this IReliableStateManager stateManager, IEvent @event, Func<IEvent, EventData> serialzer, string queueName)
 			=> stateManager.UseTransactionAsync(tx => stateManager.EnqueuAsync(tx, new[] { @event }, serialzer, queueName));
 

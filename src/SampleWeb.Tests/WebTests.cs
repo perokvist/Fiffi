@@ -40,8 +40,13 @@ namespace SampleWeb.Tests
 				  .UseStartup<Startup>()
 				  .ConfigureTestServices(services =>
 				  {
+					  services.Configure<MailboxOptions>(opt =>
+					  {
+						  opt.Serializer = Serialization.Json();
+						  opt.Deserializer = Serialization.JsonDeserialization(TypeResolver.Default());
+					  });
+					  services.AddMailboxes(sp => new Func<IEvent, Task>[] { sp.GetRequiredService<CartModule>().WhenAsync });
 					  services.AddMvc();
-					  services.AddSingleton<IReliableStateManager>(new MockReliableStateManager());
 					  services.AddSingleton(module);
 				  }));
 

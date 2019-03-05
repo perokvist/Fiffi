@@ -7,8 +7,6 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.ServiceFabric.Data;
-using SampleWeb.Cart;
 
 namespace SampleWeb
 {
@@ -16,6 +14,11 @@ namespace SampleWeb
 	{
 		public void ConfigureServices(IServiceCollection services)
 		{
+			services.Configure<MailboxOptions>(opt =>
+			{
+				opt.Serializer = Serialization.Json();
+				opt.Deserializer = Serialization.JsonDeserialization(TypeResolver.Default());
+			});
 			services.AddCart();
 			services.AddMailboxes(sp => new Func<IEvent, Task>[] { sp.GetRequiredService<CartModule>().WhenAsync });
 
