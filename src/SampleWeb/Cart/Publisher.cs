@@ -29,7 +29,8 @@ namespace SampleWeb.Cart
 				{
 					var b = e;
 					return Task.CompletedTask;
-				}, deserializer, stoppingToken); 
+				}, deserializer, stoppingToken);
+				await Task.Delay(1000);
 			}
 		}
 	}

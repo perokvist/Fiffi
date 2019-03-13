@@ -1,60 +1,57 @@
-using Fiffi;
-using Microsoft.ServiceFabric.Data;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
-using ServiceFabric.Mocks;
+using SampleWeb.Order;
 using Fiffi.ServiceFabric;
+using Xunit.Abstractions;
 
 namespace SampleWeb.Tests
 {
 	public class CartTests
 	{
+		TestContext context;
+		ITestOutputHelper output;
+		public CartTests(ITestOutputHelper output)
+		=> this.context = TestContextBuilder.Create((stateManager, storeFactory, queue) =>
+		   {
+			   this.output = output;
+			   var orderModule = OrderModule.Initialize(stateManager, storeFactory, queue.Enqueue, events => Task.CompletedTask);
+			   var module = CartModule.Initialize(stateManager, storeFactory, queue.Enqueue, events => Task.CompletedTask); //write to xunit output as logger
+
+			   return new TestContext(given => stateManager.UseTransactionAsync(tx => given(storeFactory(tx)))
+				   , module.DispatchAsync, queue, module.WhenAsync, orderModule.WhenAsync);
+		   });
+
 		[Fact]
 		public async Task AddItemToCartAsync()
 		{
-			var context = new TestContext();
-
 			//Given
 
 
 			//When
-			await context.When(new AddItemCommand(Guid.NewGuid()));
+			await context.WhenAsync(new AddItemCommand(Guid.NewGuid()));
 
 			//Then
-			context.Then(events => Assert.True(events.OfType<ItemAddedEvent>().Count() == 1));
+			context.Then(events => Assert.True(events.OfType<ItemAddedEvent>().Happened()));
 		}
-	}
 
-	public class TestContext
-	{
-		IReliableStateManager stateManager;
-		CartModule module;
-		IEvent[] events;
-		Func<ITransaction, IEventStore> factory;
-
-		public TestContext()
+		[Fact]
+		public async Task CheckoutCartAsync()
 		{
-			this.stateManager = new MockReliableStateManager();
-			this.factory = tx => new ReliableEventStore(stateManager, tx, Serialization.FabricSerialization(), Serialization.FabricDeserialization());
-			this.module = CartModule.Initialize(stateManager, factory, evts =>
+			//Given
+
+
+			//When
+			await context.WhenAsync(new CheckoutCommand(Guid.NewGuid()));
+
+			//Then
+			context.Then((events, table) =>
 			{
-				events = evts;
-				return Task.WhenAll(events.Select(e => this.module.WhenAsync(e)));
+				this.output.WriteLine(table);
+				Assert.True(events.OfType<OrderCreatedEvent>().Happened());
 			});
 		}
 
-		public void Given(params IEvent[] events)
-		{
-			var streamName = events.First().GetStreamName();
-			UseStore(store => store.AppendToStreamAsync(streamName, 0, events));
-		}
-
-		public Task When(ICommand command) => module.DispatchAsync(command);
-
-		public void Then(Action<IEvent[]> f) => f(this.events);
-			
-		void UseStore(Func<IEventStore, Task> f) => this.stateManager.UseTransactionAsync(tx => f(factory(tx))).GetAwaiter().GetResult();
 	}
 }

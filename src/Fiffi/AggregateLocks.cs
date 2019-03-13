@@ -28,6 +28,12 @@ namespace Fiffi
 
 			var @lock = locks[aggregateId];
 
+			if (@lock.Semaphore.CurrentCount == 0 && @lock.CorrelationId == correlationId)
+			{
+				logger($"Passedthrough lock due to same correlation : {correlationId}");
+				return; //let same correlation pass through, cycles
+			}
+
 			await @lock.Semaphore.WaitAsync(TimeSpan.FromMilliseconds(timeout));
 
 			locks[aggregateId] = (correlationId, @lock.Semaphore);

@@ -18,7 +18,9 @@ namespace Fiffi.ServiceFabric
 			this.inProcess = inProcess;
 		}
 
-		public Task PublishAsync(ITransaction tx, PublishMode mode, params IEvent[] events)
+		public Task PublishAsync(ITransaction tx, params IEvent[] events) => PublishAsync(tx, PublishMode.All, events); //TODO set default mode on publisher
+
+		public Task PublishAsync(ITransaction tx, PublishMode mode, params IEvent[] events) 
 		{
 			switch (mode)
 			{
