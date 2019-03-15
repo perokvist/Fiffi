@@ -1,3 +1,5 @@
+<img src="fiffi.png" width="200" alt="Fiffi logo" />
+
 # Fiffi
 Exploration kit for eventdriven services.
 
