@@ -5,6 +5,7 @@ using Xunit;
 using SampleWeb.Order;
 using Fiffi.ServiceFabric;
 using Xunit.Abstractions;
+using Fiffi.Testing;
 
 namespace SampleWeb.Tests
 {

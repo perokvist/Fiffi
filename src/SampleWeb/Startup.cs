@@ -20,7 +20,7 @@ namespace SampleWeb
 				opt.Deserializer = Serialization.JsonDeserialization(TypeResolver.Default());
 			});
 			services.AddCart();
-			services.AddMailboxes(sp => new Func<IEvent, Task>[] { sp.GetRequiredService<CartModule>().WhenAsync });
+			services.AddMailboxes(new InMemoryEventCommunication(), sp => new Func<IEvent, Task>[] { sp.GetRequiredService<CartModule>().WhenAsync });
 
 			services
 				.AddMvc()

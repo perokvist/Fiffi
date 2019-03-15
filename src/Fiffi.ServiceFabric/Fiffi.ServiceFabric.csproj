@@ -3,6 +3,17 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp2.2</TargetFramework>
     <RuntimeIdentifier>win7-x64</RuntimeIdentifier>
+    <VersionPrefix>0.4.0</VersionPrefix>
+    <VersionSuffix>alpha</VersionSuffix>
+    <PackageId>Fiffi.ServiceFabric</PackageId>
+    <Title>Fiffi.ServiceFabric</Title>
+    <Authors>Per Ökvist</Authors>
+    <PackageLicenseUrl>http://opensource.org/licenses/MS-PL</PackageLicenseUrl>
+    <PackageProjectUrl>https://github.com/perokvist/Fiffi/</PackageProjectUrl>
+    <PackageIconUrl>https://github.com/perokvist/Fiffi/raw/master/fiffi.ico</PackageIconUrl>
+    <Description>Exploration kit for eventdriven services</Description>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <PackageTags>event-driven microservices infrastructure</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>

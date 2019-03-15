@@ -15,12 +15,15 @@ namespace SampleWeb
 		readonly Func<IReliableStateManager, ITransaction, IEvent, Task> inboxPublisher;
 		readonly Func<IEvent, Task> outboundPublisher;
 		readonly Func<Func<IReliableStateManager, ITransaction, IEvent, Task>, CancellationToken, Task> outboxReader;
+		readonly Func<Task> outboundShutDown;
 
 		public Publisher(
 			Func<Func<IReliableStateManager, ITransaction, IEvent, Task>, CancellationToken, Task> outboxReader,
 			Func<IReliableStateManager, ITransaction, IEvent, Task> inboxPublisher,
-			Func<IEvent, Task> outboundPublisher)
+			Func<IEvent, Task> outboundPublisher,
+			Func<Task> outboundShutDown)
 		{
+			this.outboundShutDown = outboundShutDown;
 			this.outboxReader = outboxReader;
 			this.inboxPublisher = inboxPublisher;
 			this.outboundPublisher = outboundPublisher;
@@ -37,6 +40,7 @@ namespace SampleWeb
 
 				wait = true;
 			}
+			await outboundShutDown();
 		}
 	}
 }

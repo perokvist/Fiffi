@@ -24,5 +24,8 @@ namespace Fiffi.ServiceFabric
 		 => (sm, tx, e) =>
 			sm.EnqueuAsync(tx, new IEvent[] { e }, serializer, "inbox");
 
+		public static Func<IEvent, CancellationToken, Task> Writer(this IReliableStateManager sm, Func<IEvent, EventData> serializer)
+		=> (e, ct) => sm.EnqueuAsync(new IEvent[] { e }, serializer, "inbox"); //TODO ct
+
 	}
 }

@@ -28,7 +28,7 @@ namespace SampleWeb
 			{
 				await inboxReader((sm, tx, e) => Task.WhenAll(Task.Factory.StartNew(() => wait = false), Task.WhenAll(subscribers.Select(x => x(e)))), stoppingToken);
 
-				if (wait) await Task.Delay(500);
+				if (wait) await Task.Delay(50);
 
 				wait = true;
 			}

@@ -1,5 +1,6 @@
 ﻿using Fiffi;
 using Fiffi.ServiceFabric;
+using Fiffi.Testing;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,7 +10,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
-using System.Text;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -21,10 +21,18 @@ namespace SampleWeb.Tests
 		private HttpClient client;
 		private TestContext context;
 		private List<IEvent> events = new List<IEvent>();
+		private Task waitFor;
+		private IEventCommunication eventCommunication;
 
 		public MailboxTests()
 		=> this.context = TestContextBuilder.Create((stateManager, storeFactory, queue) =>
 		{
+
+			eventCommunication = new InMemoryEventCommunication();
+			var testHelperSource = new TaskCompletionSource<bool>();
+			waitFor = testHelperSource.Task;
+
+
 			var server = new TestServer(
 		   new WebHostBuilder()
 		   .UseEnvironment("Development")
@@ -37,11 +45,11 @@ namespace SampleWeb.Tests
 				   opt.Serializer = Serialization.FabricSerialization(); //TODO JSON
 				   opt.Deserializer = Serialization.FabricDeserialization(); 
 			   });
-			   services.AddMailboxes(sp => new Func<IEvent, Task>[] { e => {
+			   services.AddMailboxes(eventCommunication ,sp => new Func<IEvent, Task>[] { e => {
 				   events.Add(e);
-				   return Task.CompletedTask;
+					testHelperSource.SetResult(true);
+				   return testHelperSource.Task;
 			   } });
-			   services.AddMvc();
 		   }));
 
 			this.stateManager = stateManager;
@@ -56,7 +64,15 @@ namespace SampleWeb.Tests
 		public async Task InboxProcessorReadsFromInboxAsync()
 		{
 			await stateManager.EnqueuAsync(new TestEvent(Guid.NewGuid()), Serialization.FabricSerialization(), "inbox");
-			await Task.Delay(500); //TODO await a task set by inbox delegate
+			await waitFor; //TODO utlize
+			Assert.True(this.events.Any());
+		}
+
+		[Fact]
+		public async Task SubscriberForwardsToinboxAsync()
+		{
+			await this.eventCommunication.PublichAsync(new TestEvent(Guid.NewGuid()));
+			await waitFor; //TODO utlize
 			Assert.True(this.events.Any());
 		}
 
