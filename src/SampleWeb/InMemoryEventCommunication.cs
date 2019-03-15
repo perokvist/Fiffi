@@ -1,25 +1,29 @@
 ﻿using Fiffi;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
 public class InMemoryEventCommunication : IEventCommunication
 {
-	Func<IEvent, CancellationToken, Task> pump;
+	List<Func<IEvent, CancellationToken, Task>> subs = new List<Func<IEvent, CancellationToken, Task>>();
 
 	public Task OnShutdownAsync() => Task.CompletedTask;
 
-	public Task PublichAsync(IEvent @event) 
+	public Task PublichAsync(IEvent @event)
 	{
-		if (pump != null)
-			pump(@event, CancellationToken.None);
+		if (subs.Any())
+		{
+		   Task.WhenAll(subs.Select(f => f(@event, CancellationToken.None)));
+		}
 
 		return Task.CompletedTask;
 	}
 
 	public Task SubscribeAsync(Func<IEvent, CancellationToken, Task> onEvent)
 	{
-		pump = onEvent;
+		subs.Add(onEvent);
 		return Task.CompletedTask;
 	}
 }

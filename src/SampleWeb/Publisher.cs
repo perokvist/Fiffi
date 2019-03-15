@@ -36,7 +36,7 @@ namespace SampleWeb
 			{
 				await outboxReader((sm, tx, e) => Task.WhenAll(Task.Factory.StartNew(() => wait = false), inboxPublisher(sm, tx, e), outboundPublisher(e)), stoppingToken);
 
-				if (wait) await Task.Delay(500);
+				if (wait) await Task.Delay(50);
 
 				wait = true;
 			}

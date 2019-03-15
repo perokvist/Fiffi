@@ -21,17 +21,28 @@ namespace SampleWeb.Tests
 		private HttpClient client;
 		private TestContext context;
 		private List<IEvent> events = new List<IEvent>();
-		private Task waitFor;
+		private List<IEvent> outgoingEvents = new List<IEvent>();
+		private Task eventsDispatchedToModules;
+		private Task eventsDispatchedToOutbound;
+
 		private IEventCommunication eventCommunication;
 
 		public MailboxTests()
 		=> this.context = TestContextBuilder.Create((stateManager, storeFactory, queue) =>
 		{
+			var eventsDispatchedToOutBoundSource = new TaskCompletionSource<bool>();
+			eventsDispatchedToOutbound = eventsDispatchedToOutBoundSource.Task;
 
 			eventCommunication = new InMemoryEventCommunication();
-			var testHelperSource = new TaskCompletionSource<bool>();
-			waitFor = testHelperSource.Task;
+			eventCommunication.SubscribeAsync((e, ct) =>
+			{
+				outgoingEvents.Add(e);
+				eventsDispatchedToOutBoundSource.SetResult(true);
+				return Task.CompletedTask;
+			}).Wait();
 
+		var eventsDispatchedToModulesSource = new TaskCompletionSource<bool>();
+		eventsDispatchedToModules = eventsDispatchedToModulesSource.Task;
 
 			var server = new TestServer(
 		   new WebHostBuilder()
@@ -43,12 +54,12 @@ namespace SampleWeb.Tests
 			   services.Configure<MailboxOptions>(opt =>
 			   {
 				   opt.Serializer = Serialization.FabricSerialization(); //TODO JSON
-				   opt.Deserializer = Serialization.FabricDeserialization(); 
+				   opt.Deserializer = Serialization.FabricDeserialization();
 			   });
-			   services.AddMailboxes(eventCommunication ,sp => new Func<IEvent, Task>[] { e => {
+			   services.AddMailboxes(eventCommunication, sp => new Func<IEvent, Task>[] { e => {
 				   events.Add(e);
-					testHelperSource.SetResult(true);
-				   return testHelperSource.Task;
+					eventsDispatchedToModulesSource.SetResult(true);
+				   return eventsDispatchedToModulesSource.Task;
 			   } });
 		   }));
 
@@ -64,16 +75,24 @@ namespace SampleWeb.Tests
 		public async Task InboxProcessorReadsFromInboxAsync()
 		{
 			await stateManager.EnqueuAsync(new TestEvent(Guid.NewGuid()), Serialization.FabricSerialization(), "inbox");
-			await waitFor; //TODO utlize
+			await eventsDispatchedToModules; //TODO utlize
 			Assert.True(this.events.Any());
 		}
 
 		[Fact]
-		public async Task SubscriberForwardsToinboxAsync()
+		public async Task SubscriberForwardsToInboxAsync()
 		{
 			await this.eventCommunication.PublichAsync(new TestEvent(Guid.NewGuid()));
-			await waitFor; //TODO utlize
+			await eventsDispatchedToModules; //TODO utlize
 			Assert.True(this.events.Any());
+		}
+
+		[Fact]
+		public async Task PublisherForwardsToOutboundAsync()
+		{
+			await stateManager.EnqueuAsync(new TestEvent(Guid.NewGuid()), Serialization.FabricSerialization(), "outbox");
+			await eventsDispatchedToOutbound; //TODO utlize
+			Assert.True(this.outgoingEvents.Any());
 		}
 
 		public class TestEvent : IEvent

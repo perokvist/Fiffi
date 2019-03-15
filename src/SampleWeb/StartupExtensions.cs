@@ -1,6 +1,5 @@
 ﻿using Fiffi;
 using Fiffi.ServiceFabric;
-using Microsoft.Azure.ServiceBus;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
