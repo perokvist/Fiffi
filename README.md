@@ -1,4 +1,4 @@
-[![NuGet Version and Downloads count](https://buildstats.info/nuget/Fiffi?includePreReleases=true)]
+[![NuGet Version and Downloads count](https://buildstats.info/nuget/Fiffi?includePreReleases=true)](https://www.nuget.org/packages/Fiffi/)
 
 # Fiffi
 Exploration kit for eventdriven services.
