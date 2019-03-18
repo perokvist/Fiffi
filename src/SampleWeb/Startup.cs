@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using Fiffi;
 using Fiffi.ServiceFabric;
 using Microsoft.AspNetCore.Builder;
@@ -6,8 +7,6 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.ServiceFabric.Data;
-using SampleWeb.Cart;
 
 namespace SampleWeb
 {
@@ -15,9 +14,14 @@ namespace SampleWeb
 	{
 		public void ConfigureServices(IServiceCollection services)
 		{
-			var deserializer = Serialization.JsonDeserialization(TypeResolver.FromMap(TypeResolver.GetEventsFromTypes(typeof(ItemAddedEvent))));
-			services.AddSingleton(sc => CartModule.Initialize(sc.GetService<IReliableStateManager>(), events => Task.CompletedTask));
-			services.AddSingleton<Microsoft.Extensions.Hosting.IHostedService>(sc => new Publisher(sc.GetService<IReliableStateManager>(), deserializer));
+			services.Configure<MailboxOptions>(opt =>
+			{
+				opt.Serializer = Serialization.Json();
+				opt.Deserializer = Serialization.JsonDeserialization(TypeResolver.Default());
+			});
+			services.AddCart();
+			services.AddMailboxes(new NoEventCommunication(), sp => new Func<IEvent, Task>[] { sp.GetRequiredService<CartModule>().WhenAsync });
+
 			services
 				.AddMvc()
 				.SetCompatibilityVersion(CompatibilityVersion.Version_2_2);

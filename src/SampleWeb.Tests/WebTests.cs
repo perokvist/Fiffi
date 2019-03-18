@@ -1,22 +1,16 @@
 ﻿using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
-using Microsoft.ServiceFabric.Data;
 using System;
-using System.Collections.Generic;
 using System.Net.Http;
-using System.Text;
 using Microsoft.Extensions.DependencyInjection;
-using ServiceFabric.Mocks;
 using Xunit;
 using System.Threading.Tasks;
 using Fiffi;
 using Fiffi.ServiceFabric;
-using Microsoft.AspNetCore.Builder;
 using System.Linq;
 using Xunit.Abstractions;
-using System.Diagnostics;
-using System.IO;
 using SampleWeb.Order;
+using Fiffi.Testing;
 
 namespace SampleWeb.Tests
 {
@@ -40,8 +34,13 @@ namespace SampleWeb.Tests
 				  .UseStartup<Startup>()
 				  .ConfigureTestServices(services =>
 				  {
-					  services.AddMvc();
-					  services.AddSingleton<IReliableStateManager>(new MockReliableStateManager());
+					  services.Configure<MailboxOptions>(opt =>
+					  {
+						  opt.Serializer = Serialization.Json();
+						  opt.Deserializer = Serialization.JsonDeserialization(TypeResolver.Default());
+					  });
+					  services.AddSingleton(stateManager);
+					  services.AddMailboxes(new InMemoryEventCommunication(), sp => new Func<IEvent, Task>[] { sp.GetRequiredService<CartModule>().WhenAsync });
 					  services.AddSingleton(module);
 				  }));
 

@@ -12,17 +12,18 @@ namespace Fiffi.ServiceFabric
 {
 	public static class ServiceFabricEventStoreExtensions
 	{
-		const string defaultQueueName = "outbox";
+		const string defaultOutBoxQueueName = "outbox";
+		const string defaultInboxQueueName = "inbox";
 		const string defaultStreamsName = "streams";
 
 		public static Task<long> AppendToStreamAsync(this IReliableStateManager stateManager,
 			string streamName, long version, IEvent[] events,
-			string queueName = defaultQueueName, string streamsName = defaultStreamsName) =>
+			string queueName = defaultOutBoxQueueName, string streamsName = defaultStreamsName) =>
 			stateManager.AppendToStreamAsync(streamName, version, events, Serialization.FabricSerialization(), queueName, streamsName);
 
 		public static async Task<long> AppendToStreamAsync(this IReliableStateManager stateManager,
 			string streamName, long version, IEvent[] events, Func<IEvent, EventData> serializer,
-			string queueName = defaultQueueName, string streamsName = defaultStreamsName)
+			string queueName = defaultOutBoxQueueName, string streamsName = defaultStreamsName)
 		{
 			using (var tx = stateManager.CreateTransaction())
 			{
@@ -111,16 +112,23 @@ namespace Fiffi.ServiceFabric
 			return (stream.Skip(version).Select(x => x.ToEventData().ToEvent(deserializer)), stream.Count);
 		}
 
-		public static Task EnqueuAsync<T>(this IReliableStateManager stateManager, IEnumerable<T> events, Func<T, EventData> serialzer, string queueName = defaultQueueName)
+		//TODO move to queue etx
+		public static Task EnqueuAsync(this IReliableStateManager stateManager, IEvent @event, Func<IEvent, EventData> serialzer, string queueName)
+			=> stateManager.UseTransactionAsync(tx => stateManager.EnqueuAsync(tx, new[] { @event }, serialzer, queueName));
+
+		public static Task EnqueuAsync(this IReliableStateManager stateManager, ITransaction tx, IEvent @event, Func<IEvent, EventData> serializer, string queueName)
+			=> stateManager.EnqueuAsync(tx, new[] { @event }, serializer, queueName);
+
+		public static Task EnqueuAsync<T>(this IReliableStateManager stateManager, IEnumerable<T> events, Func<T, EventData> serialzer, string queueName = defaultOutBoxQueueName)
 			where T : IEvent
 			=> stateManager.UseTransactionAsync(tx => stateManager.EnqueuAsync(tx, events, serialzer, queueName));
 
-		public static Task EnqueuAsync<T>(this IReliableStateManager stateManager, ITransaction tx, IEnumerable<T> events, Func<T, EventData> serializer, string queueName = defaultQueueName)
+		public static Task EnqueuAsync<T>(this IReliableStateManager stateManager, ITransaction tx, IEnumerable<T> events, Func<T, EventData> serializer, string queueName = defaultOutBoxQueueName)
 			where T : IEvent
 			=> stateManager.EnqueuAsync(tx, events.Select(x => serializer(x)), queueName);
 
 		public static async Task EnqueuAsync(this IReliableStateManager stateManager, ITransaction tx,
-			IEnumerable<EventData> events, string queueName = defaultQueueName)
+			IEnumerable<EventData> events, string queueName = defaultOutBoxQueueName)
 		{
 			var queue = await stateManager.GetOrAddAsync<IReliableQueue<EventData>>(queueName);
 			await Task.WhenAll(events.Select(e => queue.EnqueueAsync(tx, e)));
@@ -128,11 +136,11 @@ namespace Fiffi.ServiceFabric
 
 		public static Task DequeueAsync<T>(this IReliableStateManager stateManager, Func<T, Task> action,
 			Func<EventData, T> deserializer,
-			CancellationToken cancellationToken, string queueName = defaultQueueName)
+			CancellationToken cancellationToken, string queueName = defaultOutBoxQueueName)
 			=> stateManager.UseTransactionAsync(tx => stateManager.DequeueAsync(tx, action, deserializer, cancellationToken, true, queueName), autoCommit: false);
 
 		public static async Task DequeueAsync<T>(this IReliableStateManager stateManager, ITransaction tx, Func<T, Task> action,
-			 Func<EventData, T> deserializer, CancellationToken cancellationToken, bool commitOnAction = false, string queueName = defaultQueueName)
+			 Func<EventData, T> deserializer, CancellationToken cancellationToken, bool commitOnAction = false, string queueName = defaultOutBoxQueueName)
 		{
 			if (deserializer == null)
 				throw new ArgumentNullException(nameof(deserializer));

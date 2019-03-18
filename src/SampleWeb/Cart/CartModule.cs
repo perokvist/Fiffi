@@ -1,5 +1,7 @@
 ﻿using Fiffi;
 using Fiffi.ServiceFabric;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Microsoft.ServiceFabric.Data;
 using SampleWeb.Cart;
 using System;
@@ -28,14 +30,14 @@ namespace SampleWeb
 
 		public Task WhenAsync(IEvent @event) => publish(new[] { @event });
 
-		public static CartModule Initialize(IReliableStateManager stateManager, Func<IEvent[], Task> eventLogger)
+		public static CartModule Initialize(IReliableStateManager stateManager, MailboxOptions mailboxOptions, Func<IEvent[], Task> eventLogger)
 		 => Initialize(stateManager, tx => new ReliableEventStore(
 						stateManager,
 						tx,
 						Serialization.Json(),
-						Serialization.JsonDeserialization(TypeResolver.FromMap(TypeResolver.GetEventsFromTypes(typeof(ItemAddedEvent)))) //TODO "share" with publisher?
-				 	),
-			 (tx, events) => stateManager.EnqueuAsync(tx, events, Serialization.Json()),
+						Serialization.JsonDeserialization(TypeResolver.Default())
+					),
+			 Outbox.Writer(stateManager, mailboxOptions.Serializer),
 			 eventLogger);
 
 
@@ -60,6 +62,13 @@ namespace SampleWeb
 
 			return new CartModule(commandDispatcher, policies.Merge(projections.PublishAsync), queryDispatcher);
 		}
+
+	}
+	public static class CartModuleExtensions
+	{
+		public static IServiceCollection AddCart(this IServiceCollection services)
+		=> services.AddSingleton(sc => CartModule.Initialize(sc.GetRequiredService<IReliableStateManager>(), sc.GetRequiredService<IOptions<MailboxOptions>>().Value, events => Task.CompletedTask)); //TODO global eventlogger
+
 
 	}
 }

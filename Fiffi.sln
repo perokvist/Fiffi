@@ -11,13 +11,13 @@ Project("{A07B5EB6-E848-4116-A8D0-A826331D98C6}") = "Sample", "src\Sample\Sample
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SampleWeb", "src\SampleWeb\SampleWeb.csproj", "{14AA394F-0DC7-4BEC-9A43-DB1A26DED22D}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "src\Samples", "{5BBB9DDA-4A64-4EF7-9ED5-7605FA4A6C10}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{5BBB9DDA-4A64-4EF7-9ED5-7605FA4A6C10}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fiffi.ServiceFabric.Tests", "src\Fiffi.ServiceFabric.Tests\Fiffi.ServiceFabric.Tests.csproj", "{3F845945-5100-48A8-A46D-B0AD516C8757}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SampleWeb.Tests", "src\SampleWeb.Tests\SampleWeb.Tests.csproj", "{B8FDF432-D135-4A6E-912B-09DADCE591AE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gateway", "src\Gateway\Gateway.csproj", "{CADBDB3A-8EFA-43EB-95A3-00343BE9D3AA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Gateway", "src\Gateway\Gateway.csproj", "{CADBDB3A-8EFA-43EB-95A3-00343BE9D3AA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

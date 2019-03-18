@@ -27,4 +27,5 @@ nuget.exe
 *.sln.ide
 project.lock.json
 pkg/
+nupkgs/
 
