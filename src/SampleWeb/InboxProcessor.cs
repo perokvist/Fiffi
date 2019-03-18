@@ -22,16 +22,7 @@ namespace SampleWeb
 		}
 
 		protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-		{
-			var wait = true;
-			while (!stoppingToken.IsCancellationRequested)
-			{
-				await inboxReader((sm, tx, e) => Task.WhenAll(Task.Factory.StartNew(() => wait = false), Task.WhenAll(subscribers.Select(x => x(e)))), stoppingToken);
+		 => await Polling.PollAsync(stoppingToken, f => inboxReader((sm, tx, e) => Task.WhenAll(f(), Task.WhenAll(subscribers.Select(x => x(e)))), stoppingToken));
 
-				if (wait) await Task.Delay(50);
-
-				wait = true;
-			}
-		}
 	}
 }

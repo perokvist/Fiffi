@@ -14,13 +14,13 @@ namespace SampleWeb
 		public static IServiceCollection AddMailboxes(
 			this IServiceCollection services,
 			IEventCommunication eventCommunication,
-			Func<IServiceProvider, Func<IEvent, Task>[]> subscribers)
+			Func<IServiceProvider, Func<IEvent, Task>[]> subscribers) //TODO publish filter & subsciption filter
 		{
 			services.AddSingleton<IHostedService>(sc =>
 				new Publisher(Outbox.Reader(sc.GetRequiredService<IReliableStateManager>(),
 					sc.GetRequiredService<IOptions<MailboxOptions>>().Value.Deserializer),
 					Inbox.Writer(sc.GetRequiredService<IOptions<MailboxOptions>>().Value.Serializer),
-					eventCommunication.PublichAsync,
+					eventCommunication.PublishAsync<IDomainEvent>,
 					eventCommunication.OnShutdownAsync));
 
 			services.AddSingleton<IHostedService>(sc =>

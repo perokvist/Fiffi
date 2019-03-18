@@ -95,7 +95,7 @@ namespace SampleWeb.Tests
 			Assert.True(this.outgoingEvents.Any());
 		}
 
-		public class TestEvent : IEvent
+		public class TestEvent : IEvent, IDomainEvent
 		{
 			public TestEvent(Guid id)
 			{
