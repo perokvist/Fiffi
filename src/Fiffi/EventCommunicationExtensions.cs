@@ -1,10 +1,7 @@
-﻿using Fiffi;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System;
 using System.Threading.Tasks;
 
-namespace SampleWeb
+namespace Fiffi
 {
 	public static class EventCommunicationExtensions
 	{

@@ -2,7 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace SampleWeb
+namespace Fiffi
 {
 	public static class Polling
 	{
