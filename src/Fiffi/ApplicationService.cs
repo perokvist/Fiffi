@@ -1,15 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Fiffi
 {
 	public static class ApplicationService
 	{
-		public static async Task ExecuteAsync<TState>(IEventStore store, ICommand command, Func<TState, IEvent[]> action, Func<IEvent[], Task> pub)
+		public static Task ExecuteAsync<TState>(IEventStore store, ICommand command, Func<TState, IEvent[]> action, Func<IEvent[], Task> pub)
+			=> ExecuteAsync(store, command, action, pub);
+
+		public static async Task ExecuteAsync<TState>(IEventStore store, ICommand command, Func<TState, Task<IEvent[]>> action, Func<IEvent[], Task> pub)
 			where TState : class, new()
 		{
 			if (command.CorrelationId == default(Guid))
@@ -19,7 +20,7 @@ namespace Fiffi
 			var streamName = $"{aggregateName}-{command.AggregateId}";
 			var happend = await store.LoadEventStreamAsync(streamName, 0);
 			var state = happend.Events.Rehydrate<TState>();
-			var events = action(state);
+			var events = await action(state);
 
 			events
 				.Where(x => x.Meta == null)
