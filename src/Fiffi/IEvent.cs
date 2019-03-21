@@ -1,12 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
 
 namespace Fiffi
 {
 	public interface IEvent
 	{
-		Guid AggregateId { get; }
+		string SourceId { get; }
 		IDictionary<string, string> Meta { get; set; }
 	}
 

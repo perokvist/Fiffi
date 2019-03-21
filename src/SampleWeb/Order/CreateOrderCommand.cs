@@ -5,7 +5,7 @@ namespace SampleWeb.Order
 {
 	public class CreateOrderCommand : ICommand
 	{
-		public CreateOrderCommand(Guid aggregateId) => this.AggregateId = new AggregateId(aggregateId.ToString());
+		public CreateOrderCommand(string aggregateId) => this.AggregateId = new AggregateId(aggregateId);
 
 		public IAggregateId AggregateId { get; }
 

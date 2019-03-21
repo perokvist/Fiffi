@@ -74,7 +74,7 @@ namespace SampleWeb.Tests
 		[Fact]
 		public async Task InboxProcessorReadsFromInboxAsync()
 		{
-			await stateManager.EnqueuAsync(new TestEvent(Guid.NewGuid()), Serialization.FabricSerialization(), "inbox");
+			await stateManager.EnqueuAsync(new TestEvent(Guid.NewGuid().ToString()), Serialization.FabricSerialization(), "inbox");
 			await eventsDispatchedToModules; //TODO utlize
 			Assert.True(this.events.Any());
 		}
@@ -82,7 +82,7 @@ namespace SampleWeb.Tests
 		[Fact]
 		public async Task SubscriberForwardsToInboxAsync()
 		{
-			await this.eventCommunication.PublichAsync(new TestEvent(Guid.NewGuid()));
+			await this.eventCommunication.PublichAsync(new TestEvent(Guid.NewGuid().ToString()));
 			await eventsDispatchedToModules; //TODO utlize
 			Assert.True(this.events.Any());
 		}
@@ -90,20 +90,20 @@ namespace SampleWeb.Tests
 		[Fact(Timeout = 4000)]
 		public async Task PublisherForwardsToOutboundAsync()
 		{
-			await stateManager.EnqueuAsync(new TestEvent(Guid.NewGuid()), Serialization.FabricSerialization(), "outbox");
+			await stateManager.EnqueuAsync(new TestEvent(Guid.NewGuid().ToString()), Serialization.FabricSerialization(), "outbox");
 			await eventsDispatchedToOutbound; //TODO utlize
 			Assert.True(this.outgoingEvents.Any());
 		}
 
 		public class TestEvent : IEvent, IDomainEvent
 		{
-			public TestEvent(Guid id)
+			public TestEvent(string id)
 			{
-				this.AggregateId = id;
+				this.SourceId = id;
 				this.Meta["eventid"] = Guid.NewGuid().ToString();
 			}
 
-			public Guid AggregateId { get; set; }
+			public string SourceId { get; set; }
 
 			public IDictionary<string, string> Meta { get; set; } = new Dictionary<string, string>();
 		}

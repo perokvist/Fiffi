@@ -6,9 +6,9 @@ namespace SampleWeb.Order
 {
 	public class OrderCreatedEvent : IEvent
 	{
-		public OrderCreatedEvent(Guid aggregateId) => this.AggregateId = aggregateId;
+		public OrderCreatedEvent(string aggregateId) => this.SourceId = aggregateId;
 
-		public Guid AggregateId { get; }
+		public string SourceId { get; }
 
 		public IDictionary<string, string> Meta { get; set; }
 	}
