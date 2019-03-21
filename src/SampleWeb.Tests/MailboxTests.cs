@@ -41,8 +41,8 @@ namespace SampleWeb.Tests
 				return Task.CompletedTask;
 			}).Wait();
 
-		var eventsDispatchedToModulesSource = new TaskCompletionSource<bool>();
-		eventsDispatchedToModules = eventsDispatchedToModulesSource.Task;
+			var eventsDispatchedToModulesSource = new TaskCompletionSource<bool>();
+			eventsDispatchedToModules = eventsDispatchedToModulesSource.Task;
 
 			var server = new TestServer(
 		   new WebHostBuilder()
@@ -87,7 +87,7 @@ namespace SampleWeb.Tests
 			Assert.True(this.events.Any());
 		}
 
-		[Fact]
+		[Fact(Timeout = 4000)]
 		public async Task PublisherForwardsToOutboundAsync()
 		{
 			await stateManager.EnqueuAsync(new TestEvent(Guid.NewGuid()), Serialization.FabricSerialization(), "outbox");

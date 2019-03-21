@@ -28,4 +28,5 @@ nuget.exe
 project.lock.json
 pkg/
 nupkgs/
+release.bat
 

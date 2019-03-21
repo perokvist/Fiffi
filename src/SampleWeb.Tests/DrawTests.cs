@@ -17,8 +17,9 @@ namespace SampleWeb.Tests
 			this.output = output;
 		}
 
-		[Fact]
-		public void Foo()
+		
+		[Fact(Skip = "Demo")]
+		public void TestDraw()
 		{
 			var id = Guid.NewGuid();
 			var foocmd = new FooCommand(id);

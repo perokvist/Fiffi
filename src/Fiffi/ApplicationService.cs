@@ -8,7 +8,8 @@ namespace Fiffi
 	public static class ApplicationService
 	{
 		public static Task ExecuteAsync<TState>(IEventStore store, ICommand command, Func<TState, IEvent[]> action, Func<IEvent[], Task> pub)
-			=> ExecuteAsync(store, command, action, pub);
+			where TState : class, new()
+			=> ExecuteAsync<TState>(store, command, state => Task.FromResult(action(state)) , pub);
 
 		public static async Task ExecuteAsync<TState>(IEventStore store, ICommand command, Func<TState, Task<IEvent[]>> action, Func<IEvent[], Task> pub)
 			where TState : class, new()
@@ -32,7 +33,7 @@ namespace Fiffi
 						.Tap(e => e.Meta.AddTypeInfo(e))
 					);
 
-			if(events.Any())
+			if (events.Any())
 				await store.AppendToStreamAsync(streamName, events.Last().GetVersion(), events);
 
 			await pub(events); //need to always execute due to locks
