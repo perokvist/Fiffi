@@ -29,6 +29,11 @@ namespace Fiffi
 
 			throw new InvalidOperationException("Can't compare with non IAggregateId");
 		}
+
+		public static implicit operator AggregateId(string instance) => new AggregateId(instance);
+
+		public static implicit operator AggregateId(Guid instance) => new AggregateId(instance);
+
 	}
 	public interface IAggregateId : IComparable<IAggregateId>, IComparable
 	{
