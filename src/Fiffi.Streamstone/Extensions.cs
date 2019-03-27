@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace Fiffi.Streamstone
 {
-	using TypeResolver = Func<string, Task<Type>>;
+	using TypeResolver = Func<string, Type>;
 
 	public static class Extensions
 	{
@@ -94,7 +94,7 @@ namespace Fiffi.Streamstone
 			return (events, version);
 		}
 
-		public static IEvent ToEvent(this TypeResolver typeResolver, EventEntity e) => ToEvent(e.Data, typeResolver(e.Type).Result);
+		public static IEvent ToEvent(this TypeResolver typeResolver, EventEntity e) => ToEvent(e.Data, typeResolver(e.Type));
 
 		public static Type ToType(string typeValue)
 		{
@@ -118,7 +118,7 @@ namespace Fiffi.Streamstone
 			var properties = new
 			{
 				Id = e.Meta == null ? id : e.Meta.ContainsKey(nameof(EventMetaData.EventId)) ? Guid.Parse(e.Meta[nameof(EventMetaData.EventId)]) : id,
-				Type = e.GetType().AssemblyQualifiedName,
+				Type = e.GetType().Name,
 				Data = JsonConvert.SerializeObject(e),
 				Offset = e.Meta == null ? -1 : e.Meta.ContainsKey("Offset") ? long.Parse(e.Meta["Offset"]) : -1,
 				SequenceNumber = e.Meta == null ? -1 : e.Meta.ContainsKey("SequenceNumber") ? long.Parse(e.Meta["SequenceNumber"]) : -1

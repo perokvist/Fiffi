@@ -7,13 +7,10 @@ namespace Fiffi.Streamstone
 {
 	public class StreamStoneEventStore : IEventStore
 	{
-		readonly Func<string, Task<Type>> _typeResolver;
+		readonly Func<string, Type> _typeResolver;
 		readonly CloudTable _table;
 
-		//public StreamStoneEventStore(CloudTable table) : this(table, s => Task.FromResult(ToType(s)))
-		//{ }
-
-		public StreamStoneEventStore(CloudTable table, Func<string, Task<Type>> typeResolver)
+		public StreamStoneEventStore(CloudTable table, Func<string, Type> typeResolver)
 		{
 			_table = table;
 			_typeResolver = typeResolver;
