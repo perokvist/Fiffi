@@ -6,11 +6,14 @@ using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 using System.Threading.Tasks;
 using Fiffi;
+using Fiffi.Testing;
+using Fiffi.Visualization;
 using Fiffi.ServiceFabric;
 using System.Linq;
 using Xunit.Abstractions;
 using SampleWeb.Order;
-using Fiffi.Testing;
+using Fiffi.ServiceFabric.Testing;
+using ServiceFabric.Mocks;
 
 namespace SampleWeb.Tests
 {
@@ -21,34 +24,34 @@ namespace SampleWeb.Tests
 		private ITestOutputHelper output;
 
 		public WebTests(ITestOutputHelper output)
-		=> this.context = TestContextBuilder.Create((stateManager, storeFactory, queue) =>
-		   {
-			   this.output = output;
+		=> this.context = TestContextBuilder.Create(new MockReliableStateManager(), (stateManager, storeFactory, queue) =>
+			{
+				this.output = output;
 
-			   var orderModule = OrderModule.Initialize(stateManager, storeFactory, queue.Enqueue, events => Task.CompletedTask);
-			   var module = CartModule.Initialize(stateManager, storeFactory, queue.Enqueue, events => Task.CompletedTask);
+				var orderModule = OrderModule.Initialize(stateManager, storeFactory, queue.Enqueue, events => Task.CompletedTask);
+				var module = CartModule.Initialize(stateManager, storeFactory, queue.Enqueue, events => Task.CompletedTask);
 
-			   var server = new TestServer(
-				  new WebHostBuilder()
-				  .UseEnvironment("Development")
-				  .UseStartup<Startup>()
-				  .ConfigureTestServices(services =>
-				  {
-					  services.Configure<MailboxOptions>(opt =>
-					  {
-						  opt.Serializer = Serialization.Json();
-						  opt.Deserializer = Serialization.JsonDeserialization(TypeResolver.Default());
-					  });
-					  services.AddSingleton(stateManager);
-					  services.AddMailboxes(new InMemoryEventCommunication(), sp => new Func<IEvent, Task>[] { sp.GetRequiredService<CartModule>().WhenAsync });
-					  services.AddSingleton(module);
-				  }));
+				var server = new TestServer(
+				   new WebHostBuilder()
+				   .UseEnvironment("Development")
+				   .UseStartup<Startup>()
+				   .ConfigureTestServices(services =>
+				   {
+					   services.Configure<MailboxOptions>(opt =>
+					   {
+						   opt.Serializer = Serialization.Json();
+						   opt.Deserializer = Serialization.JsonDeserialization(TypeResolver.Default());
+					   });
+					   services.AddSingleton(stateManager);
+					   services.AddMailboxes(new InMemoryEventCommunication(), sp => new Func<IEvent, Task>[] { sp.GetRequiredService<CartModule>().WhenAsync });
+					   services.AddSingleton(module);
+				   }));
 
-			   this.client = server.CreateClient();
+				this.client = server.CreateClient();
 
-			   return new TestContext(given => stateManager.UseTransactionAsync(tx => given(storeFactory(tx))),
-				   module.DispatchAsync, queue, module.WhenAsync, orderModule.WhenAsync);
-		   });
+				return new TestContext(given => stateManager.UseTransactionAsync(tx => given(storeFactory(tx))),
+					module.DispatchAsync, queue, module.WhenAsync, orderModule.WhenAsync);
+			});
 
 		[Fact]
 		public async Task HelloAsync()

@@ -6,6 +6,9 @@ using SampleWeb.Order;
 using Fiffi.ServiceFabric;
 using Xunit.Abstractions;
 using Fiffi.Testing;
+using Fiffi.Visualization;
+using Fiffi.ServiceFabric.Testing;
+using ServiceFabric.Mocks;
 
 namespace SampleWeb.Tests
 {
@@ -14,15 +17,15 @@ namespace SampleWeb.Tests
 		TestContext context;
 		ITestOutputHelper output;
 		public CartTests(ITestOutputHelper output)
-		=> this.context = TestContextBuilder.Create((stateManager, storeFactory, queue) =>
-		   {
-			   this.output = output;
-			   var orderModule = OrderModule.Initialize(stateManager, storeFactory, queue.Enqueue, events => Task.CompletedTask);
-			   var module = CartModule.Initialize(stateManager, storeFactory, queue.Enqueue, events => Task.CompletedTask); //write to xunit output as logger
+		=> this.context = TestContextBuilder.Create(new MockReliableStateManager(), (stateManager, storeFactory, queue) =>
+			{
+				this.output = output;
+				var orderModule = OrderModule.Initialize(stateManager, storeFactory, queue.Enqueue, events => Task.CompletedTask);
+				var module = CartModule.Initialize(stateManager, storeFactory, queue.Enqueue, events => Task.CompletedTask); //write to xunit output as logger
 
 			   return new TestContext(given => stateManager.UseTransactionAsync(tx => given(storeFactory(tx)))
-				   , module.DispatchAsync, queue, module.WhenAsync, orderModule.WhenAsync);
-		   });
+					, module.DispatchAsync, queue, module.WhenAsync, orderModule.WhenAsync);
+			});
 
 		[Fact]
 		public async Task AddItemToCartAsync()

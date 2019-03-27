@@ -1,11 +1,13 @@
 ﻿using Fiffi;
 using Fiffi.ServiceFabric;
+using Fiffi.ServiceFabric.Testing;
 using Fiffi.Testing;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.ServiceFabric.Data;
+using ServiceFabric.Mocks;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -28,48 +30,48 @@ namespace SampleWeb.Tests
 		private IEventCommunication eventCommunication;
 
 		public MailboxTests()
-		=> this.context = TestContextBuilder.Create((stateManager, storeFactory, queue) =>
-		{
-			var eventsDispatchedToOutBoundSource = new TaskCompletionSource<bool>();
-			eventsDispatchedToOutbound = eventsDispatchedToOutBoundSource.Task;
+		=> this.context = TestContextBuilder.Create(new MockReliableStateManager(), (stateManager, storeFactory, queue) =>
+		 {
+			 var eventsDispatchedToOutBoundSource = new TaskCompletionSource<bool>();
+			 eventsDispatchedToOutbound = eventsDispatchedToOutBoundSource.Task;
 
-			eventCommunication = new InMemoryEventCommunication();
-			eventCommunication.SubscribeAsync((e, ct) =>
+			 eventCommunication = new InMemoryEventCommunication();
+			 eventCommunication.SubscribeAsync((e, ct) =>
+			 {
+				 outgoingEvents.Add(e);
+				 eventsDispatchedToOutBoundSource.SetResult(true);
+				 return Task.CompletedTask;
+			 }).Wait();
+
+			 var eventsDispatchedToModulesSource = new TaskCompletionSource<bool>();
+			 eventsDispatchedToModules = eventsDispatchedToModulesSource.Task;
+
+			 var server = new TestServer(
+			new WebHostBuilder()
+			.UseEnvironment("Development")
+			.UseStartup<Startup>()
+			.ConfigureTestServices(services =>
 			{
-				outgoingEvents.Add(e);
-				eventsDispatchedToOutBoundSource.SetResult(true);
-				return Task.CompletedTask;
-			}).Wait();
-
-			var eventsDispatchedToModulesSource = new TaskCompletionSource<bool>();
-			eventsDispatchedToModules = eventsDispatchedToModulesSource.Task;
-
-			var server = new TestServer(
-		   new WebHostBuilder()
-		   .UseEnvironment("Development")
-		   .UseStartup<Startup>()
-		   .ConfigureTestServices(services =>
-		   {
-			   services.AddSingleton(stateManager);
-			   services.Configure<MailboxOptions>(opt =>
-			   {
-				   opt.Serializer = Serialization.FabricSerialization(); //TODO JSON
+				services.AddSingleton(stateManager);
+				services.Configure<MailboxOptions>(opt =>
+				{
+					opt.Serializer = Serialization.FabricSerialization(); //TODO JSON
 				   opt.Deserializer = Serialization.FabricDeserialization();
-			   });
-			   services.AddMailboxes(eventCommunication, sp => new Func<IEvent, Task>[] { e => {
+				});
+				services.AddMailboxes(eventCommunication, sp => new Func<IEvent, Task>[] { e => {
 				   events.Add(e);
 					eventsDispatchedToModulesSource.SetResult(true);
 				   return eventsDispatchedToModulesSource.Task;
 			   } });
-		   }));
+			}));
 
-			this.stateManager = stateManager;
+			 this.stateManager = stateManager;
 
-			this.client = server.CreateClient();
+			 this.client = server.CreateClient();
 
-			return new TestContext(given => stateManager.UseTransactionAsync(tx => given(storeFactory(tx))),
-				c => Task.CompletedTask, queue, e => Task.CompletedTask);
-		});
+			 return new TestContext(given => stateManager.UseTransactionAsync(tx => given(storeFactory(tx))),
+				 c => Task.CompletedTask, queue, e => Task.CompletedTask);
+		 });
 
 		[Fact]
 		public async Task InboxProcessorReadsFromInboxAsync()

@@ -1,4 +1,5 @@
 ﻿using Fiffi;
+using Fiffi.Visualization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
