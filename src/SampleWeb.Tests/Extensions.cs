@@ -97,8 +97,8 @@ namespace SampleWeb.Tests
 				var occured = x.First().OccuredAt().ToString();
 				commandPosition = lastOccured == occured ? commandPosition : i * 2;
 				lastOccured = occured;
-				blocks.Add((x.Key.Split(':')[0].Trim(), commandPosition, x.First().AggregateId.ToString()));
-				blocks.AddRange(x.Select(e => (e.GetType().Name, commandPosition + 1, e.AggregateId.ToString())));
+				blocks.Add((x.Key.Split(':')[0].Trim(), commandPosition, x.First().SourceId.ToString()));
+				blocks.AddRange(x.Select(e => (e.GetType().Name, commandPosition + 1, e.SourceId.ToString())));
 			});
 
 			return blocks;

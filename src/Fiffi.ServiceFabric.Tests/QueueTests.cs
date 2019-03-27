@@ -16,7 +16,7 @@ namespace Fiffi.ServiceFabric.Tests
 		public async Task ReadAndWriteFromEventQueue()
 		{
 			var stateManager = new MockReliableStateManager();
-			var aggregateId = Guid.NewGuid();
+			var aggregateId = Guid.NewGuid().ToString();
 			var dequeued = false;
 			var events = new[] { new TestEvent(aggregateId), new TestEvent(aggregateId), new TestEvent(aggregateId) };
 			await stateManager.EnqueuAsync(events, Serialization.FabricSerialization());

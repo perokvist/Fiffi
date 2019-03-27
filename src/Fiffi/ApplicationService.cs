@@ -39,10 +39,14 @@ namespace Fiffi
 			await pub(events); //need to always execute due to locks
 		}
 
-		public static async Task ExecuteAsync<TState>(IEventStore store, ICommand command, Func<TState, IEvent[]> action, Func<IEvent[], Task> pub, AggregateLocks aggregateLocks)
+		public static async Task ExecuteAsync<TState>(IEventStore store, ICommand command, Func<TState, Task<IEvent[]>> action, Func<IEvent[], Task> pub, AggregateLocks aggregateLocks)
 			where TState : class, new()
 			=> await aggregateLocks.UseLockAsync(command.AggregateId, command.CorrelationId, pub, async (publisher) =>
 				 await ExecuteAsync(store, command, action, publisher)
 			);
+
+		public static Task ExecuteAsync<TState>(IEventStore store, ICommand command, Func<TState, IEvent[]> action, Func<IEvent[], Task> pub, AggregateLocks aggregateLocks)
+			where TState : class, new()
+			=> ExecuteAsync<TState>(store, command, state => Task.FromResult(action(state)), pub, aggregateLocks);
 	}
 }

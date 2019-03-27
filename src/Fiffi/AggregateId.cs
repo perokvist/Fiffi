@@ -1,14 +1,17 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Fiffi
 {
-	public class AggregateId : IAggregateId
+	public struct AggregateId : IAggregateId
 	{
 		public AggregateId(string aggregateId)
 		{
 			Id = aggregateId;
+		}
+
+		public AggregateId(Guid aggregateId)
+		{
+			Id = aggregateId.ToString();
 		}
 
 		public int CompareTo(IAggregateId other) => string.Compare(Id, other.Id, StringComparison.Ordinal);
@@ -16,8 +19,23 @@ namespace Fiffi
 		public string Id { get; }
 
 		public override string ToString() => Id;
+
+		public int CompareTo(object obj) {
+			if (obj == null)
+				return 1;
+
+			if (obj is IAggregateId)
+				return CompareTo((IAggregateId)obj);
+
+			throw new InvalidOperationException("Can't compare with non IAggregateId");
+		}
+
+		public static implicit operator AggregateId(string instance) => new AggregateId(instance);
+
+		public static implicit operator AggregateId(Guid instance) => new AggregateId(instance);
+
 	}
-	public interface IAggregateId
+	public interface IAggregateId : IComparable<IAggregateId>, IComparable
 	{
 		string Id { get; }
 	}

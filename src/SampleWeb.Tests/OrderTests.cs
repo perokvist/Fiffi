@@ -27,7 +27,7 @@ namespace SampleWeb.Tests
 
 
 			//When
-			await context.WhenAsync(new CreateOrderCommand(Guid.NewGuid()));
+			await context.WhenAsync(new CreateOrderCommand(Guid.NewGuid().ToString()));
 
 			//Then
 			context.Then(events => Assert.True(events.OfType<OrderCreatedEvent>().Happened()));

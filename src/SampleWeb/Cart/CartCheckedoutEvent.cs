@@ -6,9 +6,9 @@ namespace SampleWeb.Cart
 {
 	public class CartCheckedoutEvent : IEvent
 	{
-		public CartCheckedoutEvent(Guid aggregateId) => this.AggregateId = aggregateId;
+		public CartCheckedoutEvent(Guid aggregateId) => this.SourceId = aggregateId.ToString();
 
-		public Guid AggregateId { get; }
+		public string SourceId { get; }
 
 		public IDictionary<string, string> Meta { get; set; }
 	}

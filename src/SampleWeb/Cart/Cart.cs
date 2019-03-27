@@ -30,10 +30,10 @@ namespace SampleWeb
 	{
 		public ItemAddedEvent(IAggregateId aggregateId)
 		{
-			this.AggregateId = Guid.Parse(aggregateId.ToString());
+			this.SourceId = aggregateId.ToString();
 		}
 
-		public Guid AggregateId { get; set; }
+		public string SourceId { get; set; }
 
 		public IDictionary<string, string> Meta { get; set; } = new Dictionary<string, string>();
 
