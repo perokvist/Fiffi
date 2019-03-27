@@ -19,7 +19,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SampleWeb.Tests", "src\Samp
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Gateway", "src\Gateway\Gateway.csproj", "{CADBDB3A-8EFA-43EB-95A3-00343BE9D3AA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fiffi.Streamstone", "src\Fiffi.Streamstone\Fiffi.Streamstone.csproj", "{13EA7DB4-C64A-48BC-BF4B-6C400BB02DAA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fiffi.Streamstone", "src\Fiffi.Streamstone\Fiffi.Streamstone.csproj", "{13EA7DB4-C64A-48BC-BF4B-6C400BB02DAA}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fiffi.Streamstone.Tests", "Fiffi.Streamstone.Tests\Fiffi.Streamstone.Tests.csproj", "{427F6BBB-F01C-4ABB-9272-14863B363D51}"
 EndProject

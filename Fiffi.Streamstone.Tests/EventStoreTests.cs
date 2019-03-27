@@ -30,7 +30,7 @@ namespace Fiffi.Streamstone.Tests
 			var id = Guid.NewGuid();
 			var e = new TestEvent()
 			{
-				AggregateId = id,
+				SourceId = id.ToString(),
 				Meta = new Dictionary<string, string>() {
 				{ "EventId", Guid.NewGuid().ToString() }
 			}
@@ -51,7 +51,7 @@ namespace Fiffi.Streamstone.Tests
 			var id = Guid.NewGuid();
 			var e = new TestEvent()
 			{
-				AggregateId = id,
+				SourceId = id.ToString(),
 				Meta = new Dictionary<string, string>() {
 				{ "EventId", eventid }
 			}
@@ -62,7 +62,7 @@ namespace Fiffi.Streamstone.Tests
 
 			var e2 = new TestEvent()
 			{
-				AggregateId = id,
+				SourceId = id.ToString(),
 				Meta = new Dictionary<string, string>() {
 				{ "EventId", eventid }
 			}
@@ -75,7 +75,7 @@ namespace Fiffi.Streamstone.Tests
 		{
 			public IDictionary<string, string> Meta { get; set; } = new Dictionary<string, string>();
 
-			public Guid AggregateId { get; set; }
+			public string SourceId { get; set; }
 		}
 	}
 }
