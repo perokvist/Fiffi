@@ -20,11 +20,13 @@ namespace Fiffi
 			typeProperties.ForEach(x => meta.TryAdd(x.Key, x.Value));
 		}
 
-		public static string GetStreamName(this IEvent @event) => @event.Require(nameof(EventMetaData.StreamName).ToLower());
+		public static string GetStreamName(this IEvent @event) => @event.Require(nameof(EventMetaData.StreamName));
 
-		public static long GetVersion(this IEvent @event) => long.Parse(@event.Require(nameof(EventMetaData.Version).ToLower()));
+		public static string GetAggregateName(this IEvent @event) => @event.Require(nameof(EventMetaData.AggregateName));
 
-		public static Guid EventId(this IEvent e) => Guid.Parse(e.Require(nameof(EventMetaData.EventId).ToLower()));
+		public static long GetVersion(this IEvent @event) => long.Parse(@event.Require(nameof(EventMetaData.Version)));
+
+		public static Guid EventId(this IEvent e) => Guid.Parse(e.Require(nameof(EventMetaData.EventId)));
 
 		public static bool HasCorrelation(this IEvent @event) => @event.HasMeta(nameof(EventMetaData.CorrelationId));
 
@@ -40,7 +42,7 @@ namespace Fiffi
 		public static DateTime OccuredAt(this IEvent @event) => new DateTime(long.Parse(@event.Require(nameof(EventMetaData.OccuredAt))));
 
 		internal static string Require(this IEvent @event, string keyName)
-			=> @event.Meta.ContainsKey(keyName.ToLower()) ? @event.Meta[keyName.ToLower()] : throw new ArgumentException($"{keyName} for {@event.GetType()} required");
+			=> @event.Meta.ContainsKey(keyName.ToLower()) ? @event.Meta[keyName.ToLower()] : throw new ArgumentException($"{keyName.ToLower()} for {@event.GetType()} required");
 
 		public static string GetMetaOrDefault<T>(this IDictionary<string, string> meta, string keyName, T @default = default(T))
 			=> meta.ContainsKey(keyName.ToLower()) ? meta[keyName.ToLower()] : @default.ToString();
