@@ -7,15 +7,11 @@ namespace Fiffi
 	{
 		Task<T> GetAsync<T>(IAggregateId id);
 
+		/// <remarks>Expects that state and outbox events is persisted in the same transaction</remarks>
 		Task SaveAsync<T>(IAggregateId aggregateId, T state, IEvent[] outboxEvents);
 
 		Func<IEvent[], Task> OnPublish(Func<IEvent[], Task> publish);
 
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <remarks>Call OnPublish while publishing events</remarks>
-		/// <returns></returns>
-		Task PublishAllUnPublishedEventsAsync(Func<IEvent[], Task> publish);
+		Task<IEvent[]> GetAllUnPublishedEvents();
 	}
 }
