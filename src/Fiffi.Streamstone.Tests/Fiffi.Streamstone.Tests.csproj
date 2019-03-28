@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\src\Fiffi.Streamstone\Fiffi.Streamstone.csproj" />
+    <ProjectReference Include="..\Fiffi.Streamstone\Fiffi.Streamstone.csproj" />
   </ItemGroup>
 
 </Project>

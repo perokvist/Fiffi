@@ -9,7 +9,7 @@ namespace Fiffi
 	{
 		public static Task ExecuteAsync<TState>(IEventStore store, ICommand command, Func<TState, IEvent[]> action, Func<IEvent[], Task> pub)
 			where TState : class, new()
-			=> ExecuteAsync<TState>(store, command, state => Task.FromResult(action(state)) , pub);
+			=> ExecuteAsync<TState>(store, command, state => Task.FromResult(action(state)), pub);
 
 		public static async Task ExecuteAsync<TState>(IEventStore store, ICommand command, Func<TState, Task<IEvent[]>> action, Func<IEvent[], Task> pub)
 			where TState : class, new()
@@ -23,15 +23,7 @@ namespace Fiffi
 			var state = happend.Events.Rehydrate<TState>();
 			var events = await action(state);
 
-			events
-				.Where(x => x.Meta == null)
-				.ForEach(x => x.Meta = new Dictionary<string, string>());
-
-			events
-				.ForEach(x => x
-						.Tap(e => e.Meta.AddMetaData(happend.Version + 1, streamName, aggregateName, command))
-						.Tap(e => e.Meta.AddTypeInfo(e))
-					);
+			events.AddMetaData(command, aggregateName, streamName, happend.Version);
 
 			if (events.Any())
 				await store.AppendToStreamAsync(streamName, events.Last().GetVersion(), events);
@@ -48,5 +40,44 @@ namespace Fiffi
 		public static Task ExecuteAsync<TState>(IEventStore store, ICommand command, Func<TState, IEvent[]> action, Func<IEvent[], Task> pub, AggregateLocks aggregateLocks)
 			where TState : class, new()
 			=> ExecuteAsync<TState>(store, command, state => Task.FromResult(action(state)), pub, aggregateLocks);
+
+
+		public static Task ExecuteAsync<TState>(IStateManager stateFoo, ICommand command, Func<TState, IEnumerable<IEvent>> f, Func<IEvent[], Task> pub)
+			where TState : new()
+			=> ExecuteAsync(() => stateFoo.GetAsync<TState>(command.AggregateId), (state, evts) => stateFoo.SaveAsync(command.AggregateId, state, evts), command, f, stateFoo.OnPublish(pub));
+
+		public static async Task ExecuteAsync<TState>(
+			Func<Task<TState>> getState,
+			Func<TState, IEvent[], Task> saveState,
+			ICommand command,
+			Func<TState, IEnumerable<IEvent>> f,
+			Func<IEvent[], Task> pub)
+			where TState : new()
+		{
+			var aggregateName = typeof(TState).Name.Replace("State", "Aggregate").ToLower();
+			var streamName = $"{aggregateName}-{command.AggregateId}";
+			var state = await getState();
+			var events = f(state).ToArray();
+			var newState = events.Apply(state);
+
+			if (events.Any())
+				events.AddMetaData(command, aggregateName, streamName, events.Last().GetVersion()); //TODO revise version here
+
+			await saveState(state, events); //2PC trouble
+			await pub(events);
+		}
+
+		static void AddMetaData(this IEvent[] events, ICommand command, string aggregateName, string streamName, long version)
+		{
+			events
+				.Where(x => x.Meta == null)
+				.ForEach(x => x.Meta = new Dictionary<string, string>());
+
+			events
+				.ForEach(x => x
+						.Tap(e => e.Meta.AddMetaData(version + 1, streamName, aggregateName, command))
+						.Tap(e => e.Meta.AddTypeInfo(e))
+					);
+		}
 	}
 }

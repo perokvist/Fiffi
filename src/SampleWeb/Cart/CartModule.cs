@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using static Fiffi.ApplicationService;
 
 namespace SampleWeb
 {
@@ -54,6 +55,11 @@ namespace SampleWeb
 
 			var publisher = new EventPublisher(outbox, eventLogger, (tx, evts) => projections.PublishAsync(evts));
 			var context = new ApplicationServiceContext(stateManager, store, publisher);
+
+			//IStateFoo stateFoo = null;
+			//commandDispatcher.Register<AddItemCommand>(cmd =>
+			//	ApplicationService.ExecuteAsync<CartState>(() => stateFoo.Get<CartState>(cmd.AggregateId), (state, evts) => stateFoo.Save(state,evts), cmd, state => Array.Empty<IEvent>() ,stateFoo.OnPublish(evts => Task.CompletedTask))
+			//);
 
 			commandDispatcher
 				.WithContext(context)
