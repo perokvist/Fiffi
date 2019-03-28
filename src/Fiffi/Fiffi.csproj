@@ -8,7 +8,7 @@
     <PackageId>Fiffi</PackageId>
     <Title>Fiffi</Title>
     <Authors>Per Ökvist</Authors>
-    <PackageLicenseUrl>http://opensource.org/licenses/MS-PL</PackageLicenseUrl>
+    <PackageLicenseExpression>MS-PL</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/perokvist/Fiffi/</PackageProjectUrl>
     <PackageIconUrl>https://github.com/perokvist/Fiffi/raw/master/fiffi.ico</PackageIconUrl>
     <Description>Exploration kit for eventdriven services</Description>
