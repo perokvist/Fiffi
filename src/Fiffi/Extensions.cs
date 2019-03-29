@@ -45,5 +45,10 @@ namespace Fiffi
 			where T : IEvent
 			=> processor.Register<T>(e => d.Dispatch(receptor(e)));
 
+		public static void DoIf<T>(this T self, Func<T, bool> p, Action<T> f)
+		{
+			if (p(self)) f(self);
+		}
+
 	}
 }

@@ -10,8 +10,10 @@ namespace Fiffi
 		/// <remarks>Expects that state and outbox events is persisted in the same transaction</remarks>
 		Task SaveAsync<T>(IAggregateId aggregateId, T state, IEvent[] outboxEvents);
 
-		Func<IEvent[], Task> OnPublish(Func<IEvent[], Task> publish);
+		Task<IEvent[]> GetOutBoxAsync(string sourceId);
 
-		Task<IEvent[]> GetAllUnPublishedEvents();
+		Task ClearOutBoxAsync(string sourceId);
+
+		Task<IEvent[]> GetAllUnPublishedEventsAsync();
 	}
 }
