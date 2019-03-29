@@ -38,7 +38,7 @@ namespace Fiffi
 			=> events.ExecuteHandlersAsync(_handlers, BuildExecutionContext,_locks);
 
 		static Func<(Type Type, EventHandle EventHandler), (Task EventHandler, IAggregateId AggregateId, Guid CorrelationId)> BuildExecutionContext(IEvent e)
-		=> f => (f.EventHandler(e), new AggregateId(e.SourceId.ToString()), e.GetCorrelation());
+		=> f => (f.EventHandler(e), new AggregateId(e.SourceId), e.GetCorrelation());
 
 	}
 
@@ -63,7 +63,7 @@ namespace Fiffi
 		=> events.ExecuteHandlersAsync(_handlers, e => BuildExecutionContext(e, additional), _locks);
 
 		static Func<(Type Type, Func<IEvent, TAdditional, Task> EventHandler), (Task EventHandler, IAggregateId AggregateId, Guid CorrelationId)> BuildExecutionContext(IEvent e, TAdditional additional)
-			=> f => (f.EventHandler(e, additional), new AggregateId(e.SourceId.ToString()), e.GetCorrelation());
+			=> f => (f.EventHandler(e, additional), new AggregateId(e.SourceId), e.GetCorrelation());
 	}
 
 	public static class EventProcessorExtensions

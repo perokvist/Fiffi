@@ -21,7 +21,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Gateway", "src\Gateway\Gate
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fiffi.Streamstone", "src\Fiffi.Streamstone\Fiffi.Streamstone.csproj", "{13EA7DB4-C64A-48BC-BF4B-6C400BB02DAA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fiffi.Streamstone.Tests", "src\Fiffi.Streamstone.Tests\Fiffi.Streamstone.Tests.csproj", "{427F6BBB-F01C-4ABB-9272-14863B363D51}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fiffi.Streamstone.Tests", "src\Fiffi.Streamstone.Tests\Fiffi.Streamstone.Tests.csproj", "{427F6BBB-F01C-4ABB-9272-14863B363D51}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fiffi.Tests", "src\Fiffi.Tests\Fiffi.Tests.csproj", "{CA477014-D5FD-46CE-975E-9C9FD4E4B020}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -103,6 +105,14 @@ Global
 		{427F6BBB-F01C-4ABB-9272-14863B363D51}.Release|Any CPU.Build.0 = Release|Any CPU
 		{427F6BBB-F01C-4ABB-9272-14863B363D51}.Release|x64.ActiveCfg = Release|Any CPU
 		{427F6BBB-F01C-4ABB-9272-14863B363D51}.Release|x64.Build.0 = Release|Any CPU
+		{CA477014-D5FD-46CE-975E-9C9FD4E4B020}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CA477014-D5FD-46CE-975E-9C9FD4E4B020}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CA477014-D5FD-46CE-975E-9C9FD4E4B020}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{CA477014-D5FD-46CE-975E-9C9FD4E4B020}.Debug|x64.Build.0 = Debug|Any CPU
+		{CA477014-D5FD-46CE-975E-9C9FD4E4B020}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CA477014-D5FD-46CE-975E-9C9FD4E4B020}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CA477014-D5FD-46CE-975E-9C9FD4E4B020}.Release|x64.ActiveCfg = Release|Any CPU
+		{CA477014-D5FD-46CE-975E-9C9FD4E4B020}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
