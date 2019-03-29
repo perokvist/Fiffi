@@ -69,6 +69,8 @@ namespace Fiffi
 
 		static void AddMetaData(this IEvent[] events, ICommand command, string aggregateName, string streamName, long version)
 		{
+			if (!events.All(x => x.SourceId == command.AggregateId.Id)) throw new InvalidOperationException("Event SourceId not set or not matching the triggering command");
+
 			events
 				.Where(x => x.Meta == null)
 				.ForEach(x => x.Meta = new Dictionary<string, string>());
