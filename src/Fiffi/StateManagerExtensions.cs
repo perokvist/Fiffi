@@ -7,7 +7,9 @@ namespace Fiffi
 	public static class StateManagerExtensions
 	{
 		public static async Task PublishAllUnPublishedEventsAsync(this IStateManager stateManager, Func<IEvent[], Task> publish)
-			=> (await stateManager.GetAllUnPublishedEventsAsync()).Select(x => stateManager.OnPublish(publish));
+			=> await 
+			(await stateManager.GetAllUnPublishedEventsAsync())
+			.Pipe(async x => await stateManager.OnPublish(publish)(x)); 
 		public static Func<IEvent[], Task> OnPublish(this IStateManager stateManager, Func<IEvent[], Task> publish)
 			=> events =>
 				Task.WhenAll(events
