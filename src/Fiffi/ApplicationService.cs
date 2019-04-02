@@ -17,8 +17,7 @@ namespace Fiffi
 			if (command.CorrelationId == default(Guid))
 				throw new ArgumentException("CorrelationId required");
 
-			var aggregateName = typeof(TState).Name.Replace("State", "Aggregate").ToLower();
-			var streamName = $"{aggregateName}-{command.AggregateId}";
+			var (aggregateName, streamName) = typeof(TState).Name.AsStreamName(command.AggregateId);
 			var happend = await store.LoadEventStreamAsync(streamName, 0);
 			var state = happend.Events.Rehydrate<TState>();
 			var events = await action(state);
@@ -54,8 +53,7 @@ namespace Fiffi
 			Func<IEvent[], Task> pub)
 			where TState : new()
 		{
-			var aggregateName = typeof(TState).Name.Replace("State", "Aggregate").ToLower();
-			var streamName = $"{aggregateName}-{command.AggregateId}";
+			var (aggregateName, streamName) = typeof(TState).Name.AsStreamName(command.AggregateId);
 			var state = await getState();
 			var events = f(state).ToArray();
 			var newState = events.Apply(state);

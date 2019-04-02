@@ -45,10 +45,18 @@ namespace Fiffi
 			where T : IEvent
 			=> processor.Register<T>(e => d.Dispatch(receptor(e)));
 
+		public static void RegisterReceptor<T>(this EventProcessor processor, Dispatcher<ICommand, Task> d, Func<T, Task<ICommand>> receptor)
+			where T : IEvent
+			=> processor.Register<T>(async e => await d.Dispatch(await receptor(e)));
+
 		public static void DoIf<T>(this T self, Func<T, bool> p, Action<T> f)
 		{
 			if (p(self)) f(self);
 		}
+
+		public static string AsAggregateName(this string typeName) => typeName.Replace("State", "Aggregate").ToLower();
+
+		public static (string AggregateName, string streamName) AsStreamName(this string typeName, IAggregateId aggregateId) => (typeName.AsAggregateName(), $"{typeName.AsAggregateName()}-{aggregateId.Id}");
 
 	}
 }

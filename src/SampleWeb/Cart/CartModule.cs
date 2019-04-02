@@ -5,10 +5,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.ServiceFabric.Data;
 using SampleWeb.Cart;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
-using static Fiffi.ApplicationService;
 
 namespace SampleWeb
 {

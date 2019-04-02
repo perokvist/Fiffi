@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,7 +9,7 @@ namespace Fiffi
 {
 	public class InMemoryEventStore : IEventStore
 	{
-		readonly IDictionary<string, IEvent[]> store = new Dictionary<string, IEvent[]>();
+		readonly IDictionary<string, IEvent[]> store = new ConcurrentDictionary<string, IEvent[]>();
 
 		public Task<long> AppendToStreamAsync(string streamName, long version, IEvent[] events)
 		{
