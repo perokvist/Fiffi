@@ -6,11 +6,11 @@ namespace Fiffi
 {
 	public static class StateManagerExtensions
 	{
-		public static async Task PublishAllUnPublishedEventsAsync(this IStateManager stateManager, Func<IEvent[], Task> publish)
+		public static async Task PublishAllUnPublishedEventsAsync(this IStateStore stateManager, Func<IEvent[], Task> publish)
 			=> await 
 			(await stateManager.GetAllUnPublishedEventsAsync())
 			.Pipe(async x => await stateManager.OnPublish(publish)(x)); 
-		public static Func<IEvent[], Task> OnPublish(this IStateManager stateManager, Func<IEvent[], Task> publish)
+		public static Func<IEvent[], Task> OnPublish(this IStateStore stateManager, Func<IEvent[], Task> publish)
 			=> events =>
 				Task.WhenAll(events
 				.GroupBy(x => x.SourceId)

@@ -41,7 +41,7 @@ namespace Fiffi
 			=> ExecuteAsync<TState>(store, command, state => Task.FromResult(action(state)), pub, aggregateLocks);
 
 
-		public static Task ExecuteAsync<TState>(IStateManager stateManager, ICommand command, Func<TState, IEnumerable<IEvent>> f, Func<IEvent[], Task> pub)
+		public static Task ExecuteAsync<TState>(IStateStore stateManager, ICommand command, Func<TState, IEnumerable<IEvent>> f, Func<IEvent[], Task> pub)
 			where TState : new()
 			=> ExecuteAsync(() => stateManager.GetAsync<TState>(command.AggregateId), (state, evts) => stateManager.SaveAsync(command.AggregateId, state, evts), command, f, stateManager.OnPublish(pub));
 

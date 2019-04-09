@@ -12,7 +12,6 @@ using Fiffi.ServiceFabric;
 using System.Linq;
 using Xunit.Abstractions;
 using SampleWeb.Order;
-using Fiffi.ServiceFabric.Testing;
 using ServiceFabric.Mocks;
 
 namespace SampleWeb.Tests
@@ -20,11 +19,11 @@ namespace SampleWeb.Tests
 	public class WebTests
 	{
 		private HttpClient client;
-		private TestContext context;
+		private ITestContext context;
 		private ITestOutputHelper output;
 
 		public WebTests(ITestOutputHelper output)
-		=> this.context = TestContextBuilder.Create(new MockReliableStateManager(), (stateManager, storeFactory, queue) =>
+		=> this.context = Fiffi.ServiceFabric.Testing.TestContextBuilder.Create(new MockReliableStateManager(), (stateManager, storeFactory, queue) =>
 			{
 				this.output = output;
 

@@ -7,17 +7,16 @@ using Fiffi.ServiceFabric;
 using Xunit.Abstractions;
 using Fiffi.Testing;
 using Fiffi.Visualization;
-using Fiffi.ServiceFabric.Testing;
 using ServiceFabric.Mocks;
 
 namespace SampleWeb.Tests
 {
 	public class CartTests
 	{
-		TestContext context;
+		ITestContext context;
 		ITestOutputHelper output;
 		public CartTests(ITestOutputHelper output)
-		=> this.context = TestContextBuilder.Create(new MockReliableStateManager(), (stateManager, storeFactory, queue) =>
+		=> this.context = Fiffi.ServiceFabric.Testing.TestContextBuilder.Create(new MockReliableStateManager(), (stateManager, storeFactory, queue) =>
 			{
 				this.output = output;
 				var orderModule = OrderModule.Initialize(stateManager, storeFactory, queue.Enqueue, events => Task.CompletedTask);

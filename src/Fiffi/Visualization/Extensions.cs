@@ -7,7 +7,7 @@ namespace Fiffi.Visualization
 {
 	public static class Extensions
 	{
-		public static void Then(this TestContext context, Action<IEvent[], string> f)
+		public static void Then(this ITestContext context, Action<IEvent[], string> f)
 			=> context.Then(events =>
 		{
 			var t = events.Draw();

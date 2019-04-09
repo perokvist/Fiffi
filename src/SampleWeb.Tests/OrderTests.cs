@@ -12,9 +12,9 @@ namespace SampleWeb.Tests
 {
 	public class OrderTests
 	{
-		TestContext context;
+		ITestContext context;
 		public OrderTests()
-		=> this.context = TestContextBuilder.Create(new MockReliableStateManager(), (stateManager, storeFactory, queue) =>
+		=> this.context = Fiffi.ServiceFabric.Testing.TestContextBuilder.Create(new MockReliableStateManager(), (stateManager, storeFactory, queue) =>
 		 {
 			 var module = OrderModule.Initialize(stateManager, storeFactory, queue.Enqueue, events => Task.CompletedTask);
 

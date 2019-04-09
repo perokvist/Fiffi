@@ -21,7 +21,7 @@ namespace SampleWeb.Tests
 	{
 		private IReliableStateManager stateManager;
 		private HttpClient client;
-		private TestContext context;
+		private ITestContext context;
 		private List<IEvent> events = new List<IEvent>();
 		private List<IEvent> outgoingEvents = new List<IEvent>();
 		private Task eventsDispatchedToModules;
@@ -30,7 +30,7 @@ namespace SampleWeb.Tests
 		private IEventCommunication eventCommunication;
 
 		public MailboxTests()
-		=> this.context = TestContextBuilder.Create(new MockReliableStateManager(), (stateManager, storeFactory, queue) =>
+		=> this.context = Fiffi.ServiceFabric.Testing.TestContextBuilder.Create(new MockReliableStateManager(), (stateManager, storeFactory, queue) =>
 		 {
 			 var eventsDispatchedToOutBoundSource = new TaskCompletionSource<bool>();
 			 eventsDispatchedToOutbound = eventsDispatchedToOutBoundSource.Task;
