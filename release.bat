@@ -1,7 +1,8 @@
 @echo "Builing and publishing nuget"
 dotnet restore
 dotnet build
-dotnet test
+dotnet test --filter Category!=Integration
+if errorLevel = 1 exit
 cd src\Fiffi
 cd nupkgs
 del *.nupkg

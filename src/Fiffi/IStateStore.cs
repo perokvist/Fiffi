@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 
 namespace Fiffi
 {
@@ -11,7 +12,7 @@ namespace Fiffi
 
 		Task<IEvent[]> GetOutBoxAsync(string sourceId);
 
-		Task ClearOutBoxAsync(string sourceId);
+		Task ClearOutBoxAsync(string sourceId, params Guid[] correlationIds);
 
 		Task<IEvent[]> GetAllUnPublishedEventsAsync();
 	}
