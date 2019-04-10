@@ -11,23 +11,24 @@ namespace Fiffi.Testing
     {
         public static bool Happened(this IEnumerable<IEvent> events) => events.Count() >= 1;
 
-        public static async Task<object> GetAsync(this IStateStore stateManager, Type type, IAggregateId aggregateId)
+        public static async Task<(object Value, long Version)> GetAsync(this IStateStore stateManager, Type type, IAggregateId aggregateId)
         {
             var mi = typeof(IStateStore).GetMethod("GetAsync").MakeGenericMethod(type);
             return await mi.InvokeAsync(stateManager, aggregateId);
         }
 
-        public static async Task SaveAsync(this IStateStore stateManager, IAggregateId aggregateId, object state, IEvent[] events, Type type)
+        public static async Task SaveAsync(this IStateStore stateManager, IAggregateId aggregateId, object state, long version, IEvent[] events, Type type)
         {
             var mi = typeof(IStateStore).GetMethod("SaveAsync").MakeGenericMethod(type);
-            await mi.InvokeAsync(stateManager, aggregateId, events);
+            await mi.InvokeAsync(stateManager, aggregateId, state, version, events);
         }
 
-        public static async Task<object> InvokeAsync(this MethodInfo @this, object obj, params object[] parameters)
+        static async Task<(object, long)> InvokeAsync(this MethodInfo @this, object obj, params object[] parameters)
         {
             dynamic awaitable = @this.Invoke(obj, parameters);
             await awaitable;
-            return awaitable.GetAwaiter().GetResult();
+            var r = awaitable.GetAwaiter().GetResult();
+            return (r.Item1, r.Item2);
         }
 
         public static IEvent AddTestMetaData<TState>(this IEvent @event, IAggregateId id, int version = 1)

@@ -5,79 +5,79 @@ using System.Threading.Tasks;
 
 namespace Fiffi
 {
-	public static class ApplicationService
-	{
-		public static Task ExecuteAsync<TState>(IEventStore store, ICommand command, Func<TState, IEvent[]> action, Func<IEvent[], Task> pub)
-			where TState : class, new()
-			=> ExecuteAsync<TState>(store, command, state => Task.FromResult(action(state)), pub);
+    public static class ApplicationService
+    {
+        public static Task ExecuteAsync<TState>(IEventStore store, ICommand command, Func<TState, IEvent[]> action, Func<IEvent[], Task> pub)
+            where TState : class, new()
+            => ExecuteAsync<TState>(store, command, state => Task.FromResult(action(state)), pub);
 
-		public static async Task ExecuteAsync<TState>(IEventStore store, ICommand command, Func<TState, Task<IEvent[]>> action, Func<IEvent[], Task> pub)
-			where TState : class, new()
-		{
-			if (command.CorrelationId == default(Guid))
-				throw new ArgumentException("CorrelationId required");
+        public static async Task ExecuteAsync<TState>(IEventStore store, ICommand command, Func<TState, Task<IEvent[]>> action, Func<IEvent[], Task> pub)
+            where TState : class, new()
+        {
+            if (command.CorrelationId == default(Guid))
+                throw new ArgumentException("CorrelationId required");
 
-			var (aggregateName, streamName) = typeof(TState).Name.AsStreamName(command.AggregateId);
-			var happend = await store.LoadEventStreamAsync(streamName, 0);
-			var state = happend.Events.Rehydrate<TState>();
-			var events = await action(state);
+            var (aggregateName, streamName) = typeof(TState).Name.AsStreamName(command.AggregateId);
+            var happend = await store.LoadEventStreamAsync(streamName, 0);
+            var state = happend.Events.Rehydrate<TState>();
+            var events = await action(state);
 
-			events.AddMetaData(command, aggregateName, streamName, happend.Version);
+            events.AddMetaData(command, aggregateName, streamName, happend.Version);
 
-			if (events.Any())
-				await store.AppendToStreamAsync(streamName, events.Last().GetVersion(), events);
+            if (events.Any())
+                await store.AppendToStreamAsync(streamName, events.Last().GetVersion(), events);
 
-			await pub(events); //need to always execute due to locks
-		}
+            await pub(events); //need to always execute due to locks
+        }
 
-		public static async Task ExecuteAsync<TState>(IEventStore store, ICommand command, Func<TState, Task<IEvent[]>> action, Func<IEvent[], Task> pub, AggregateLocks aggregateLocks)
-			where TState : class, new()
-			=> await aggregateLocks.UseLockAsync(command.AggregateId, command.CorrelationId, pub, async (publisher) =>
-				 await ExecuteAsync(store, command, action, publisher)
-			);
+        public static async Task ExecuteAsync<TState>(IEventStore store, ICommand command, Func<TState, Task<IEvent[]>> action, Func<IEvent[], Task> pub, AggregateLocks aggregateLocks)
+            where TState : class, new()
+            => await aggregateLocks.UseLockAsync(command.AggregateId, command.CorrelationId, pub, async (publisher) =>
+                 await ExecuteAsync(store, command, action, publisher)
+            );
 
-		public static Task ExecuteAsync<TState>(IEventStore store, ICommand command, Func<TState, IEvent[]> action, Func<IEvent[], Task> pub, AggregateLocks aggregateLocks)
-			where TState : class, new()
-			=> ExecuteAsync<TState>(store, command, state => Task.FromResult(action(state)), pub, aggregateLocks);
+        public static Task ExecuteAsync<TState>(IEventStore store, ICommand command, Func<TState, IEvent[]> action, Func<IEvent[], Task> pub, AggregateLocks aggregateLocks)
+            where TState : class, new()
+            => ExecuteAsync<TState>(store, command, state => Task.FromResult(action(state)), pub, aggregateLocks);
 
 
-		public static Task ExecuteAsync<TState>(IStateStore stateManager, ICommand command, Func<TState, IEnumerable<IEvent>> f, Func<IEvent[], Task> pub)
-			where TState : new()
-			=> ExecuteAsync(() => stateManager.GetAsync<TState>(command.AggregateId), (state, evts) => stateManager.SaveAsync(command.AggregateId, state, evts), command, f, stateManager.OnPublish(pub));
+        public static Task ExecuteAsync<TState>(IStateStore stateManager, ICommand command, Func<TState, IEnumerable<IEvent>> f, Func<IEvent[], Task> pub)
+            where TState : new()
+            => ExecuteAsync(() => stateManager.GetAsync<TState>(command.AggregateId), (state, version, evts) => stateManager.SaveAsync(command.AggregateId, state, version ,evts), command, f, stateManager.OnPublish(pub));
 
-		public static async Task ExecuteAsync<TState>(
-			Func<Task<TState>> getState,
-			Func<TState, IEvent[], Task> saveState,
-			ICommand command,
-			Func<TState, IEnumerable<IEvent>> f,
-			Func<IEvent[], Task> pub)
-			where TState : new()
-		{
-			var (aggregateName, streamName) = typeof(TState).Name.AsStreamName(command.AggregateId);
-			var state = await getState();
-			var events = f(state).ToArray();
-			var newState = events.Apply(state);
+        public static async Task ExecuteAsync<TState>(
+            Func<Task<(TState, long)>> getState,
+            Func<TState, long, IEvent[], Task> saveState,
+            ICommand command,
+            Func<TState, IEnumerable<IEvent>> f,
+            Func<IEvent[], Task> pub)
+            where TState : new()
+        {
+            var (aggregateName, streamName) = typeof(TState).Name.AsStreamName(command.AggregateId);
+            var state = await getState();
+            var events = f(state.Item1).ToArray();
+            var newState = events.Apply(state.Item1);
 
-			if (events.Any())
-				events.AddMetaData(command, aggregateName, streamName, long.Parse(events.Last()?.Meta.GetMetaOrDefault("version", "0"))); //TODO revise version here
+            if (events.Any())
+                events.AddMetaData(command, aggregateName, streamName, state.Item2);
 
-			await saveState(newState, events); //2PC trouble
-			await pub(events);
-		}
+            await saveState(newState, state.Item2, events); //2PC trouble
+            await pub(events);
+        }
 
-		static void AddMetaData(this IEvent[] events, ICommand command, string aggregateName, string streamName, long version)
-		{
-			if (!events.All(x => x.SourceId == command.AggregateId.Id)) throw new InvalidOperationException("Event SourceId not set or not matching the triggering command");
+        static void AddMetaData(this IEvent[] events, ICommand command, string aggregateName, string streamName, long version)
+        {
+            if (!events.All(x => x.SourceId == command.AggregateId.Id)) throw new InvalidOperationException("Event SourceId not set or not matching the triggering command");
 
-			events
-				.Where(x => x.Meta == null)
-				.ForEach(x => x.Meta = new Dictionary<string, string>());
+            events
+                .Where(x => x.Meta == null)
+                .ForEach(x => x.Meta = new Dictionary<string, string>());
 
-			events
-				.ForEach(x => x
-						.Tap(e => e.Meta.AddMetaData(version + 1, streamName, aggregateName, command))
-						.Tap(e => e.Meta.AddTypeInfo(e))
-					);
-		}
-	}
+            events
+                .ForEach(x => x
+                        .Tap(e => e.Meta.AddMetaData(version + 1, streamName, aggregateName, command))
+                        .Tap(e => e.Meta.AddTypeInfo(e))
+                    );
+        }
+    }
 }

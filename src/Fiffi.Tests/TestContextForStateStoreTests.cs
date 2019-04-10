@@ -31,7 +31,7 @@ namespace Fiffi.Tests
 
             var state = await stateStore.GetAsync<TestState>(id);
 
-            Assert.True(state.Called);
+            Assert.True(state.State.Called);
         }
 
         public class TestState
