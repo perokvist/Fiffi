@@ -43,7 +43,7 @@ namespace Fiffi
 
         public static Task ExecuteAsync<TState>(IStateStore stateManager, ICommand command, Func<TState, IEnumerable<IEvent>> f, Func<IEvent[], Task> pub)
             where TState : new()
-            => ExecuteAsync(() => stateManager.GetAsync<TState>(command.AggregateId), (state, version, evts) => stateManager.SaveAsync(command.AggregateId, state, version ,evts), command, f, stateManager.OnPublish(pub));
+            => ExecuteAsync(() => stateManager.GetAsync<TState>(command.AggregateId), (state, version, evts) => stateManager.SaveAsync(command.AggregateId, state, version, evts), command, f, stateManager.OnPublish(pub));
 
         public static async Task ExecuteAsync<TState>(
             Func<Task<(TState, long)>> getState,
@@ -54,14 +54,15 @@ namespace Fiffi
             where TState : new()
         {
             var (aggregateName, streamName) = typeof(TState).Name.AsStreamName(command.AggregateId);
-            var state = await getState();
-            var events = f(state.Item1).ToArray();
-            var newState = events.Apply(state.Item1);
+            var (state, version) = await getState();
+            if (state == null) state = new TState();
+            var events = f(state).ToArray();
+            var newState = events.Apply(state);
 
             if (events.Any())
-                events.AddMetaData(command, aggregateName, streamName, state.Item2);
+                events.AddMetaData(command, aggregateName, streamName, version);
 
-            await saveState(newState, state.Item2, events); //2PC trouble
+            await saveState(newState, version, events); //2PC trouble
             await pub(events);
         }
 
