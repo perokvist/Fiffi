@@ -13,7 +13,7 @@ namespace Fiffi.Tests
         IStateStore stateStore;
 
         public TestContextForStateStoreTests()
-        => context = TestContextBuilder.Create<InMemoryStateStrore>((store, q) =>
+        => context = TestContextBuilder.Create<InMemoryStateStore>((store, q) =>
         {
             stateStore = store;
             return new TestContextForStateStore(a => a(store), c => Task.CompletedTask, q, e => Task.CompletedTask);

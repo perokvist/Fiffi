@@ -6,7 +6,7 @@ using System.Collections.Concurrent;
 
 namespace Fiffi
 {
-    public class InMemoryStateStrore : IStateStore
+    public class InMemoryStateStore : IStateStore
     {
         IDictionary<IAggregateId, (object State, ISet<IEvent> OutBox)> store = new ConcurrentDictionary<IAggregateId, (object, ISet<IEvent>)>();
 

@@ -23,7 +23,7 @@ namespace Fiffi.Testing
 		}
 
 		public void Given(params IEvent[] events)
-		=> this.init(stateManager =>
+		=> this.init(stateStore =>
             Task.WhenAll(events
             .GroupBy(x => x.SourceId)
             .Select(async x => {
@@ -32,12 +32,12 @@ namespace Fiffi.Testing
 
                 var type = Type.GetType(e.Meta["test.statetype"]);
                 if (type == null) throw new AggregateException($"Couldn't find type by convension for {e.GetAggregateName()}");
-                var state = await stateManager.GetAsync(type, id);
+                var state = await stateStore.GetAsync(type, id);
 
                 if (state == null)
                 {
-                    await stateManager.SaveAsync(id, Activator.CreateInstance(type), x.ToArray());
-                    state = await stateManager.GetAsync(type, id);
+                    await stateStore.SaveAsync(id, Activator.CreateInstance(type), x.ToArray());
+                    state = await stateStore.GetAsync(type, id);
                 }
 
                 foreach (var item in x)
