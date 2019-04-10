@@ -59,9 +59,9 @@ namespace Fiffi
 			var newState = events.Apply(state);
 
 			if (events.Any())
-				events.AddMetaData(command, aggregateName, streamName, events.Last().GetVersion()); //TODO revise version here
+				events.AddMetaData(command, aggregateName, streamName, long.Parse(events.Last()?.Meta.GetMetaOrDefault("version", "0"))); //TODO revise version here
 
-			await saveState(state, events); //2PC trouble
+			await saveState(newState, events); //2PC trouble
 			await pub(events);
 		}
 

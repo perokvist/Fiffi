@@ -26,7 +26,7 @@ namespace Fiffi
 
 		public static long GetVersion(this IEvent @event) => long.Parse(@event.Require(nameof(EventMetaData.Version)));
 
-		public static Guid EventId(this IEvent e) => Guid.Parse(e.Require(nameof(EventMetaData.EventId)));
+        public static Guid EventId(this IEvent e) => Guid.Parse(e.Require(nameof(EventMetaData.EventId)));
 
 		public static bool HasCorrelation(this IEvent @event) => @event.HasMeta(nameof(EventMetaData.CorrelationId));
 
