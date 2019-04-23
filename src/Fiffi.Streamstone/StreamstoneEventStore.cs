@@ -19,7 +19,7 @@ namespace Fiffi.Streamstone
 		public Task<long> AppendToStreamAsync(string streamName, long version, IEvent[] events)
 			=> _table.AppendToEventStreamAsync(streamName, version, events);
 
-		public Task<(IEnumerable<IEvent> Events, long Version)> LoadEventStreamAsync(string streamName, int version)
+		public Task<(IEnumerable<IEvent> Events, long Version)> LoadEventStreamAsync(string streamName, long version)
 			=> _table.ReadEventsFromStreamAsync(streamName, version, _typeResolver);
 
 

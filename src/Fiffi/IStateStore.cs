@@ -5,10 +5,12 @@ namespace Fiffi
 {
     public interface IStateStore
     {
-        Task<(T State, long Version)> GetAsync<T>(IAggregateId id);
+        Task<(T State, long Version)> GetAsync<T>(IAggregateId id)
+         where T : new();
 
         /// <remarks>Expects that state and outbox events is persisted in the same transaction</remarks>
-        Task SaveAsync<T>(IAggregateId aggregateId, T state, long version, IEvent[] outboxEvents);
+        Task SaveAsync<T>(IAggregateId id, T state, long version, IEvent[] events)
+         where T : new();
 
         Task<IEvent[]> GetOutBoxAsync(string sourceId);
 

@@ -77,7 +77,7 @@ namespace Fiffi.ServiceFabric
 		}
 
 		public static async Task<(IEnumerable<IEvent>, long)> LoadEventStreamAsync(this IReliableStateManager stateManager, string streamName,
-			int version, Func<EventData, IEvent> deserializer, string streamsName = defaultStreamsName)
+			long version, Func<EventData, IEvent> deserializer, string streamsName = defaultStreamsName)
 		{
 			using (var tx = stateManager.CreateTransaction())
 			{
@@ -88,7 +88,7 @@ namespace Fiffi.ServiceFabric
 		}
 
 		public static async Task<(IEnumerable<IEvent>, long)> LoadEventStreamAsync(this IReliableStateManager stateManager,
-			ITransaction tx, string streamName, int version, Func<EventData, IEvent> deserializer, string streamsName = defaultStreamsName)
+			ITransaction tx, string streamName, long version, Func<EventData, IEvent> deserializer, string streamsName = defaultStreamsName)
 		{
 			//var streams = await stateManager.GetOrAddAsync<IReliableDictionary<string, List<StorageEvent>>>(tx, streamsName);
 			//https://github.com/Azure/service-fabric-issues/issues/24
@@ -98,7 +98,7 @@ namespace Fiffi.ServiceFabric
 		}
 
 		public static async Task<(IEnumerable<IEvent>, long)> LoadEventStreamAsync(this IReliableDictionary<string, List<StorageEvent>> streams,
-			ITransaction tx, string streamName, int version, Func<EventData, IEvent> deserializer)
+			ITransaction tx, string streamName, long version, Func<EventData, IEvent> deserializer)
 		{
 			var streamResult = await streams.TryGetValueAsync(tx, streamName);
 
@@ -109,7 +109,7 @@ namespace Fiffi.ServiceFabric
 
 			var stream = streamResult.Value;
 
-			return (stream.Skip(version).Select(x => x.ToEventData().ToEvent(deserializer)), stream.Count);
+			return (stream.Skip((int)version).Select(x => x.ToEventData().ToEvent(deserializer)), stream.Count);
 		}
 
 		//TODO move to queue etx

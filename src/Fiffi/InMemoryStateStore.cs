@@ -1,50 +1,58 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using System.Linq;
 using System.Collections.Concurrent;
-using System.Data;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace Fiffi
 {
     public class InMemoryStateStore : IStateStore
     {
-        IDictionary<IAggregateId, ((object Value, long Version) State, ISet<IEvent> OutBox)> store = new ConcurrentDictionary<IAggregateId, ((object Value, long Version) State, ISet<IEvent> OutBox)>();
+        private readonly IEventStore store;
+        private IDictionary<string, (string StreamName, long Version)> published = new ConcurrentDictionary<string, (string StreamName, long Version)>();
 
-        public Task<(T State, long Version)> GetAsync<T>(IAggregateId id)
-            => Task.FromResult<(T State, long Version)>(store.ContainsKey(id) ? ((T)store[id].State.Value, store[id].State.Version) : (default(T), default(long)));
+        public InMemoryStateStore() : this(new InMemoryEventStore())
+        { }
 
-        public Task SaveAsync<T>(IAggregateId aggregateId, T state, long version, IEvent[] outboxEvents)
+        public InMemoryStateStore(IEventStore store)
         {
-            if (store.ContainsKey(aggregateId))
-            {
-                if (store[aggregateId].State.Version != version)
-                    throw new DBConcurrencyException($"wrong version - expected {version} but was {store[aggregateId].State.Version}");
+            this.store = store;
+        }
+        public async Task ClearOutBoxAsync(string sourceId, params Guid[] correlationIds)
+        {
+            if (!published.ContainsKey(sourceId)) return;
 
-                store[aggregateId] = ((state, version + 1), outboxEvents.ToHashSet());
-            }
-            else
-                store.Add(aggregateId, ((state, version + 1), outboxEvents.ToHashSet()));
+            var happend = await GetOutBoxAsync(sourceId);
+            var version = happend
+                .Where(e => correlationIds.Any(x => x == e.GetCorrelation()))
+                .Last().GetVersion();
 
-            return Task.CompletedTask;
+            published[sourceId] = (published[sourceId].StreamName, version);
         }
 
-        public Task<IEvent[]> GetOutBoxAsync(string sourceId)
-            => new AggregateId(sourceId)
-                .Pipe(id => Task.FromResult(store.ContainsKey(id) ? store[id].OutBox.ToArray() : Array.Empty<IEvent>()));
+        public async Task<IEvent[]> GetAllUnPublishedEventsAsync()
+            => (await Task.WhenAll(published.Select(x => GetOutBoxAsync(x.Key)))).SelectMany(x => x).ToArray();
 
-        public Task ClearOutBoxAsync(string sourceId, params Guid[] correlationIds)
-            => new AggregateId(sourceId)
-                .Tap(id => store.DoIf(s => s.ContainsKey(id), s =>
-                    s[id].OutBox
-                    .Where(x => correlationIds.Any(c => c == x.GetCorrelation()))
-                    .ToList()
-                    .ForEach(e => s[id].OutBox.Remove(e))
-                ))
-                .Pipe(id => Task.CompletedTask);
+        public async Task<(T State, long Version)> GetAsync<T>(IAggregateId id)
+            where T : new()
+        {
+            var happend = await this.store.LoadEventStreamAsync(typeof(T).Name.AsStreamName(id).StreamName, 0);
+            return (happend.Events.Rehydrate<T>(), happend.Version);
+        }
 
-        public Task<IEvent[]> GetAllUnPublishedEventsAsync()
-             => Task.FromResult(store.SelectMany(x => x.Value.OutBox).ToArray());
+        public async Task<IEvent[]> GetOutBoxAsync(string sourceId)
+        {
+            if (!published.ContainsKey(sourceId)) Array.Empty<IEvent>();
+            return (await this.store.LoadEventStreamAsync(published[sourceId].StreamName, published[sourceId].Version)).Events.ToArray();
+        }
 
+        public Task SaveAsync<T>(IAggregateId id, T state, long version, IEvent[] events)
+            where T : new()
+        {
+            var streamName = typeof(T).Name.AsStreamName(id).StreamName;
+            if (!this.published.ContainsKey(id.Id)) this.published.Add(id.Id, (streamName, 0));
+            return this.store.AppendToStreamAsync(streamName, version, events);
+        }
     }
 }

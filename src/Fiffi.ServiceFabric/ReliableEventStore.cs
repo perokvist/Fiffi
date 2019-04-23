@@ -34,7 +34,7 @@ namespace Fiffi.ServiceFabric
 			this.reliableCollectionNameProvider(streamName)
 				.Pipe(name => name == null ? this.stateManager.AppendToStreamAsync(tx, streamName, version, events, serializer) : this.stateManager.AppendToStreamAsync(tx, streamName, version, events, serializer, name));
 
-		public Task<(IEnumerable<IEvent>, long)> LoadEventStreamAsync(string streamName, int version) =>
+		public Task<(IEnumerable<IEvent>, long)> LoadEventStreamAsync(string streamName, long version) =>
 			this.reliableCollectionNameProvider(streamName)
 			.Pipe(name => name == null ? this.stateManager.LoadEventStreamAsync(tx, streamName, version, deserializer) : this.stateManager.LoadEventStreamAsync(tx, streamName, version, deserializer, name));
 

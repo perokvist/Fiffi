@@ -56,7 +56,7 @@ namespace Fiffi
 
 		public static string AsAggregateName(this string typeName) => typeName.Replace("State", "Aggregate").ToLower();
 
-		public static (string AggregateName, string streamName) AsStreamName(this string typeName, IAggregateId aggregateId) => (typeName.AsAggregateName(), $"{typeName.AsAggregateName()}-{aggregateId.Id}");
+        public static (string AggregateName, string StreamName) AsStreamName(this string typeName, IAggregateId aggregateId) => (typeName.AsAggregateName(), $"{typeName.AsAggregateName()}-{aggregateId.Id}");
 
 	}
 }

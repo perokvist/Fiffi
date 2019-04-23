@@ -17,7 +17,6 @@ namespace Fiffi
 				.Select(async x =>
 				{
 					await publish(x.ToArray());
-					var state = stateManager.GetOutBoxAsync(x.Key.SourceId);
 					await stateManager.ClearOutBoxAsync(x.Key.SourceId, x.Key.CorrelationId);
 				}));
 
