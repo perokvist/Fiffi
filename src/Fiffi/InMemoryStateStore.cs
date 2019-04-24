@@ -35,9 +35,10 @@ namespace Fiffi
             => (await Task.WhenAll(published.Select(x => GetOutBoxAsync(x.Key)))).SelectMany(x => x).ToArray();
 
         public async Task<(T State, long Version)> GetAsync<T>(IAggregateId id)
-            where T : new()
+            where T : class, new()
         {
             var happend = await this.store.LoadEventStreamAsync(typeof(T).Name.AsStreamName(id).StreamName, 0);
+            if (!happend.Events.Any()) return (null, 0);
             return (happend.Events.Rehydrate<T>(), happend.Version);
         }
 
@@ -48,7 +49,7 @@ namespace Fiffi
         }
 
         public Task SaveAsync<T>(IAggregateId id, T state, long version, IEvent[] events)
-            where T : new()
+            where T : class, new()
         {
             var streamName = typeof(T).Name.AsStreamName(id).StreamName;
             if (!this.published.ContainsKey(id.Id)) this.published.Add(id.Id, (streamName, 0));

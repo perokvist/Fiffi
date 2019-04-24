@@ -14,21 +14,21 @@ namespace Fiffi.Testing
         public static async Task<(object Value, long Version)> GetAsync(this IStateStore stateManager, Type type, IAggregateId aggregateId)
         {
             var mi = typeof(IStateStore).GetMethod("GetAsync").MakeGenericMethod(type);
-            return await mi.InvokeAsync(stateManager, aggregateId);
+            return await mi.InvokeAsync<(object, long)>(stateManager, d => (d.Item1, d.Item2), aggregateId);
         }
 
         public static async Task SaveAsync(this IStateStore stateManager, IAggregateId aggregateId, object state, long version, IEvent[] events, Type type)
         {
             var mi = typeof(IStateStore).GetMethod("SaveAsync").MakeGenericMethod(type);
-            await mi.InvokeAsync(stateManager, aggregateId, state, version, events);
+            await mi.InvokeAsync<bool>(stateManager, d => true, aggregateId, state, version, events);
         }
 
-        static async Task<(object, long)> InvokeAsync(this MethodInfo @this, object obj, params object[] parameters)
+        static async Task<TResult> InvokeAsync<TResult>(this MethodInfo @this, object obj, Func<dynamic, TResult> f, params object[] parameters)
         {
             dynamic awaitable = @this.Invoke(obj, parameters);
             await awaitable;
             var r = awaitable.GetAwaiter().GetResult();
-            return (r.Item1, r.Item2);
+            return f(r);
         }
 
         public static IEvent AddTestMetaData<TState>(this IEvent @event, IAggregateId id, int version = 1)

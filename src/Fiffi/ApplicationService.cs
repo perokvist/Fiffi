@@ -42,7 +42,7 @@ namespace Fiffi
 
 
         public static Task ExecuteAsync<TState>(IStateStore stateManager, ICommand command, Func<TState, IEnumerable<IEvent>> f, Func<IEvent[], Task> pub)
-            where TState : new()
+            where TState : class, new()
             => ExecuteAsync(() => stateManager.GetAsync<TState>(command.AggregateId), (state, version, evts) => stateManager.SaveAsync(command.AggregateId, state, version, evts), command, f, stateManager.OnPublish(pub));
 
         public static async Task ExecuteAsync<TState>(
