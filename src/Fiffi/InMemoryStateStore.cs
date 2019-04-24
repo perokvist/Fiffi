@@ -37,7 +37,8 @@ namespace Fiffi
         public async Task<(T State, long Version)> GetAsync<T>(IAggregateId id)
             where T : class, new()
         {
-            var happend = await this.store.LoadEventStreamAsync(typeof(T).Name.AsStreamName(id).StreamName, 0);
+            var streamName = typeof(T).Name.AsStreamName(id).StreamName;
+            var happend = await this.store.LoadEventStreamAsync(streamName, 0);
             if (!happend.Events.Any()) return (null, 0);
             return (happend.Events.Rehydrate<T>(), happend.Version);
         }
@@ -52,7 +53,7 @@ namespace Fiffi
             where T : class, new()
         {
             var streamName = typeof(T).Name.AsStreamName(id).StreamName;
-            if (!this.published.ContainsKey(id.Id)) this.published.Add(id.Id, (streamName, 0));
+            if (!this.published.ContainsKey(id.Id)) this.published.Add(id.Id, (streamName, version));
             return this.store.AppendToStreamAsync(streamName, version, events);
         }
     }

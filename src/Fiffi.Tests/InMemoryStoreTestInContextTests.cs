@@ -7,32 +7,28 @@ using Xunit;
 
 namespace Fiffi.Tests
 {
-    public class TestContextForStateStoreTests
+    public class TestContextForStateStoreTests2
     {
         ITestContext context;
         IStateStore stateStore;
 
-        public TestContextForStateStoreTests()
+        public TestContextForStateStoreTests2()
         => context = TestContextBuilder.Create<InMemoryStateStore>((store, q) =>
         {
             stateStore = store;
-            return new TestContextForStateStore(a => a(store), c => Task.CompletedTask, q, e => Task.CompletedTask);
+            return new TestContextForStateStore(a => a(store), c => ApplicationService.ExecuteAsync<TestState>(store, c, s => Array.Empty<IEvent>(), e => Task.CompletedTask)  , q, e => Task.CompletedTask);
         });
 
-
         [Fact]
-        public async Task ContextCreatesStateAsync()
+        public async Task AppendToStreamAsync()
         {
             var id = new AggregateId(Guid.NewGuid());
 
             context.Given(new TestEvent(id).AddTestMetaData<TestState>(id));
 
             await context.WhenAsync(new TestCommand(id));
-
-            var state = await stateStore.GetAsync<TestState>(id);
-
-            Assert.True(state.State.Called);
         }
+
         public class TestState
         {
             public TestState()
@@ -58,4 +54,3 @@ namespace Fiffi.Tests
         }
     }
 }
-

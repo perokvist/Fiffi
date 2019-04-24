@@ -11,7 +11,7 @@ namespace Fiffi
 			while (!stoppingToken.IsCancellationRequested)
 			{
 				if (await PollAsync(poll))
-					await Task.Delay(delay);
+					await Task.Delay(delay, stoppingToken);
 			}
 		}
 
