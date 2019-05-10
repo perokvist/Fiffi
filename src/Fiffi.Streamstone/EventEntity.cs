@@ -1,11 +1,8 @@
-﻿using Microsoft.WindowsAzure.Storage.Table;
-using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using Microsoft.Azure.Cosmos.Table;
 
 namespace Fiffi.Streamstone
 {
-	public class EventEntity : TableEntity
+    public class EventEntity : TableEntity
 	{
 		public string Type { get; set; }
 		public string Data { get; set; }

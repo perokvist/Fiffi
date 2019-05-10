@@ -7,12 +7,12 @@ using Xunit;
 
 namespace Fiffi.Tests
 {
-    public class TestContextForStateStoreTests2
+    public class InMemoryStoreTestInContextTests
     {
         ITestContext context;
         IStateStore stateStore;
 
-        public TestContextForStateStoreTests2()
+        public InMemoryStoreTestInContextTests()
         => context = TestContextBuilder.Create<InMemoryStateStore>((store, q) =>
         {
             stateStore = store;

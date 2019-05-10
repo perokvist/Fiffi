@@ -1,5 +1,4 @@
-using Microsoft.WindowsAzure.Storage;
-using Microsoft.WindowsAzure.Storage.Table;
+using Microsoft.Azure.Cosmos.Table;
 using Streamstone;
 using System;
 using System.Collections.Generic;
@@ -8,7 +7,7 @@ using Xunit;
 
 namespace Fiffi.Streamstone.Tests
 {
-	public class EventStoreTests
+    public class EventStoreTests
 	{
 		private CloudTable table;
 
