@@ -1,7 +1,6 @@
 ﻿using Microsoft.Azure.Cosmos.Table;
 using System;
-using System.Collections.Generic;
-using System.Text;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Fiffi.Streamstone
@@ -15,10 +14,14 @@ namespace Fiffi.Streamstone
             this.table = table;
         }
 
-        public Task CancelAsync(string sourceId) => CompleteAsync(sourceId);
+        public Task CancelAsync(string sourceId, params IEvent[] events) => CompleteAsync(sourceId, events);
 
-        public async Task CompleteAsync(string sourceId)
+        public async Task CompleteAsync(string sourceId, params IEvent[] events)
         {
+            if (events.Any(x => x.SourceId != sourceId))
+                throw new ArgumentException("Events not from same source");
+
+
             var deleteOperation = TableOperation.Delete(await GetEntityAsync(sourceId));
             await table.ExecuteAsync(deleteOperation);
         }
@@ -30,10 +33,16 @@ namespace Fiffi.Streamstone
 
         public Task<StreamPointer> GetPendingAsync(string sourceId) => GetAsync(sourceId);
 
-        public async Task PendingAsync(IAggregateId id, string streamName, long expectedNewVersion)
+        public async Task PendingAsync(IAggregateId id, string streamName, long version, params IEvent[] events)
         {
-            var insertOperation = TableOperation.Insert(new StreamPointerEntity(new StreamPointer(id.Id, streamName, expectedNewVersion)));
-            await table.ExecuteAsync(insertOperation);
+            var pointer = new StreamPointer(id.Id, streamName, version + 1);
+            var insertOperation = TableOperation.Insert(new StreamPointerEntity(pointer));
+            try
+            {
+                await table.ExecuteAsync(insertOperation);
+            }
+            catch (StorageException e) when (e.RequestInformation.HttpStatusCode == 409)
+            {}
         }
 
         async Task<StreamPointerEntity> GetEntityAsync(string sourceId)
@@ -43,7 +52,6 @@ namespace Fiffi.Streamstone
             var e = r.Result as StreamPointerEntity;
             return e;
         }
-
 
         async Task<StreamPointer> GetAsync(string sourceId)
         {

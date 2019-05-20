@@ -5,11 +5,11 @@ namespace Fiffi
 {
     public interface IStreamOutbox
     {
-        Task PendingAsync(IAggregateId id, string streamName, long expectedNewVersion);
+        Task PendingAsync(IAggregateId id, string streamName, long version, params IEvent[] events);
         Task<StreamPointer> GetPendingAsync(string sourceId);
         Task<StreamPointer[]> GetAllPendingAsync();
-        Task CancelAsync(string sourceId);
-        Task CompleteAsync(string sourceId);
+        Task CancelAsync(string sourceId, params IEvent[] events);
+        Task CompleteAsync(string sourceId, params IEvent[] events);
     }
 
     public class StreamPointer 

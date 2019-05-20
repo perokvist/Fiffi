@@ -14,7 +14,7 @@ namespace Fiffi
 
         Task<IEvent[]> GetOutBoxAsync(string sourceId);
 
-        Task ClearOutBoxAsync(string sourceId, params Guid[] correlationIds);
+        Task CompleteOutBoxAsync(string sourceId, params IEvent[] events);
 
         Task<IEvent[]> GetAllUnPublishedEventsAsync();
     }

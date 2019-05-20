@@ -18,8 +18,8 @@ namespace Fiffi
             this.store = store;
             this.streamOutbox = streamOutbox;
         }
-        public async Task ClearOutBoxAsync(string sourceId, params Guid[] correlationIds)
-            => await this.streamOutbox.CompleteAsync(sourceId);
+        public async Task CompleteOutBoxAsync(string sourceId, params IEvent[] events)
+            => await this.streamOutbox.CompleteAsync(sourceId, events);
 
         public async Task<IEvent[]> GetAllUnPublishedEventsAsync()
             => (await Task.WhenAll((await streamOutbox.GetAllPendingAsync()).Select(x => GetOutBoxAsync(x.SourceId)))).SelectMany(x => x).ToArray();
@@ -43,7 +43,7 @@ namespace Fiffi
             where T : class, new()
         {
             var streamName = typeof(T).Name.AsStreamName(id).StreamName;
-            await streamOutbox.PendingAsync(id, streamName, version + 1);
+            await streamOutbox.PendingAsync(id, streamName, version, events);
 
             try
             {
@@ -51,7 +51,7 @@ namespace Fiffi
             }
             catch (DBConcurrencyException)
             {
-                await streamOutbox.CancelAsync(id.Id);
+                await streamOutbox.CancelAsync(id.Id, events);
                 throw;
             }
         }

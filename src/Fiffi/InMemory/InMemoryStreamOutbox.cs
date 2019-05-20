@@ -12,10 +12,10 @@ namespace Fiffi
     {
         private IDictionary<string, StreamPointer> publish = new ConcurrentDictionary<string, StreamPointer>();
 
-        public Task CancelAsync(string sourceId)
-            => CompleteAsync(sourceId);
+        public Task CancelAsync(string sourceId, params IEvent[] events)
+            => CompleteAsync(sourceId, events);
 
-        public Task CompleteAsync(string sourceId)
+        public Task CompleteAsync(string sourceId, params IEvent[] events)
         {
             if (!publish.ContainsKey(sourceId)) return Task.CompletedTask;
 
@@ -33,12 +33,12 @@ namespace Fiffi
             return Task.FromResult(this.publish[sourceId]);
         }
 
-        public Task PendingAsync(IAggregateId id, string streamName, long expectedNewVersion)
+        public Task PendingAsync(IAggregateId id, string streamName, long version, params IEvent[] events)
         {
             if (this.publish.ContainsKey(id.Id))
                 throw new DBConcurrencyException($"There is already a task pending for {id.Id}");
 
-            this.publish.Add(id.Id, new StreamPointer(id.Id, streamName, expectedNewVersion));
+            this.publish.Add(id.Id, new StreamPointer(id.Id, streamName, version + 1));
             return Task.CompletedTask;
         }
     }
