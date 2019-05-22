@@ -5,4 +5,8 @@
 
 	public interface IIntegrationEvent
 	{ }
+
+    public interface IKillStreamEvent
+    { }
+
 }
