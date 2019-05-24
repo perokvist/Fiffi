@@ -29,9 +29,9 @@ namespace Fiffi
 		}
 
 
-		public void Register<T>(Func<T, Task> f)
-			where T : IEvent
-			=> _handlers.Add((typeof(T), @event => f((T)@event)));
+        public void Register<T>(Func<T, Task> f)
+            where T : IEvent
+            => _handlers.Add((typeof(T), @event => f((T)@event)));
 
 
 		public Task PublishAsync(params IEvent[] events)
@@ -47,8 +47,8 @@ namespace Fiffi
 		readonly AggregateLocks _locks;
 		readonly List<(Type Type, Func<IEvent, TAdditional, Task>)> _handlers = new List<(Type, Func<IEvent, TAdditional, Task>)>();
 
-		public EventProcessor()
-		{ }
+		public EventProcessor() : this(new AggregateLocks())
+        { }
 
 		public EventProcessor(AggregateLocks locks)
 		{
@@ -86,7 +86,44 @@ namespace Fiffi
 			locks.ReleaseIfPresent(executionContext.Select(x => (x.AggregateId, x.CorrelationId)).ToArray());
 		}
 		public static Func<(Type Type, THandle EventHandler), bool> DelegatefForTypeOrInterface<THandle>(this IEvent e)
-		=> kv => kv.Type == e.GetType() || e.GetType().GetTypeInfo().GetInterfaces().Any(t => t == kv.Type);
-	}
+		=> kv => e.GetType().IsOrImplements(kv.Type);
 
+        public static bool IsOrImplements(this Type e, Type registered)
+            => registered.Pipe(t => t == e || e.GetTypeInfo().GetInterfaces().Any(x => x == t));
+
+        public static Action<Func<TEvent, TContext, Task>> InContext<TEvent, TContext>(this EventProcessor<TContext> processor)
+         where TEvent : IEvent
+         => f => processor.Register(f);
+
+        public static Action<Func<TEvent, Task>> Always<TEvent>(this EventProcessor processor, Func<TEvent, Task> @do)
+            where TEvent : IEvent
+            => f => processor.Register(@do.Then(f));
+
+
+        public static Action<Func<TEvent, Task>> When<TEvent>(this Action<Func<TEvent, Task>> f, Func<TEvent, bool> p)
+            => next => f(next.When(p));
+
+        public static Action<Func<TEvent, TContext, Task>> When<TEvent, TContext>(this Action<Func<TEvent, TContext, Task>> f, Func<TEvent, TContext, bool> p)
+            => next => f(next.When(p));
+
+        public static Action<Func<TEvent, Task>> Then<TEvent>(this Action<Func<TEvent, Task>> f, Func<TEvent, Task> f2)
+            => next => f(f2.Then(next));
+
+        public static Action<Func<TEvent, TContext, Task>> Then<TEvent, TContext>(this Action<Func<TEvent, TContext, Task>> f, Func<TEvent, TContext, Task> f2)
+           => next => f(f2.Then(next));
+
+        public static void Done<TEvent>(this Action<Func<TEvent, Task>> f)
+            => f(e => Task.CompletedTask);
+
+        public static void Done<TEvent, TContext>(this Action<Func<TEvent, TContext, Task>> f)
+            => f((e, c) => Task.CompletedTask);
+
+        public static bool Is<T>(this IEvent e)
+            where T : IEvent
+            => e.Is(typeof(T));
+
+        public static bool Is(this IEvent e, Type type)
+            => e.GetType().IsOrImplements(type);
+
+    }
 }
