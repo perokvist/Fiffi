@@ -33,8 +33,7 @@ namespace Fiffi.Tests
                 thenCalled = true;
                 thenCalledLast = true;
                 return Task.CompletedTask;
-            })
-            .Done();
+            });
 
             await ep.PublishAsync(new TestEvent().AddTestMetaData<string>(new AggregateId("b")));
 
@@ -83,14 +82,13 @@ namespace Fiffi.Tests
             var published = false;
 
             ep
-             .InContext<TestEvent, EventContext>()
+             .Register<TestEvent, EventContext>()
              .When((e, c) => c == context)
              .Then((e, c) =>
              {
                  published = true;
                  return Task.CompletedTask;
-             })
-             .Done();
+             });
 
             //Act
             await ep.PublishAsync(
@@ -129,14 +127,13 @@ namespace Fiffi.Tests
             var published = false;
 
             ep
-             .InContext<IEvent, EventContext>()
+             .Register<IEvent, EventContext>()
              .When((e, c) => e.Is<TestEvent>())
              .Then((e, c) =>
              {
                  published = true;
                  return Task.CompletedTask;
-             })
-             .Done();
+             });
 
             //Act
             await ep.PublishAsync(

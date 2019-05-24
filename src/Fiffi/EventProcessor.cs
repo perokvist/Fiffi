@@ -91,7 +91,7 @@ namespace Fiffi
         public static bool IsOrImplements(this Type e, Type registered)
             => registered.Pipe(t => t == e || e.GetTypeInfo().GetInterfaces().Any(x => x == t));
 
-        public static Action<Func<TEvent, TContext, Task>> InContext<TEvent, TContext>(this EventProcessor<TContext> processor)
+        public static Action<Func<TEvent, TContext, Task>> Register<TEvent, TContext>(this EventProcessor<TContext> processor)
          where TEvent : IEvent
          => f => processor.Register(f);
 
@@ -106,18 +106,11 @@ namespace Fiffi
         public static Action<Func<TEvent, TContext, Task>> When<TEvent, TContext>(this Action<Func<TEvent, TContext, Task>> f, Func<TEvent, TContext, bool> p)
             => next => f(next.When(p));
 
-        public static Action<Func<TEvent, Task>> Then<TEvent>(this Action<Func<TEvent, Task>> f, Func<TEvent, Task> f2)
-            => next => f(f2.Then(next));
+        public static void Then<TEvent>(this Action<Func<TEvent, Task>> f, Func<TEvent, Task> f2)
+            => f(f2.Then(e => Task.CompletedTask));
 
-        public static Action<Func<TEvent, TContext, Task>> Then<TEvent, TContext>(this Action<Func<TEvent, TContext, Task>> f, Func<TEvent, TContext, Task> f2)
-           => next => f(f2.Then(next));
-
-        public static void Done<TEvent>(this Action<Func<TEvent, Task>> f)
-            => f(e => Task.CompletedTask);
-
-        public static void Done<TEvent, TContext>(this Action<Func<TEvent, TContext, Task>> f)
-            => f((e, c) => Task.CompletedTask);
-
+        public static void Then<TEvent, TContext>(this Action<Func<TEvent, TContext, Task>> f, Func<TEvent, TContext, Task> f2)
+           => f(f2.Then((e, c) => Task.CompletedTask));
         public static bool Is<T>(this IEvent e)
             where T : IEvent
             => e.Is(typeof(T));
