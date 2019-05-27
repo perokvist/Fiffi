@@ -12,9 +12,7 @@ namespace Fiffi
         Task SaveAsync<T>(IAggregateId id, T state, long version, IEvent[] events)
          where T : class, new();
 
-        Task<IEvent[]> GetOutBoxAsync(string sourceId);
-
-        Task CompleteOutBoxAsync(string sourceId, params IEvent[] events);
+        Task CompleteOutBoxAsync(params IEvent[] events);
 
         Task<IEvent[]> GetAllUnPublishedEventsAsync();
     }

@@ -37,7 +37,7 @@ namespace Fiffi.Testing
                 if (state.Value == null)
                 {
                     await stateStore.SaveAsync(id, Activator.CreateInstance(type), state.Version, x.ToArray(), type);
-                    await stateStore.CompleteOutBoxAsync(id.Id, x.ToArray());
+                    await stateStore.CompleteOutBoxAsync(x.ToArray());
                     state = await stateStore.GetAsync(type, id);
                 }
 

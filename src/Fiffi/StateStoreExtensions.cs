@@ -17,7 +17,7 @@ namespace Fiffi
 				.Select(async x =>
 				{
 					await publish(x.ToArray());
-					await stateManager.CompleteOutBoxAsync(x.Key.SourceId, x.ToArray());
+					await stateManager.CompleteOutBoxAsync(x.ToArray());
 				}));
 
         static (string SourceId, Guid CorrelationId) GetKey(this IEvent @event) => (@event.SourceId, @event.GetCorrelation());
