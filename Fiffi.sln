@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.28010.2026
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.28803.452
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fiffi.ServiceFabric", "src\Fiffi.ServiceFabric\Fiffi.ServiceFabric.csproj", "{277065CE-2A6F-4D11-8C24-69939828BD1A}"
 EndProject
@@ -23,7 +23,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fiffi.Streamstone", "src\Fi
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fiffi.Streamstone.Tests", "src\Fiffi.Streamstone.Tests\Fiffi.Streamstone.Tests.csproj", "{427F6BBB-F01C-4ABB-9272-14863B363D51}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fiffi.Tests", "src\Fiffi.Tests\Fiffi.Tests.csproj", "{CA477014-D5FD-46CE-975E-9C9FD4E4B020}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fiffi.Tests", "src\Fiffi.Tests\Fiffi.Tests.csproj", "{CA477014-D5FD-46CE-975E-9C9FD4E4B020}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fiffi.CosmoStore", "src\Fiffi.CosmoStore\Fiffi.CosmoStore.csproj", "{0E704017-A870-4588-8576-183E9969BF3B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fiffi.CosmoStore.Tests", "src\Fiffi.CosmoStore.Tests\Fiffi.CosmoStore.Tests.csproj", "{FB02EE41-924F-4938-A5D3-6CF7D76DFCDB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -113,6 +117,22 @@ Global
 		{CA477014-D5FD-46CE-975E-9C9FD4E4B020}.Release|Any CPU.Build.0 = Release|Any CPU
 		{CA477014-D5FD-46CE-975E-9C9FD4E4B020}.Release|x64.ActiveCfg = Release|Any CPU
 		{CA477014-D5FD-46CE-975E-9C9FD4E4B020}.Release|x64.Build.0 = Release|Any CPU
+		{0E704017-A870-4588-8576-183E9969BF3B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0E704017-A870-4588-8576-183E9969BF3B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0E704017-A870-4588-8576-183E9969BF3B}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{0E704017-A870-4588-8576-183E9969BF3B}.Debug|x64.Build.0 = Debug|Any CPU
+		{0E704017-A870-4588-8576-183E9969BF3B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0E704017-A870-4588-8576-183E9969BF3B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0E704017-A870-4588-8576-183E9969BF3B}.Release|x64.ActiveCfg = Release|Any CPU
+		{0E704017-A870-4588-8576-183E9969BF3B}.Release|x64.Build.0 = Release|Any CPU
+		{FB02EE41-924F-4938-A5D3-6CF7D76DFCDB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FB02EE41-924F-4938-A5D3-6CF7D76DFCDB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FB02EE41-924F-4938-A5D3-6CF7D76DFCDB}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{FB02EE41-924F-4938-A5D3-6CF7D76DFCDB}.Debug|x64.Build.0 = Debug|Any CPU
+		{FB02EE41-924F-4938-A5D3-6CF7D76DFCDB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FB02EE41-924F-4938-A5D3-6CF7D76DFCDB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FB02EE41-924F-4938-A5D3-6CF7D76DFCDB}.Release|x64.ActiveCfg = Release|Any CPU
+		{FB02EE41-924F-4938-A5D3-6CF7D76DFCDB}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
