@@ -1,4 +1,4 @@
-[![NuGet Version and Downloads count](https://buildstats.info/nuget/Fiffi?includePreReleases=true)](https://www.nuget.org/packages/Fiffi/)
+﻿[![NuGet Version and Downloads count](https://buildstats.info/nuget/Fiffi?includePreReleases=true)](https://www.nuget.org/packages/Fiffi/)
 
 # Fiffi
 Exploration kit for eventdriven services.
@@ -64,6 +64,3 @@ The core Fiffi project also includes tools for handling command, query, event di
 
 The vision is to create a kit to get feedback/test from modeling/eventstorming sessions.
 
-### Implementations
-
-The project currenlty only includes a implementation of IEventStore for Service Fabric's reliable collections. Each implementation might add utils that suites that infrastructure.
