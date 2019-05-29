@@ -9,12 +9,15 @@ namespace Fiffi.CosmoStore
     public class CosmoStoreEventStore : IEventStore
     {
         private readonly global::CosmoStore.EventStore store;
+        private readonly Func<string, Type> typeResolver;
 
-        public CosmoStoreEventStore(Uri serviceEndpoint, string authKey)
+        public CosmoStoreEventStore(Uri serviceEndpoint, string authKey,
+            Func<string, Type> typeResolver)
         {
             this.store = global::CosmoStore.CosmosDb.EventStore
                 .getEventStore(global::CosmoStore.CosmosDb
                 .Configuration.CreateDefault(serviceEndpoint, authKey));
+            this.typeResolver = typeResolver;
         }
 
         public async Task<long> AppendToStreamAsync(string streamName, long version, IEvent[] events)
@@ -30,9 +33,12 @@ namespace Fiffi.CosmoStore
             return expectedNewVersion;
         }
 
-        public Task<(IEnumerable<IEvent> Events, long Version)> LoadEventStreamAsync(string streamName, long version)
+        public async Task<(IEnumerable<IEvent> Events, long Version)> LoadEventStreamAsync(string streamName, long version)
         {
-            throw new NotImplementedException();
+            var r = await this.store.GetEvents
+                .Invoke(streamName)
+                .Invoke(global::CosmoStore.EventsReadRange.NewFromPosition(version));
+            return (r.Select(x => x.ToEvent(this.typeResolver)), r.Last().Position);
         }
     }
 }
