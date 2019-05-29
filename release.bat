@@ -10,7 +10,7 @@ cd ..
 dotnet pack -o nupkgs
 dotnet nuget push nupkgs\*.nupkg -k oy2nuatumdmsjfqczhmq7hu7lv2lnvhelkhn4jc2bt2vvu --source https://www.nuget.org/api/v2/package
 cd ..
-cd src\Fiffi.CosmoStore
+cd Fiffi.CosmoStore
 cd nupkgs
 del *.nupkg
 cd ..

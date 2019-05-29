@@ -11,6 +11,7 @@ namespace Fiffi.CosmoStore
         public static async Task<IChangeFeedProcessor> CreateProcessorAsync<T>(
             Uri serviceUri,
             string key,
+            string hostName,
             string databaseName,
             string collectionName
             )
@@ -36,7 +37,7 @@ namespace Fiffi.CosmoStore
 
             var builder = new ChangeFeedProcessorBuilder();
             var processor = await builder
-                .WithHostName("SampleHost")
+                .WithHostName(hostName)
                 .WithFeedCollection(feedCollectionInfo)
                 .WithLeaseCollection(leaseCollectionInfo)
                 .WithObserver<T>()
