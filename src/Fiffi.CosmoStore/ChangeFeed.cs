@@ -8,14 +8,22 @@ namespace Fiffi.CosmoStore
 {
     public static class ChangeFeed
     {
-        public static async Task<IChangeFeedProcessor> CreateProcessorAsync<T>(
+        public static Task<IChangeFeedProcessor> CreateProcessorAsync(
+            Uri serviceUri,
+            string key,
+            string hostName,
+            Func<IEvent[], Task> dispatcher,
+            Func<string, Type> typeResolver)
+            => CreateProcessorAsync(serviceUri, key, hostName, "EventStore",
+                "Events", new FeedObserverFactory(dispatcher, typeResolver));
+
+        public static async Task<IChangeFeedProcessor> CreateProcessorAsync(
             Uri serviceUri,
             string key,
             string hostName,
             string databaseName,
-            string collectionName
-            )
-            where T : Microsoft.Azure.Documents.ChangeFeedProcessor.FeedProcessing.IChangeFeedObserver, new()
+            string collectionName,
+            Microsoft.Azure.Documents.ChangeFeedProcessor.FeedProcessing.IChangeFeedObserverFactory feedObserverFactory)
         {
             await CreateCollectionAsync(serviceUri, key, databaseName, "leases");
 
@@ -40,17 +48,18 @@ namespace Fiffi.CosmoStore
                 .WithHostName(hostName)
                 .WithFeedCollection(feedCollectionInfo)
                 .WithLeaseCollection(leaseCollectionInfo)
-                .WithObserver<T>()
+                .WithObserverFactory(feedObserverFactory)
                 .BuildAsync();
             return processor;
         }
 
-        public static async Task CreateCollectionAsync(Uri serviceUri, string key, string databaseName, string collectionName) {
+        static async Task CreateCollectionAsync(Uri serviceUri, string key, string databaseName, string collectionName)
+        {
             using (var c = new DocumentClient(serviceUri, key))
             {
-                    _ = await c.
-                    CreateDocumentCollectionIfNotExistsAsync(UriFactory.CreateDatabaseUri(databaseName),
-                    new Microsoft.Azure.Documents.DocumentCollection { Id = collectionName });
+                _ = await c.
+                CreateDocumentCollectionIfNotExistsAsync(UriFactory.CreateDatabaseUri(databaseName),
+                new Microsoft.Azure.Documents.DocumentCollection { Id = collectionName });
             }
         }
     }
