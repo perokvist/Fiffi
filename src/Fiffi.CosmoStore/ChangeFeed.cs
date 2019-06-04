@@ -15,7 +15,8 @@ namespace Fiffi.CosmoStore
             Func<IEvent[], Task> dispatcher,
             Func<string, Type> typeResolver)
             => CreateProcessorAsync(serviceUri, key, hostName, "EventStore",
-                "Events", new FeedObserverFactory(dispatcher, typeResolver));
+                "Events", new FeedObserverFactory(dispatcher, typeResolver),
+                builder => { });
 
         public static async Task<IChangeFeedProcessor> CreateProcessorAsync(
             Uri serviceUri,
@@ -23,7 +24,8 @@ namespace Fiffi.CosmoStore
             string hostName,
             string databaseName,
             string collectionName,
-            Microsoft.Azure.Documents.ChangeFeedProcessor.FeedProcessing.IChangeFeedObserverFactory feedObserverFactory)
+            Microsoft.Azure.Documents.ChangeFeedProcessor.FeedProcessing.IChangeFeedObserverFactory feedObserverFactory,
+            Action<ChangeFeedProcessorBuilder> config)
         {
             await CreateCollectionAsync(serviceUri, key, databaseName, "leases");
 
@@ -48,6 +50,7 @@ namespace Fiffi.CosmoStore
                 .WithHostName(hostName)
                 .WithFeedCollection(feedCollectionInfo)
                 .WithLeaseCollection(leaseCollectionInfo)
+                .Tap(x => config(x))
                 .WithObserverFactory(feedObserverFactory)
                 .BuildAsync();
             return processor;

@@ -19,13 +19,16 @@ namespace Fiffi
             if (currentEvents.Any() && currentEvents.Last().GetVersion() != version)
                 throw new DBConcurrencyException($"wrong version - expected {version} but was {currentEvents.Last().GetVersion()}");
 
+            if(currentEvents.Any() && events.Any(x => x.GetVersion() == currentEvents.Last().GetVersion()))
+                throw new DBConcurrencyException($"wrong version - events to write has the same version as last {currentEvents.Last().GetVersion()}");
+
             var newStream = currentEvents.Concat(events).ToArray();
             store[streamName] = newStream;
             return Task.FromResult(newStream.Last().GetVersion());
         }
 
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
-        public async Task<(IEnumerable<IEvent>, long)> LoadEventStreamAsync(string streamName, long version) =>
+        public async Task<(IEnumerable<IEvent> Events, long Version)> LoadEventStreamAsync(string streamName, long version) =>
 #pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
             store.ContainsKey(streamName) ? (store[streamName].Where(x => x.GetVersion() >= version).ToArray(), store[streamName].Last().GetVersion()) : (new IEvent[] { }, 0);
     }

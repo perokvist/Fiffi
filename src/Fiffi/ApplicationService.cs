@@ -25,7 +25,7 @@ namespace Fiffi
             events.AddMetaData(command, aggregateName, streamName, happend.Version);
 
             if (events.Any())
-                await store.AppendToStreamAsync(streamName, events.Last().GetVersion(), events);
+                await store.AppendToStreamAsync(streamName, happend.Version, events);
 
             await pub(events); //need to always execute due to locks
         }

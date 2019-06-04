@@ -5,7 +5,7 @@ namespace Fiffi
 {
 	public interface IEventStore
 	{
-		Task<long> AppendToStreamAsync(string streamName, long version, IEvent[] events);
+		Task<long> AppendToStreamAsync(string streamName, long version, params IEvent[] events);
 
 		Task<(IEnumerable<IEvent> Events, long Version)> LoadEventStreamAsync(string streamName, long version);
 	}
