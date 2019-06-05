@@ -35,7 +35,7 @@ namespace Fiffi.Tests
                 return Task.CompletedTask;
             });
 
-            await ep.PublishAsync(new TestEvent().AddTestMetaData<string>(new AggregateId("b")));
+            await ep.PublishAsync(new AggregateId("b").Pipe(id => new TestEvent(id).AddTestMetaData<string>(id)));
 
             Assert.True(doCalled, "Do not called");
             Assert.Equal(expectedThenCalled, thenCalled);
@@ -60,11 +60,11 @@ namespace Fiffi.Tests
             });
 
             ep
-            .RegisterReceptorWith<TestEvent>(d, e => new TestCommand())
+            .RegisterReceptorWith<TestEvent>(d, e => Policy.Issue(e, () => new TestCommand(e.SourceId)))
             .Guard(e => letThrough);
 
             //Act
-            await ep.PublishAsync(new TestEvent().AddTestMetaData<string>(new AggregateId("t")));
+            await ep.PublishAsync(new AggregateId("t").Pipe(id => new TestEvent(id).AddTestMetaData<string>(id)));
 
             //Assert
             Assert.Equal(expectdispatch, dispatched);
@@ -93,7 +93,7 @@ namespace Fiffi.Tests
             //Act
             await ep.PublishAsync(
                 EventContext.Inbox,
-                new TestEvent().AddTestMetaData<string>(new AggregateId("t")));
+                new AggregateId("t").Pipe(id => new TestEvent(id).AddTestMetaData<string>(id)));
 
             //Assert
             Assert.Equal(expected, published);
@@ -113,7 +113,7 @@ namespace Fiffi.Tests
             });
 
             //Act
-            await ep.PublishAsync(EventContext.Inbox, new TestEvent().AddTestMetaData<string>(new AggregateId("t")));
+            await ep.PublishAsync(EventContext.Inbox, new AggregateId("t").Pipe(id => new TestEvent(id).AddTestMetaData<string>(id)));
 
             //Assert
             Assert.True(published);
@@ -138,24 +138,11 @@ namespace Fiffi.Tests
             //Act
             await ep.PublishAsync(
                 EventContext.Inbox,
-                new TestEvent().AddTestMetaData<string>(new AggregateId("t")));
+                new AggregateId("t")
+                .Pipe(id => new TestEvent(id).AddTestMetaData<string>(id)));
 
             //Assert
             Assert.True(published);
-        }
-
-        public class TestCommand : ICommand
-        {
-            public IAggregateId AggregateId => new AggregateId("t");
-
-            public Guid CorrelationId { get; set; } = Guid.NewGuid();
-        }
-
-        public class TestEvent : IEvent
-        {
-            public string SourceId => string.Empty;
-
-            public IDictionary<string, string> Meta { get; set; } = new Dictionary<string, string>();
         }
     }
 }

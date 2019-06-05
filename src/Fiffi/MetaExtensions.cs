@@ -30,7 +30,10 @@ namespace Fiffi
 
 		public static bool HasCorrelation(this IEvent @event) => @event.HasMeta(nameof(EventMetaData.CorrelationId));
 
-		public static Type GetEventType(this IDictionary<string, string> meta, Func<string, Type> f)
+        public static string GetEventName(this IEvent e)
+            => e.Require("type.name");
+
+        public static Type GetEventType(this IDictionary<string, string> meta, Func<string, Type> f)
 			=> f(meta["type.name"]);
 
 		public static Guid GetCorrelation(this IEvent @event) => Guid.Parse(@event.Require(nameof(EventMetaData.CorrelationId)));
@@ -54,7 +57,8 @@ namespace Fiffi
 		=> new EventMetaData {
 			AggregateName = meta.GetMetaOrDefault<string>(nameof(EventMetaData.AggregateName)),
 			CorrelationId = Guid.Parse(meta.GetMetaOrDefault<Guid>(nameof(EventMetaData.CorrelationId))),
-			EventId = Guid.Parse(meta.GetMetaOrDefault<Guid>(nameof(EventMetaData.EventId))),
+            CausationId = Guid.Parse(meta.GetMetaOrDefault<Guid>(nameof(EventMetaData.CausationId))),
+            EventId = Guid.Parse(meta.GetMetaOrDefault<Guid>(nameof(EventMetaData.EventId))),
 			OccuredAt = long.Parse(meta.GetMetaOrDefault<long>(nameof(EventMetaData.OccuredAt))),
 			StreamName = meta.GetMetaOrDefault<string>(nameof(EventMetaData.StreamName)),
 			TriggeredBy = meta.GetMetaOrDefault<string>(nameof(EventMetaData.TriggeredBy)),
@@ -67,6 +71,7 @@ namespace Fiffi
 		{
 			AggregateName = aggregateName,
 			CorrelationId = command.CorrelationId,
+            CausationId = command.CorrelationId,
 			EventId = Guid.NewGuid(),
 			OccuredAt = occuredAt == default(long) ? DateTime.UtcNow.Ticks : occuredAt,
 			StreamName = streamName,
@@ -82,7 +87,8 @@ namespace Fiffi
 			meta[nameof(EventMetaData.AggregateName).ToLower()] = metaData.AggregateName;
 			meta[nameof(EventMetaData.EventId).ToLower()] = metaData.EventId.ToString();
 			meta[nameof(EventMetaData.CorrelationId).ToLower()] = metaData.CorrelationId.ToString();
-			meta[nameof(EventMetaData.TriggeredBy).ToLower()] = metaData.TriggeredBy;
+            meta[nameof(EventMetaData.CausationId).ToLower()] = metaData.CausationId.ToString();
+            meta[nameof(EventMetaData.TriggeredBy).ToLower()] = metaData.TriggeredBy;
 			meta[nameof(EventMetaData.TriggeredById).ToLower()] = metaData.TriggeredById.ToString();
 			meta[nameof(EventMetaData.OccuredAt).ToLower()] = metaData.OccuredAt.ToString();
 		}
@@ -91,7 +97,8 @@ namespace Fiffi
 	public class EventMetaData
 	{
 		public Guid CorrelationId { get; set; }
-		public Guid EventId { get; set; }
+        public Guid CausationId { get; set; }
+        public Guid EventId { get; set; }
 		public string StreamName { get; set; }
 		public string AggregateName { get; set; }
 		public long Version { get; set; }

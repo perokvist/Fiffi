@@ -4,19 +4,19 @@ namespace Fiffi.Testing
 {
     public class TestCommand : ICommand
     {
-        public TestCommand(IAggregateId id) : this(id.ToString())
+        public TestCommand(AggregateId id) : this((IAggregateId)id)
         { }
 
-        readonly string id;
-
-        public TestCommand(string id)
+        public TestCommand(IAggregateId id)
         {
-            this.id = id;
+            var c = Guid.NewGuid();
+            this.CorrelationId = c;
+            this.CausationId = c;
+            AggregateId = id;
         }
+        public IAggregateId AggregateId { get; }
 
-        public IAggregateId AggregateId => new AggregateId(this.id);
-
-        public Guid CorrelationId { get; private set; } = Guid.NewGuid();
-
+        public Guid CorrelationId { get; set; }
+        public Guid CausationId { get; set; }
     }
 }

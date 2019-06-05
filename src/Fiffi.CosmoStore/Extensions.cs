@@ -1,19 +1,22 @@
-﻿using System;
+﻿using Newtonsoft.Json.Linq;
+using System;
+using System.Collections.Generic;
 
 namespace Fiffi.CosmoStore
 {
     public static class Extensions
     {
         public static global::CosmoStore.EventWrite ToCosmosStoreEvent(this IEvent @event)
-         => new global::CosmoStore.EventWrite(
-                @event.Meta.GetEventMetaData().EventId,
-                @event.Meta.GetEventMetaData().CorrelationId,
-                Guid.Empty,
-                @event.Meta["type.name"], 
-                Newtonsoft.Json.Linq.JToken.FromObject(@event),
-                Newtonsoft.Json.Linq.JToken.FromObject(@event.Meta));
+         => @event.Meta.GetEventMetaData().Pipe(meta => new global::CosmoStore.EventWrite(
+                meta.EventId,
+                meta.CorrelationId,
+                meta.CausationId,
+                @event.GetEventName(),
+                JToken.FromObject(@event)
+                    .Tap(token => token[nameof(IEvent.Meta)].Replace(JToken.FromObject(new Dictionary<string, string>()))),
+                JToken.FromObject(@event.Meta)));
 
         public static IEvent ToEvent(this global::CosmoStore.EventRead eventRead, Func<string, Type> typeResolver)
-         => typeResolver(eventRead.Name).Pipe(t => (IEvent)eventRead.Data.ToObject(t));
+         => typeResolver(eventRead.Name).Pipe(t => ((IEvent)eventRead.Data.ToObject(t)).Tap(e => e.Meta = eventRead.Metadata.Value.ToObject<Dictionary<string, string>>()));
     }
 }

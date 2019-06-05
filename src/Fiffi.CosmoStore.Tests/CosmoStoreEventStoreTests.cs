@@ -43,6 +43,7 @@ namespace Fiffi.CosmoStore.Tests
             var e = r.Events.ToList();
 
             Assert.Equal(2, e.Count);
+            Assert.True(e.All(x => x.Meta.Keys.Any()));
         }
         public class TestEvent : IEvent
         {

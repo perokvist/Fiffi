@@ -8,6 +8,8 @@ namespace Fiffi
 	{
 		IAggregateId AggregateId { get; }
 
-		Guid CorrelationId { get;  }
-	}
+		Guid CorrelationId { get; set; }
+
+        Guid CausationId { get; set; }
+    }
 }

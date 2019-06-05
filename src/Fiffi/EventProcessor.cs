@@ -1,18 +1,15 @@
-﻿using Fiffi;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 
 
 namespace Fiffi
 {
-	using EventHandle = Func<IEvent, Task>;
+    using EventHandle = Func<IEvent, Task>;
 
-	public class EventProcessor
+    public class EventProcessor
 	{
 
 		readonly AggregateLocks _locks;
