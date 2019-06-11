@@ -3,11 +3,10 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 
 namespace Fiffi
 {
-	public class Dispatcher<TMessage, TResult>
+    public class Dispatcher<TMessage, TResult>
 	{
 		readonly IDictionary<Type, Func<TMessage, TResult>> _dictionary = new ConcurrentDictionary<Type, Func<TMessage, TResult>>();
 

@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Fiffi.Validation;
+using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace Fiffi.Testing
 {
@@ -14,9 +16,14 @@ namespace Fiffi.Testing
             this.CausationId = c;
             AggregateId = id;
         }
+
+        [NotDefault]
         public IAggregateId AggregateId { get; }
 
+        [NotDefault]
         public Guid CorrelationId { get; set; }
+
+        [NotDefault]
         public Guid CausationId { get; set; }
     }
 }

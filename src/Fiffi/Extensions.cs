@@ -50,6 +50,10 @@ namespace Fiffi
             where T : IEvent
             => processor.Register<T>(async e => await d.Dispatch(await receptor(e)));
 
+        public static void Register<TCommand>(this Dispatcher<ICommand, Task> d, params Func<TCommand, Task>[] f)
+         where TCommand : ICommand
+             => d.Register<TCommand>(f.Aggregate((l, r) => c => l(c).ContinueWith(res => r(c))));
+
         public static Action<Func<T, bool>> RegisterReceptorWith<T>(this EventProcessor processor, Dispatcher<ICommand, Task> d, Func<T, ICommand> receptor)
             where T : IEvent
               => f => processor.Register<T>(async e =>
@@ -65,13 +69,22 @@ namespace Fiffi
             if (p(self)) f(self);
         }
 
+        public static object GetDefault(this Type type)
+        {
+            if (type.IsValueType)
+            {
+                return Activator.CreateInstance(type);
+            }
+            return null;
+        }
+
         public static string AsAggregateName(this string typeName) => typeName.Replace("State", "Aggregate").ToLower();
 
-        public static (string AggregateName, string StreamName) AsStreamName(this string typeName, AggregateId aggregateId) 
+        public static (string AggregateName, string StreamName) AsStreamName(this string typeName, AggregateId aggregateId)
             => typeName.AsStreamName((IAggregateId)aggregateId);
 
         public static (string AggregateName, string StreamName) AsStreamName(this string typeName, IAggregateId aggregateId) => (typeName.AsAggregateName(), $"{typeName.AsAggregateName()}-{aggregateId.Id}");
-     
+
         public static Func<T, Task> Then<T>(this Func<T, Task> f1, Func<T, Task> f2)
             => e => f1(e).ContinueWith(t => f2(e));
 

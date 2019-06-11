@@ -1,14 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using Fiffi.Validation;
+using System;
 
 namespace Fiffi
 {
-	public interface ICommand
+    public interface ICommand
 	{
 		IAggregateId AggregateId { get; }
 
-		Guid CorrelationId { get; set; }
+        Guid CorrelationId { get; set; }
 
         Guid CausationId { get; set; }
     }

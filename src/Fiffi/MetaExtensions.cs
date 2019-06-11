@@ -31,7 +31,7 @@ namespace Fiffi
 		public static bool HasCorrelation(this IEvent @event) => @event.HasMeta(nameof(EventMetaData.CorrelationId));
 
         public static string GetEventName(this IEvent e)
-            => e.Require("type.name");
+            => e.Require("eventname");
 
         public static Type GetEventType(this IDictionary<string, string> meta, Func<string, Type> f)
 			=> f(meta["type.name"]);
