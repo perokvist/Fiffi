@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp2.2</TargetFramework>
     <RuntimeIdentifier>win7-x64</RuntimeIdentifier>
-    <VersionPrefix>0.1.4</VersionPrefix>
+    <VersionPrefix>0.1.5</VersionPrefix>
     <VersionSuffix>alpha</VersionSuffix>
     <PackageId>Fiffi.CosmoStore</PackageId>
     <Title>Fiffi.CosmoStore</Title>

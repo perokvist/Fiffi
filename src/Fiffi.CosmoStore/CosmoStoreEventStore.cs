@@ -38,7 +38,7 @@ namespace Fiffi.CosmoStore
             var r = await this.store.GetEvents
                 .Invoke(streamName)
                 .Invoke(global::CosmoStore.EventsReadRange.NewFromPosition(version));
-            return (r.Select(x => x.ToEvent(this.typeResolver)), r.Last().Position);
+            return (r.Select(x => x.ToEvent(this.typeResolver)), r.Any() ? r.Last().Position : 0);
         }
     }
 }
