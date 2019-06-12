@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Linq;
 using Microsoft.Azure.Documents.Client;
+using Fiffi.CosmoStore.Testing;
 
 namespace Fiffi.CosmoStore.Tests
 {
@@ -15,18 +16,9 @@ namespace Fiffi.CosmoStore.Tests
 
         public CosmoStoreEventStoreTests()
         {
-            using (var c = new DocumentClient(serviceUri, key))
-            {
-                var database = c.CreateDatabaseQuery()
-                    .Where(x => x.Id == "EventStore")
-                    .ToList();
-                if (database.Any())
-                {
-                    c.DeleteDatabaseAsync(database.First().SelfLink)
-                        .GetAwaiter()
-                        .GetResult();
-                }
-            }
+            Database.DeleteEventStoreAsync(serviceUri, key)
+                .GetAwaiter()
+                .GetResult();
         }
 
         [Fact]
