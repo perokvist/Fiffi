@@ -52,7 +52,11 @@ namespace Fiffi
 
         public static void Register<TCommand>(this Dispatcher<ICommand, Task> d, params Func<TCommand, Task>[] f)
          where TCommand : ICommand
-             => d.Register<TCommand>(f.Aggregate((l, r) => c => l(c).ContinueWith(res => r(c))));
+             => d.Register(f.Aggregate((l, r) => async c =>
+             {
+                 await l(c);
+                 await r(c);
+             }));
 
         public static Action<Func<T, bool>> RegisterReceptorWith<T>(this EventProcessor processor, Dispatcher<ICommand, Task> d, Func<T, ICommand> receptor)
             where T : IEvent
@@ -86,10 +90,16 @@ namespace Fiffi
         public static (string AggregateName, string StreamName) AsStreamName(this string typeName, IAggregateId aggregateId) => (typeName.AsAggregateName(), $"{typeName.AsAggregateName()}-{aggregateId.Id}");
 
         public static Func<T, Task> Then<T>(this Func<T, Task> f1, Func<T, Task> f2)
-            => e => f1(e).ContinueWith(t => f2(e));
+            => async e => {
+                await f1(e);
+                await f2(e);
+            };
 
         public static Func<T, T2, Task> Then<T, T2>(this Func<T, T2, Task> f1, Func<T, T2, Task> f2)
-            => (e, c) => f1(e, c).ContinueWith(t => f2(e, c));
+            => async (e, c) => {
+                await f1(e, c);
+                await f2(e, c);
+            };
 
         public static Func<T, Task> When<T>(this Func<T, Task> f, Func<T, bool> p)
             => async e =>

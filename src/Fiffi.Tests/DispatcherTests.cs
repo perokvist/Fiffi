@@ -48,19 +48,26 @@ namespace Fiffi.Tests
             var order = new List<int>();
             var d = new Dispatcher<ICommand, Task>();
 
-            d.Register<TestCommand>(cmd => {
+            d.Register<TestCommand>(cmd =>
+            {
                 order.Add(1);
                 return Task.CompletedTask;
             },
-            cmd => {
+            cmd =>
+            {
                 order.Add(2);
+                return Task.CompletedTask;
+            },
+            cmd =>
+            {
+                order.Add(3);
                 return Task.CompletedTask;
             }
             );
 
             await d.Dispatch(new TestCommand("t"));
 
-            Assert.Equal(new [] { 1, 2 }, order);
+            Assert.Equal(new[] { 1, 2, 3 }, order);
         }
 
 
