@@ -14,7 +14,7 @@ namespace Fiffi.CosmoStore.Tests
         private const string key = "C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==";
 
 
-        [Fact(Skip = "Used to append events for changefeed")]
+        [Fact]//(Skip = "Used to append events for changefeed")]
         [Trait("Category", "Integration")]
         public async Task AppendToEventStoreAsync()
         {
@@ -22,8 +22,8 @@ namespace Fiffi.CosmoStore.Tests
                  TypeResolver.FromMap(TypeResolver.GetEventsFromTypes(typeof(TestEvent))));
 
             var r = await s.LoadEventStreamAsync("test", 0);
-
-            _ = await s.AppendToStreamAsync("test", r.Version, new IEvent[] { new TestEvent().AddTestMetaData<string>(new AggregateId("id")) });
+            var id = new AggregateId("id");
+            _ = await s.AppendToStreamAsync("test", r.Version, new IEvent[] { new TestEvent().AddTestMetaData<string>(id) });
         }
 
         public class TestEvent : IEvent
