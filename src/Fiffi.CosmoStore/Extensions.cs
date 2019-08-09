@@ -1,11 +1,24 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using Microsoft.Azure.Documents;
+using Microsoft.Azure.Documents.Client;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Fiffi.CosmoStore
 {
     public static class Extensions
     {
+        public static async Task<string> fooAsync<T>(this DocumentClient client, T snapshot)
+        {
+            var c = new DocumentCollection();
+            c.Id = "myContainerName";
+            c.PartitionKey.Paths.Add("/myPartitionKey");
+            var d = await client.UpsertDocumentAsync("", snapshot);
+            return d.Resource.Id;
+        }
+
+
         public static global::CosmoStore.EventWrite ToCosmosStoreEvent(this IEvent @event)
          => @event.Meta.GetEventMetaData().Pipe(meta => new global::CosmoStore.EventWrite(
                 meta.EventId,

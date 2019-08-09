@@ -39,13 +39,17 @@ namespace Fiffi.Streamstone
 			return r.Stream.Version;
 		}
 
-		public static async Task<long> AppendToEventStreamAsync(this CloudTable table, string streamName, IEvent[] events)
-		{
-			var version = await new Partition(table, streamName).GetVersionAsync();
-			return await table.AppendToEventStreamAsync(streamName, version, events);
-		}
+        public static async Task<long> AppendToStreamAsync(this Partition partition, IEvent[] events)
+        {
+            var stream = new Stream(partition);
+            var r = await Stream.WriteAsync(stream, events.Select(e => e.ToEventData()).ToArray());
+            return r.Stream.Version;
+        }
 
-		public static async Task<long> AppendToEventStreamAsync(this CloudTable table, string streamName, long version, params IEvent[] events)
+        public static Task<long> AppendToEventStreamAsync(this CloudTable table, string streamName, IEvent[] events)
+            => new Partition(table, streamName).AppendToStreamAsync(events);
+
+        public static async Task<long> AppendToEventStreamAsync(this CloudTable table, string streamName, long version, params IEvent[] events)
 			=> await new Partition(table, streamName).AppendToStreamAsync(version, events, e => e.ToEventData());
 
 		public static Task AppendWithSnapshotAsync(this CloudTable table, string streamName, long version, IEvent[] events, Include snapshot)
