@@ -63,7 +63,7 @@ namespace ChangeFeedSample
                 return new SampleModule(events =>
                 {
                     logger.LogInformation($"{nameof(SampleModule)} got {events.Length} events");
-                    logger.LogInformation(events.Draw());
+                    //logger.LogInformation(events.Draw());
                     return ep.PublishAsync(events);
                 });
             }
