@@ -1,6 +1,7 @@
 ﻿using Microsoft.Azure.Documents.ChangeFeedProcessor;
 using Microsoft.Azure.Documents.ChangeFeedProcessor.PartitionManagement;
 using Microsoft.Azure.Documents.Client;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Threading.Tasks;
 
@@ -13,10 +14,11 @@ namespace Fiffi.CosmoStore
             string key,
             string hostName,
             Func<string, Type> typeResolver,
-            Func<IEvent[], Task> dispatcher
+            Func<IEvent[], Task> dispatcher,
+            ILogger logger
             )
             => CreateProcessorAsync(serviceUri, key, hostName, "EventStore",
-                "Events", new FeedObserverFactory(dispatcher, typeResolver),
+                "Events", new FeedObserverFactory(dispatcher, typeResolver, logger),
                 builder => { });
 
         public static async Task<IChangeFeedProcessor> CreateProcessorAsync(

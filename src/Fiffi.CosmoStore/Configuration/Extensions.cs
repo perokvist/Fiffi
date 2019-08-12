@@ -31,7 +31,7 @@ namespace Fiffi.CosmoStore.Configuration
             .AddSingleton(sp => moduleFactory(sp, sp.GetRequiredService<IEventStore>()));
 
 
-        public static IServiceCollection AddChangeFeedSubsciption<TModule, TOptions>(
+        public static IServiceCollection AddChangeFeedSubscription<TModule, TOptions>(
             this IServiceCollection sc,
             Func<IServiceProvider, TModule, ILogger, Func<IEvent[], Task>> dispatcherProvider)
             where TModule : class
@@ -43,7 +43,7 @@ namespace Fiffi.CosmoStore.Configuration
                 var logger = sp.GetRequiredService<ILogger<TModule>>();
                 var module = sp.GetRequiredService<TModule>();
                 var cf = await ChangeFeed
-                .CreateProcessorAsync(opt.ServiceUri, opt.Key, opt.HostName, opt.TypeResolver, dispatcherProvider(sp, module, logger));
+                .CreateProcessorAsync(opt.ServiceUri, opt.Key, opt.HostName, opt.TypeResolver, dispatcherProvider(sp, module, logger), logger);
                 return cf;
             })
             .AddHostedService<ChangeFeedHostedService>();

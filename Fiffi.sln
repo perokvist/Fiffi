@@ -19,6 +19,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fiffi.CosmoStore", "src\Fif
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fiffi.CosmoStore.Tests", "src\Fiffi.CosmoStore.Tests\Fiffi.CosmoStore.Tests.csproj", "{FB02EE41-924F-4938-A5D3-6CF7D76DFCDB}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{3BE7F0C7-985E-4588-8139-8D965B18F0E9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChangeFeedSample", "samples\ChangeFeedSample\ChangeFeedSample.csproj", "{3BC45708-A72E-4C29-A36F-228EEE0EDA87}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -91,9 +95,20 @@ Global
 		{FB02EE41-924F-4938-A5D3-6CF7D76DFCDB}.Release|Any CPU.Build.0 = Release|Any CPU
 		{FB02EE41-924F-4938-A5D3-6CF7D76DFCDB}.Release|x64.ActiveCfg = Release|Any CPU
 		{FB02EE41-924F-4938-A5D3-6CF7D76DFCDB}.Release|x64.Build.0 = Release|Any CPU
+		{3BC45708-A72E-4C29-A36F-228EEE0EDA87}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3BC45708-A72E-4C29-A36F-228EEE0EDA87}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3BC45708-A72E-4C29-A36F-228EEE0EDA87}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{3BC45708-A72E-4C29-A36F-228EEE0EDA87}.Debug|x64.Build.0 = Debug|Any CPU
+		{3BC45708-A72E-4C29-A36F-228EEE0EDA87}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3BC45708-A72E-4C29-A36F-228EEE0EDA87}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3BC45708-A72E-4C29-A36F-228EEE0EDA87}.Release|x64.ActiveCfg = Release|Any CPU
+		{3BC45708-A72E-4C29-A36F-228EEE0EDA87}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{3BC45708-A72E-4C29-A36F-228EEE0EDA87} = {3BE7F0C7-985E-4588-8139-8D965B18F0E9}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {92773AE5-DB12-492F-A90E-87CA692A34C9}
