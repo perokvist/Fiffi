@@ -12,8 +12,9 @@ namespace Fiffi.CosmoStore
             Uri serviceUri,
             string key,
             string hostName,
-            Func<IEvent[], Task> dispatcher,
-            Func<string, Type> typeResolver)
+            Func<string, Type> typeResolver,
+            Func<IEvent[], Task> dispatcher
+            )
             => CreateProcessorAsync(serviceUri, key, hostName, "EventStore",
                 "Events", new FeedObserverFactory(dispatcher, typeResolver),
                 builder => { });

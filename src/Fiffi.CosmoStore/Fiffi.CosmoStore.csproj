@@ -19,6 +19,9 @@
   <ItemGroup>
     <PackageReference Include="CosmoStore.CosmosDb" Version="2.1.0" />
     <PackageReference Include="Microsoft.Azure.DocumentDB.ChangeFeedProcessor" Version="2.2.7" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="2.2.0" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="2.2.0" />
+    <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="2.2.0" />
   </ItemGroup>
 
   <ItemGroup>
