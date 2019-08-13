@@ -5,7 +5,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -47,27 +46,5 @@ namespace Fiffi.CosmoStore.Configuration
                 return cf;
             })
             .AddHostedService<ChangeFeedHostedService>();
-
-
-
-        public class ModuleOptions
-        {
-            public ModuleOptions()
-            {
-                TypeResolver = Fiffi.TypeResolver.Default();
-            }
-
-            [Required]
-            public Uri ServiceUri { get; set; }
-
-            [Required]
-            public string Key { get; set; }
-
-            [Required]
-            public string HostName { get; set; }
-
-            public Func<string, Type> TypeResolver { get; set; }
-        }
-
     }
 }
