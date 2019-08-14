@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Fiffi;
 using Fiffi.CosmoStore.Configuration;
 using Fiffi.Testing;
+using Fiffi.Visualization;
 using Microsoft.Extensions.Logging;
 
 namespace ChangeFeedSample
@@ -45,7 +46,7 @@ namespace ChangeFeedSample
             return new SampleModule(dispatcher, events =>
             {
                 logger.LogInformation($"{nameof(SampleModule)} got {events.Length} events");
-                //logger.LogInformation(events.Draw());
+                logger.LogInformation(events.Draw());
                 return ep.PublishAsync(events);
             });
         }
