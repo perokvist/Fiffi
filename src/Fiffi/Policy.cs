@@ -41,6 +41,10 @@ namespace Fiffi
 
     public class PolicyExecution
     {
+        public static Func<TEvent, PolicyContext, Task> On<TEvent, TProjection>(Func<TEvent, string> streamNameProvider, Func<TEvent, TProjection, ICommand> policy)
+            where TProjection : class, new()
+            => (e, ctx) => ctx.ExecuteAsync<TProjection>(streamNameProvider(e), p => policy(e, p));
+
         public static Func<TEvent, PolicyContext, Task> On<TEvent, TProjection>(string streamName, Func<TEvent, TProjection, ICommand> policy)
             where TProjection : class, new()
             => (e, ctx) => ctx.ExecuteAsync<TProjection>(streamName, p => policy(e, p));
