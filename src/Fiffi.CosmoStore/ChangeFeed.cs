@@ -1,4 +1,5 @@
 ﻿using Microsoft.Azure.Documents.ChangeFeedProcessor;
+using Microsoft.Azure.Documents.ChangeFeedProcessor.FeedProcessing;
 using Microsoft.Azure.Documents.ChangeFeedProcessor.PartitionManagement;
 using Microsoft.Azure.Documents.Client;
 using Microsoft.Extensions.Logging;

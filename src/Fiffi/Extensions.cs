@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Fiffi
@@ -42,28 +40,6 @@ namespace Fiffi
         public static TState Apply<TState>(this IEnumerable<IEvent> events, TState currentState) where TState : new()
             => events.Aggregate(currentState, (s, @event) => s.Tap(x => ((dynamic)x).When((dynamic)@event)));
 
-        public static void RegisterReceptor<T>(this EventProcessor processor, Dispatcher<ICommand, Task> d, Func<T, ICommand> receptor)
-            where T : IEvent
-            => processor.Register<T>(e => d.Dispatch(receptor(e)));
-
-        public static void RegisterReceptor<T>(this EventProcessor processor, Dispatcher<ICommand, Task> d, Func<T, Task<ICommand>> receptor)
-            where T : IEvent
-            => processor.Register<T>(async e => await d.Dispatch(await receptor(e)));
-
-        public static void Register<TCommand>(this Dispatcher<ICommand, Task> d, params Func<TCommand, Task>[] f)
-         where TCommand : ICommand
-             => d.Register(f.Aggregate((l, r) => async c =>
-             {
-                 await l(c);
-                 await r(c);
-             }));
-
-        public static Action<Func<T, bool>> RegisterReceptorWith<T>(this EventProcessor processor, Dispatcher<ICommand, Task> d, Func<T, ICommand> receptor)
-            where T : IEvent
-              => f => processor.Register<T>(async e =>
-              {
-                  if (f(e)) await d.Dispatch(receptor(e));
-              });
 
         public static void Guard<T>(this Action<Func<T, bool>> f, Func<T, bool> guard)
             => f(guard);
@@ -71,6 +47,14 @@ namespace Fiffi
         public static void DoIf<T>(this T self, Func<T, bool> p, Action<T> f)
         {
             if (p(self)) f(self);
+        }
+
+        public static async Task DoIfAsync<T>(this T self, Func<T, bool> p, Func<T, Task> f)
+        {
+            if (p(self))
+            {
+                await f(self);
+            }
         }
 
         public static object GetDefault(this Type type)
@@ -90,13 +74,15 @@ namespace Fiffi
         public static (string AggregateName, string StreamName) AsStreamName(this string typeName, IAggregateId aggregateId) => (typeName.AsAggregateName(), $"{typeName.AsAggregateName()}-{aggregateId.Id}");
 
         public static Func<T, Task> Then<T>(this Func<T, Task> f1, Func<T, Task> f2)
-            => async e => {
+            => async e =>
+            {
                 await f1(e);
                 await f2(e);
             };
 
         public static Func<T, T2, Task> Then<T, T2>(this Func<T, T2, Task> f1, Func<T, T2, Task> f2)
-            => async (e, c) => {
+            => async (e, c) =>
+            {
                 await f1(e, c);
                 await f2(e, c);
             };
