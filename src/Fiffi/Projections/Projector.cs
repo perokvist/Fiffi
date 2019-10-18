@@ -14,7 +14,7 @@ namespace Fiffi.Projections
             => this.store.GetAsync<T>(streamName);
 
         public Task<T> ProjectAsync<TStream>(AggregateId id)
-            => ProjectAsync<TStream>(id);
+            => ProjectAsync<TStream>((IAggregateId)id);
 
         public Task<T> ProjectAsync<TStream>(IAggregateId id)
             => this.store.GetAsync<T, TStream>(id);

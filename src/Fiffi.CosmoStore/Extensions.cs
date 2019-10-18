@@ -17,6 +17,9 @@ namespace Fiffi.CosmoStore
                 JToken.FromObject(@event.Meta)));
 
         public static IEvent ToEvent(this global::CosmoStore.EventRead eventRead, Func<string, Type> typeResolver)
-         => typeResolver(eventRead.Name).Pipe(t => ((IEvent)eventRead.Data.ToObject(t)).Tap(e => e.Meta = eventRead.Metadata.Value.ToObject<Dictionary<string, string>>()));
+         => typeResolver(eventRead.Name)
+            .Pipe(t => ((IEvent)eventRead.Data.ToObject(t))
+            .Tap(e => e.Meta = eventRead.Metadata.Value.ToObject<Dictionary<string, string>>())
+            .Tap(e => e.Meta.Add(nameof(eventRead.Position).ToLower(), eventRead.Position.ToString())));
     }
 }
