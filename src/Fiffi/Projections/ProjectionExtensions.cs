@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Fiffi.Projections
@@ -31,7 +29,7 @@ namespace Fiffi.Projections
 
         public static async Task Publish<T>(this Projector<T> projector, string streamName, Func<IEvent[], Task> pub)
        where T : class, IEvent, new()
-       => await pub(new IEvent[] { await projector.ProjectAsync<T>(streamName) });
+       => await pub(new IEvent[] { await projector.ProjectAsync(streamName) });
 
     }
 }

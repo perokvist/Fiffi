@@ -40,13 +40,13 @@ namespace Fiffi
 
         public IEventStore Store { get; set; }
 
-        public Task ExecuteAsync(ICommand cmd) => this.Dispatcher.Dispatch(cmd);
+        public Task ExecuteAsync(ICommand cmd) => cmd.DoIfAsync(c => c != null, c => this.Dispatcher.Dispatch(c));
 
         public async Task ExecuteAsync<T>(string streamName, Func<T, ICommand> policy)
             where T : class, new()
         {
             var p = await this.Store.Projector<T>().ProjectAsync(streamName);
-            await this.Dispatcher.Dispatch(policy(p));
+            await policy(p).DoIfAsync(cmd => cmd != null, cmd => this.Dispatcher.Dispatch(cmd));
         }
     }
 }

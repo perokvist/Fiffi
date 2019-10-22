@@ -24,10 +24,7 @@ namespace Fiffi
 
         public static void GuaranteeCorrelation(this ICommand cmd) =>
             Guid.NewGuid()
-            .DoIf(x => x != default,
-                id => id
                 .Tap(x => cmd.CorrelationId = x)
-                .Tap(x => cmd.CausationId = x));
-
+                .Tap(x => cmd.CausationId = x);
     }
 }
