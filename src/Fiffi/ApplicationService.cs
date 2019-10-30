@@ -14,7 +14,7 @@ namespace Fiffi
         public static async Task ExecuteAsync<TState>(IEventStore store, ICommand command, Func<TState, Task<IEvent[]>> action, Func<IEvent[], Task> pub)
             where TState : class, new()
         {
-            if (command.CorrelationId == default(Guid))
+            if (command.CorrelationId == default)
                 throw new ArgumentException("CorrelationId required");
 
             var (aggregateName, streamName) = typeof(TState).Name.AsStreamName(command.AggregateId);

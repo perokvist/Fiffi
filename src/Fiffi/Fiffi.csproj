@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp2.2</TargetFramework>
     <RuntimeIdentifier>win7-x64</RuntimeIdentifier>
-    <VersionPrefix>0.7.0</VersionPrefix>
+    <VersionPrefix>0.7.1</VersionPrefix>
     <VersionSuffix>alpha</VersionSuffix>
     <PackageId>Fiffi</PackageId>
     <Title>Fiffi</Title>
@@ -14,6 +14,7 @@
     <Description>Exploration kit for eventdriven services</Description>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <PackageTags>event-driven microservices infrastructure</PackageTags>
+    <LangVersion>preview</LangVersion>
   </PropertyGroup>
 
 </Project>
