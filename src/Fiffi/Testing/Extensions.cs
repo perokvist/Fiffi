@@ -44,5 +44,11 @@ namespace Fiffi.Testing
             @event.Meta["test.statetype"] = typeof(TState).AssemblyQualifiedName;
             return @event;
         }
+
+        public static Func<IEvent[], Task> AsPub(this Queue<IEvent> q) => events =>
+        {
+            events.ForEach(e => q.Enqueue(e));
+            return Task.CompletedTask;
+        };
     }
 }

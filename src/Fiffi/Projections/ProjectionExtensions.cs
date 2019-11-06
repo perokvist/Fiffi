@@ -11,7 +11,7 @@ namespace Fiffi.Projections
 
         public static async Task<long> AppendToStreamAsync(this IEventStore store, string streamName, params IEvent[] events)
         {
-            var r = await store.LoadEventStreamAsync(streamName, 0);
+            var r = await store.LoadEventStreamAsync(streamName, 0); //TODO optimize :)
             return await store.AppendToStreamAsync(streamName, r.Version, events);
         }
 
@@ -28,8 +28,12 @@ namespace Fiffi.Projections
         }
 
         public static async Task Publish<T>(this Projector<T> projector, string streamName, Func<IEvent[], Task> pub)
-       where T : class, IEvent, new()
-       => await pub(new IEvent[] { await projector.ProjectAsync(streamName) });
+            where T : class, IEvent, new()
+            => await pub(new IEvent[] { await projector.ProjectAsync(streamName) });
+
+        public static async Task Project<T>(this Projector<T> projector, string streamName, Func<T, Task> save)
+            where T : class, new()
+                => await save(await projector.ProjectAsync(streamName));
 
     }
 }
