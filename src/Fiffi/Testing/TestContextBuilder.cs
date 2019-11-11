@@ -1,6 +1,7 @@
 ﻿using Fiffi.Modularization;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Fiffi.Testing
@@ -22,9 +23,19 @@ namespace Fiffi.Testing
         public static ITestContext Create<TPersitance, TModule>(Func<TPersitance, Func<IEvent[], Task>, Module> f)
             where TPersitance : class, IEventStore, new()
             where TModule : Module
-            => Create<TPersitance>((store, q) => {
+            => Create<TPersitance>((store, q) =>
+            {
                 var module = f(store, q.AsPub());
                 return new TestContext(a => a(store), module.DispatchAsync, q, e => module.WhenAsync(e));
-                });
+            });
+
+        public static ITestContext Create<TPersitance, TModule>(Func<TPersitance> creator, Func<TPersitance, Func<IEvent[], Task>, Module> f, params Func<IEvent, Task>[] whens)
+            where TPersitance : class, IEventStore, new()
+            where TModule : Module
+            => Create(creator, (store, q) =>
+            {
+                var module = f(store, q.AsPub());
+                return new TestContext(a => a(store), module.DispatchAsync, q, new Func<IEvent, Task>[] { e => module.WhenAsync(e) }.Concat(whens).ToArray());
+            });
     }
 }
