@@ -10,9 +10,8 @@ namespace Fiffi
             where T : ICommand
         {
             var cmd = f();
-            var meta = @event.Meta.GetEventMetaData();
-            cmd.CorrelationId = meta.CorrelationId;
-            cmd.CausationId = meta.EventId;
+            cmd.CorrelationId = @event.GetCorrelation();
+            cmd.CausationId = @event.EventId();
             return cmd;
         }
 

@@ -20,22 +20,28 @@ namespace Fiffi.Testing
             return f(store, q);
         }
 
-        public static ITestContext Create<TPersitance, TModule>(Func<TPersitance, Func<IEvent[], Task>, Module> f)
+        public static ITestContext Create<TPersitance, TModule>(
+            Func<TPersitance, Func<IEvent[], Task>, TModule> f,
+            params Func<TPersitance, Func<IEvent[], Task>, Module>[] additional)
             where TPersitance : class, IEventStore, new()
             where TModule : Module
-            => Create<TPersitance>((store, q) =>
-            {
-                var module = f(store, q.AsPub());
-                return new TestContext(a => a(store), module.DispatchAsync, q, e => module.WhenAsync(e));
-            });
+            => Create(() => new TPersitance(), f, additional);
 
-        public static ITestContext Create<TPersitance, TModule>(Func<TPersitance> creator, Func<TPersitance, Func<IEvent[], Task>, Module> f, params Func<IEvent, Task>[] whens)
+        public static ITestContext Create<TPersitance, TModule>(
+            Func<TPersitance> creator,
+            Func<TPersitance, Func<IEvent[], Task>, TModule> f,
+            params Func<TPersitance, Func<IEvent[], Task>, Module>[] additional)
             where TPersitance : class, IEventStore, new()
             where TModule : Module
             => Create(creator, (store, q) =>
             {
-                var module = f(store, q.AsPub());
-                return new TestContext(a => a(store), module.DispatchAsync, q, new Func<IEvent, Task>[] { e => module.WhenAsync(e) }.Concat(whens).ToArray());
+                var pub = q.AsPub();
+                var module = f(store, pub);
+                var additionalModules = additional.Select(x => x(store, pub));
+                var allWhens = new Func<IEvent, Task>[] { e => module.WhenAsync(e) }
+                .Concat(additionalModules.Select<Module, Func<IEvent, Task>>(x => y => x.WhenAsync(y)))
+                .ToArray();
+                return new TestContext(a => a(store), module.DispatchAsync, q, allWhens);
             });
     }
 }
