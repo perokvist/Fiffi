@@ -24,7 +24,7 @@ namespace Fiffi.CosmoStore.Configuration
                 .Configure(options)
                 .ValidateDataAnnotations())
             .AddSingleton<IEventStore>(sp => sp.GetRequiredService<IOptions<TOptions>>()
-            .Value.Pipe(c => new CosmoStoreEventStore(c.ServiceUri, c.Key, c.TypeResolver)))
+                .Value.Pipe(c => new CosmoStoreEventStore(c.ServiceUri, c.Key, c.TypeResolver)))
             .AddSingleton(sp => moduleFactory(sp, sp.GetRequiredService<IEventStore>()));
 
 

@@ -41,7 +41,7 @@ namespace Fiffi.Testing
                 var allWhens = new Func<IEvent, Task>[] { e => module.WhenAsync(e) }
                 .Concat(additionalModules.Select<Module, Func<IEvent, Task>>(x => y => x.WhenAsync(y)))
                 .ToArray();
-                return new TestContext(a => a(store), module.DispatchAsync, q, allWhens);
+                return new TestContext(a => a(store), module.DispatchAsync, q, module.QueryAsync ,allWhens);
             });
     }
 }

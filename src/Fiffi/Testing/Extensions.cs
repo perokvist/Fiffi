@@ -45,6 +45,14 @@ namespace Fiffi.Testing
             return @event;
         }
 
+        public static IEvent AddTestMetaData<TProjection>(this IEvent @event, string streamName, int version = 1)
+        {
+            @event.Tap(e => e.Meta.AddTypeInfo(e));
+            @event.Meta.AddMetaData(version, streamName, "test-projection", new TestCommand(new AggregateId(Guid.NewGuid())));
+            @event.Meta["test.statetype"] = typeof(TProjection).AssemblyQualifiedName;
+            return @event;
+        }
+
         public static Func<IEvent[], Task> AsPub(this Queue<IEvent> q) => events =>
         {
             events.ForEach(e => q.Enqueue(e));
