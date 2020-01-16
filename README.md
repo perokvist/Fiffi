@@ -21,20 +21,21 @@ Exploration kit for eventdriven services.
 ┗━━━━━━━━━━━━━━━━━┻━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┻━━━━━━┻━━━━━━━━━━━━━━━━━━┛
 </pre>
 
-		[Fact]
-		public async Task AddItemToCartAsync()
-		{
-			var context = new TestContext();
+       [Fact]
+        public async Task CreateGame()
+        {
+            //Given
+            context.Given(Array.Empty<IEvent>());
 
-			//Given
-			context.Given(new IEvent[0]);
+            //When
+            await context.WhenAsync(new CreateGame { FirstTo = 3, GameId = Guid.NewGuid(), PlayerId = "tester", Title = "Test Game" });
 
-			//When
-			await context.When(new AddItemCommand(Guid.NewGuid()));
-
-			//Then
-			context.Then(events => Assert.True(events.OfType<ItemAddedEvent>().Count() == 1));
-		}
+            //Then  
+            context.Then((events, visual) => {
+                this.helper.WriteLine(visual);
+                Assert.True(events.OfType<GameCreated>().Happened());
+            });
+        }
 
 At it's core is an defenition of an IEventStore and the IEvent.
 
@@ -55,7 +56,7 @@ The ApplicationService.ExecuteAsync is targeted on the infrastructure part of an
 ApplicationService.ExecuteAsync(
 					store,
 					command,
-					state => new IEvent[0],
+					state => Array.Empty<IEvent>(),
 					events => pub(events)
 					)
 ```
