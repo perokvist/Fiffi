@@ -46,6 +46,7 @@ namespace Fiffi
 
 		internal static string Require(this IEvent @event, string keyName)
 			=> @event.Meta.ContainsKey(keyName.ToLower()) ? @event.Meta[keyName.ToLower()] : throw new ArgumentException($"{keyName.ToLower()} for {@event.GetType()} required");
+		//TODO switch case for handling meta == null (when testing)
 
 		public static string GetMetaOrDefault<T>(this IDictionary<string, string> meta, string keyName, T @default = default(T))
 			=> meta.ContainsKey(keyName.ToLower()) ? meta[keyName.ToLower()] : @default.ToString();

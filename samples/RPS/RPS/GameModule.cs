@@ -14,8 +14,8 @@ namespace RPS
 
         public static GameModule Initialize(IEventStore store, Func<IEvent[], Task> pub)
             => new ModuleConfiguration<GameModule>((c, p, q) => new GameModule(c, p, q))
-            .Command(
-                Commands.GuaranteeCorrelation<CreateGame>(),
+            .Command<IGameCommand>(
+                Commands.GuaranteeCorrelation<IGameCommand>(),
                 cmd => ApplicationService.ExecuteAsync<GameState>(store, cmd, state => Game.Handle(cmd, state).ToArray(), pub))
             .Create(store);
 

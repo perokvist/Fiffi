@@ -1,5 +1,4 @@
-﻿using Fiffi.Visualization;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -9,6 +8,19 @@ namespace Fiffi.Testing
 {
     public static class Extensions
     {
+        //public static async Task<T> Then<T>(ITestContext context, IEventStore store, IAggregateId id)
+        //{
+        //    store.
+        //    var state = (await store.LoadEventStreamAsync(typeof(T).Name.AsStreamName(id).StreamName, 0)).Events.Rehydrate<T>();
+
+        //}
+
+        //var(aggregateName, streamName) = typeof(TState).Name.AsStreamName(command.AggregateId);
+
+
+        public static void Given<TState>(this ITestContext context, IAggregateId id, params IEvent[] events)
+            => context.Given(events.Select(e => e.AddTestMetaData<TState>(id)).ToArray());
+
         public static bool Happened(this IEnumerable<IEvent> events) => events.Count() >= 1;
 
         public static async Task<(object Value, long Version)> GetAsync(this IStateStore stateManager, Type type, IAggregateId aggregateId)
@@ -39,6 +51,7 @@ namespace Fiffi.Testing
         public static IEvent AddTestMetaData<TState>(this IEvent @event, IAggregateId id, int version = 1)
         {
             var (aggregateName, streamName) = typeof(TState).Name.AsStreamName(id);
+            if (@event.Meta == null) @event.Meta = new Dictionary<string, string>();
             @event.Tap(e => e.Meta.AddTypeInfo(e));
             @event.Meta.AddMetaData(version, streamName, aggregateName, new TestCommand(id));
             @event.Meta["test.statetype"] = typeof(TState).AssemblyQualifiedName;
