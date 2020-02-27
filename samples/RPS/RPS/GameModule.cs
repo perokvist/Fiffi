@@ -4,6 +4,7 @@ using Fiffi.Projections;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using static Domain;
 
 namespace RPS
 {

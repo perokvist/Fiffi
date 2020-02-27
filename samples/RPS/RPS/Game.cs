@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using static Foo;
+using static Domain;
 
 namespace RPS
 {
@@ -35,7 +35,7 @@ namespace RPS
 
             if (state.Players.PlayerTwo == default)
             {
-                yield return new GameStarted { GameId = command.GameId, PlayerId = command.PlayerId };
+                yield return new GameStarted(command.GameId, command.PlayerId, null);
                 yield return new RoundStarted { GameId = command.GameId, Round = 1 };
             }
         }
@@ -158,17 +158,6 @@ namespace RPS
         public Guid GameId { get; set; }
 
         public int Round { get; set; }
-
-        string IEvent.SourceId => GameId.ToString();
-
-        IDictionary<string, string> IEvent.Meta { get; set; }
-    }
-
-    public class GameStarted : IEvent
-    {
-        public Guid GameId { get; set; }
-
-        public string PlayerId { get; set; }
 
         string IEvent.SourceId => GameId.ToString();
 
