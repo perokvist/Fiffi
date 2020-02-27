@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using static Foo;
 
 namespace RPS
 {
@@ -85,23 +86,23 @@ namespace RPS
                 _ => new RoundTied { GameId = command.GameId, Round = state.Round },
             };
 
-            yield return (state.Rounds == state.Round) switch
-            {
-                true => new GameEnded { GameId = command.GameId },
-                _ => new RoundStarted { GameId = command.GameId, Round = state.Round + 1 }
-            };
+            //yield return (state.Rounds == state.Round) switch
+            //{
+            //    true => global::RPS.  new GameEnded { GameId = command.GameId },
+            //    _ => new RoundStarted { GameId = command.GameId, Round = state.Round + 1 }
+            //};
         }
 
     }
 
-    public class GameEnded : IEvent
-    {
-        public Guid GameId { get; set; }
+    //public class GameEnded : IEvent
+    //{
+    //    public Guid GameId { get; set; }
 
-        string IEvent.SourceId => GameId.ToString();
+    //    string IEvent.SourceId => GameId.ToString();
 
-        IDictionary<string, string> IEvent.Meta { get; set; }
-    }
+    //    IDictionary<string, string> IEvent.Meta { get; set; }
+    //}
 
     public class RoundTied : IEvent
     {

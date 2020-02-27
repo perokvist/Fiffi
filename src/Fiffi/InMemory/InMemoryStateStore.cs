@@ -25,7 +25,7 @@ namespace Fiffi
                  .Select(async e =>
                  {
                      if (!published.ContainsKey(e.Key)) return;
-                     var version = (await GetOutBoxAsync(e.Key)).Last().GetVersion();
+                     var version = (await GetOutBoxAsync(e.Key)).Last().Meta.GetEventStoreMetaData().EventVersion;
                      published[e.Key] = (published[e.Key].StreamName, version);
                  }));
 

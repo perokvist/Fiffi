@@ -76,7 +76,7 @@ namespace Fiffi
 
             events
                 .ForEach(x => x
-                        .Tap(e => e.Meta.AddMetaData(version + 1, streamName, aggregateName, command))
+                        .Tap(e => e.Meta.AddMetaData(version, streamName, aggregateName, command))
                         .Tap(e => e.Meta.AddTypeInfo(e))
                     );
         }

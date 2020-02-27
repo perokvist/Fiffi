@@ -24,8 +24,6 @@ namespace Fiffi
 
 		public static string GetAggregateName(this IEvent @event) => @event.Require(nameof(EventMetaData.AggregateName));
 
-		public static long GetVersion(this IEvent @event) => long.Parse(@event.Require(nameof(EventMetaData.Version)));
-
         public static Guid EventId(this IEvent e) => Guid.Parse(e.Require(nameof(EventMetaData.EventId)));
 
 		public static bool HasCorrelation(this IEvent @event) => @event.HasMeta(nameof(EventMetaData.CorrelationId));
@@ -42,13 +40,15 @@ namespace Fiffi
 
 		public static int GetTriggerId(this IEvent @event) => int.Parse(@event.Require(nameof(EventMetaData.TriggeredById)));
 
+		public static long GetBasedOnStreamVersion(this IEvent @event) => long.Parse(@event.Require(nameof(EventMetaData.BasedOnStreamVersion)));
+
 		public static DateTime OccuredAt(this IEvent @event) => new DateTime(long.Parse(@event.Require(nameof(EventMetaData.OccuredAt))));
 
 		internal static string Require(this IEvent @event, string keyName)
 			=> @event.Meta.ContainsKey(keyName.ToLower()) ? @event.Meta[keyName.ToLower()] : throw new ArgumentException($"{keyName.ToLower()} for {@event.GetType()} required");
 		//TODO switch case for handling meta == null (when testing)
 
-		public static string GetMetaOrDefault<T>(this IDictionary<string, string> meta, string keyName, T @default = default(T))
+		public static string GetMetaOrDefault<T>(this IDictionary<string, string> meta, string keyName, T @default = default)
 			=> meta.ContainsKey(keyName.ToLower()) ? meta[keyName.ToLower()] : @default.ToString();
 
 		public static bool HasMeta(this IEvent @event, string keyName)
@@ -63,11 +63,10 @@ namespace Fiffi
 			OccuredAt = long.Parse(meta.GetMetaOrDefault<long>(nameof(EventMetaData.OccuredAt))),
 			StreamName = meta.GetMetaOrDefault<string>(nameof(EventMetaData.StreamName)),
 			TriggeredBy = meta.GetMetaOrDefault<string>(nameof(EventMetaData.TriggeredBy)),
-			Version = long.Parse(meta.GetMetaOrDefault<long>(nameof(EventMetaData.Version))),
+			BasedOnStreamVersion = long.Parse(meta.GetMetaOrDefault<long>(nameof(EventMetaData.BasedOnStreamVersion))),
 		};
 
-
-		public static void AddMetaData(this IDictionary<string, string> meta, long newVersion, string streamName, string aggregateName, ICommand command, long occuredAt = default(long))
+		public static void AddMetaData(this IDictionary<string, string> meta, long version, string streamName, string aggregateName, ICommand command, long occuredAt = default(long))
 		=> meta.AddMetaData(new EventMetaData
 		{
 			AggregateName = aggregateName,
@@ -78,12 +77,12 @@ namespace Fiffi
 			StreamName = streamName,
 			TriggeredBy = command.GetType().Name,
 			TriggeredById = command.GetHashCode(),
-			Version = newVersion
+			BasedOnStreamVersion = version
 		});
 
 		public static void AddMetaData(this IDictionary<string, string> meta, EventMetaData metaData)
 		{
-			meta[nameof(EventMetaData.Version).ToLower()] = metaData.Version.ToString();
+			meta[nameof(EventMetaData.BasedOnStreamVersion).ToLower()] = metaData.BasedOnStreamVersion.ToString();
 			meta[nameof(EventMetaData.StreamName).ToLower()] = metaData.StreamName;
 			meta[nameof(EventMetaData.AggregateName).ToLower()] = metaData.AggregateName;
 			meta[nameof(EventMetaData.EventId).ToLower()] = metaData.EventId.ToString();
@@ -93,18 +92,18 @@ namespace Fiffi
 			meta[nameof(EventMetaData.TriggeredById).ToLower()] = metaData.TriggeredById.ToString();
 			meta[nameof(EventMetaData.OccuredAt).ToLower()] = metaData.OccuredAt.ToString();
 		}
-	}
 
-	public class EventMetaData
-	{
-		public Guid CorrelationId { get; set; }
-        public Guid CausationId { get; set; }
-        public Guid EventId { get; set; }
-		public string StreamName { get; set; }
-		public string AggregateName { get; set; }
-		public long Version { get; set; }
-		public string TriggeredBy { get; set; }
-		public long OccuredAt { get; set; }
-		public int TriggeredById { get; set; }
+		public static void AddStoreMetaData(this IDictionary<string, string> meta, EventStoreMetaData metaData)
+		{
+			meta[nameof(EventStoreMetaData.EventVersion).ToLower()] = metaData.EventVersion.ToString();
+			meta[nameof(EventStoreMetaData.EventPosition).ToLower()] = metaData.EventPosition.ToString();
+		}
+
+		public static EventStoreMetaData GetEventStoreMetaData(this IDictionary<string, string> meta)
+			=> new EventStoreMetaData
+			{
+				EventPosition = long.Parse(meta.GetMetaOrDefault<long>(nameof(EventStoreMetaData.EventPosition))),
+				EventVersion = long.Parse(meta.GetMetaOrDefault<long>(nameof(EventStoreMetaData.EventVersion))),
+			};
 	}
 }

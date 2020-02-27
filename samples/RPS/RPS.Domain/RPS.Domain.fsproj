@@ -2,12 +2,14 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
-    <LangVersion>preview</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Library.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\..\src\Fiffi\Fiffi.csproj" />
-    <ProjectReference Include="..\RPS.Domain\RPS.Domain.fsproj" />
   </ItemGroup>
 
 </Project>

@@ -1,6 +1,7 @@
 ﻿using Fiffi;
 using System;
 using Xunit;
+using static Foo;
 
 namespace RPS.Tests
 {
@@ -49,7 +50,7 @@ namespace RPS.Tests
                 new HandShown { GameId = gameId, Hand = Hand.Paper, PlayerId = "lisa@tester.com" },
                 new HandShown { GameId = gameId, Hand = Hand.Rock, PlayerId = "alex@tester.com" },
                 new RoundEnded { GameId = gameId, Round = 1, Looser = "lisa@tester.com", Winner = "alex@tester.com" },
-                new GameEnded { GameId = gameId }
+                new GameEnded(gameId, null)
             }.Rehydrate<GameState>();
 
             //Then  

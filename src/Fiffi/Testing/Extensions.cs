@@ -48,7 +48,7 @@ namespace Fiffi.Testing
             return f(null);
         }
 
-        public static IEvent AddTestMetaData<TState>(this IEvent @event, IAggregateId id, int version = 1)
+        public static IEvent AddTestMetaData<TState>(this IEvent @event, IAggregateId id, int version = 0)
         {
             var (aggregateName, streamName) = typeof(TState).Name.AsStreamName(id);
             if (@event.Meta == null) @event.Meta = new Dictionary<string, string>();
@@ -58,7 +58,7 @@ namespace Fiffi.Testing
             return @event;
         }
 
-        public static IEvent AddTestMetaData<TProjection>(this IEvent @event, string streamName, int version = 1)
+        public static IEvent AddTestMetaData<TProjection>(this IEvent @event, string streamName, int version = 0)
         {
             @event.Tap(e => e.Meta.AddTypeInfo(e));
             @event.Meta.AddMetaData(version, streamName, "test-projection", new TestCommand(new AggregateId(Guid.NewGuid())));
