@@ -98,5 +98,11 @@ namespace Fiffi
            {
                if (p(e, c)) await f(e, c);
            };
+
+        public static Func<T, T> Combine<T>(params Func<Func<T, T>, Func<T, T>>[] funcs)
+            => input => funcs.Aggregate((l, r) => f => l(r(f)))(c => c)(input);
+
+        public static Func<T, Task> Combine<T>(params Func<Func<T, Task>, Func<T, Task>>[] funcs)
+            => input => funcs.Aggregate((l, r) => f => l(r(f)))(c => Task.CompletedTask)(input);
     }
 }

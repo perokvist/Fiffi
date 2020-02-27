@@ -1,10 +1,7 @@
 using System;
 using Xunit;
 using Fiffi.Testing;
-using System.Collections.Generic;
 using System.Threading.Tasks;
-using System.Linq;
-using Microsoft.Azure.Documents.Client;
 
 namespace Fiffi.CosmoStore.Tests
 {
@@ -26,11 +23,5 @@ namespace Fiffi.CosmoStore.Tests
             _ = await s.AppendToStreamAsync("test", r.Version, new IEvent[] { new TestEvent().AddTestMetaData<string>(id) });
         }
 
-        public class TestEvent : IEvent
-        {
-            public IDictionary<string, string> Meta { get; set; } = new Dictionary<string, string>();
-
-            public string SourceId { get; set; }
-        }
     }
 }

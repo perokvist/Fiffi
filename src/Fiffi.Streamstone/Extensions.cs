@@ -98,8 +98,11 @@ namespace Fiffi.Streamstone
 			return (events, version);
 		}
 
-		public static IEvent ToEvent(this TypeResolver typeResolver, EventEntity e) => ToEvent(e.Data, typeResolver(e.Type));
+		public static IEvent ToEvent(this TypeResolver typeResolver, EventEntity e) 
+			=> ToEvent(e.Data, typeResolver(e.Type))
+				.Tap(evt => evt.Meta.AddStoreMetaData(new EventStoreMetaData { EventPosition = e.Version, EventVersion = e.Version }));
 
+		//TODO move ?
 		public static Type ToType(string typeValue)
 		{
 			var type = Type.GetType(typeValue);
@@ -113,6 +116,7 @@ namespace Fiffi.Streamstone
 			return type;
 		}
 
+		//TODO move ?
 		public static IEvent ToEvent(string data, Type type) => (IEvent)JsonConvert.DeserializeObject(data, type);
 
 		public static EventData ToEventData(this IEvent e, params Include[] includes)

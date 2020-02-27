@@ -4,7 +4,6 @@ using Fiffi.Testing;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Linq;
-using Microsoft.Azure.Documents.Client;
 using Fiffi.CosmoStore.Testing;
 
 namespace Fiffi.CosmoStore.Tests

@@ -23,8 +23,10 @@ namespace RPS
                                PlayerId = command.PlayerId,
                                Title = command.Title,
                                Rounds = command.Rounds,
-                               Created = DateTime.UtcNow }
-                    };
+                               Created = DateTime.UtcNow,
+                               Status = GameState.GameStatus.Started
+                    }
+                  };
 
         public static IEnumerable<IEvent> Handle(JoinGame command, GameState state)
         {
@@ -86,24 +88,15 @@ namespace RPS
                 _ => new RoundTied { GameId = command.GameId, Round = state.Round },
             };
 
-            //yield return (state.Rounds == state.Round) switch
-            //{
-            //    true => global::RPS.  new GameEnded { GameId = command.GameId },
-            //    _ => new RoundStarted { GameId = command.GameId, Round = state.Round + 1 }
-            //};
+            yield return (state.Rounds == state.Round) switch
+            {
+                true => new GameEnded(command.GameId, null),
+                _ => new RoundStarted { GameId = command.GameId, Round = state.Round + 1 }
+            };
         }
 
     }
-
-    //public class GameEnded : IEvent
-    //{
-    //    public Guid GameId { get; set; }
-
-    //    string IEvent.SourceId => GameId.ToString();
-
-    //    IDictionary<string, string> IEvent.Meta { get; set; }
-    //}
-
+   
     public class RoundTied : IEvent
     {
         public Guid GameId { get; set; }
@@ -239,7 +232,7 @@ namespace RPS
 
         public GameState When(RoundTied @event)
         {
-            Players.PlayerOne.Hand = Hand.None;
+            Players.PlayerOne.Hand = Hand.None; //TODO set all hand and status trough events
             Players.PlayerTwo.Hand = Hand.None;
             return this;
         }
@@ -272,7 +265,7 @@ namespace RPS
         public string Title { get; set; }
         public int Rounds { get; set; }
         public DateTime Created { get; set; }
-
+        public GameState.GameStatus Status { get; set; } = GameState.GameStatus.Started;
         string IEvent.SourceId => GameId.ToString();
         IDictionary<string, string> IEvent.Meta { get; set; }
     }

@@ -1,7 +1,5 @@
 ﻿using Fiffi.Testing;
-using System;
-using System.Collections.Generic;
-using System.Text;
+using System.Data;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -26,11 +24,16 @@ namespace Fiffi.Tests
             Assert.Equal(v2, r2.Item2);
         }
 
-        public class TestEvent : IEvent
+        [Fact]
+        public async Task ConcurrencyAsync()
         {
-            public string SourceId { get; set; }
+            var store = new InMemoryEventStore();
 
-            public IDictionary<string, string> Meta { get; set; } = new Dictionary<string, string>();
+            await Assert.ThrowsAsync<DBConcurrencyException>(async () =>
+            {
+                await store.AppendToStreamAsync("test", 0, new IEvent[] { new TestEvent().AddTestMetaData<string>(new AggregateId("t")) });
+                await store.AppendToStreamAsync("test", 0, new IEvent[] { new TestEvent().AddTestMetaData<string>(new AggregateId("t2")) });
+            });
         }
     }
 }

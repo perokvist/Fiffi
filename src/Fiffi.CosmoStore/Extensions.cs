@@ -20,6 +20,6 @@ namespace Fiffi.CosmoStore
          => typeResolver(eventRead.Name)
             .Pipe(t => ((IEvent)eventRead.Data.ToObject(t))
             .Tap(e => e.Meta = eventRead.Metadata.Value.ToObject<Dictionary<string, string>>())
-            .Tap(e => e.Meta.Add(nameof(eventRead.Position).ToLower(), eventRead.Position.ToString())));
+            .Tap(e => e.Meta.AddStoreMetaData(new EventStoreMetaData { EventPosition = eventRead.Position, EventVersion = eventRead.Position })));
     }
 }
