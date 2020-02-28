@@ -2,6 +2,7 @@ using System;
 using Xunit;
 using Fiffi.Testing;
 using System.Threading.Tasks;
+using Fiffi.CosmoStore.Configuration;
 
 namespace Fiffi.CosmoStore.Tests
 {
@@ -15,7 +16,13 @@ namespace Fiffi.CosmoStore.Tests
         [Trait("Category", "Integration")]
         public async Task AppendToEventStoreAsync()
         {
-            var s = new CosmoStoreEventStore(serviceUri, key,
+            var settings = new ModuleOptions
+            {
+                Key = key,
+                ServiceUri = serviceUri
+            };
+
+            var s = new CosmoStoreEventStore(settings.ConnectionString,
                  TypeResolver.FromMap(TypeResolver.GetEventsFromTypes(typeof(TestEvent))));
 
             var r = await s.LoadEventStreamAsync("test", 0);

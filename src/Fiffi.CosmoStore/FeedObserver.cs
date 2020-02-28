@@ -1,6 +1,7 @@
 ﻿using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.ChangeFeedProcessor.FeedProcessing;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -39,8 +40,10 @@ namespace Fiffi.CosmoStore
         {
             var events = docs
                 .Where(d => d.GetPropertyValue<string>("type") == "Event")
-                .Select(d => global::CosmoStore.CosmosDb.Conversion.documentToEventRead(d))
-                .Select(d => d.ToEvent(this.typeResolver))
+                //.Select(d => global::CosmoStore.Conversion.eventWriteToEventRead<JToken, long>())
+                //.Select(d => global::CosmoStore.EventRead<JToken, long>. (d))
+                //.Select(d => d.ToEvent(this.typeResolver))
+                .Cast<IEvent>() //TODO :)
                 .ToArray();
             try
             {

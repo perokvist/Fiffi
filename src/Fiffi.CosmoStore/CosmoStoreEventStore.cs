@@ -1,4 +1,5 @@
 ﻿using Microsoft.FSharp.Collections;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,22 +9,22 @@ namespace Fiffi.CosmoStore
 {
     public class CosmoStoreEventStore : IEventStore
     {
-        private readonly global::CosmoStore.EventStore store;
+        private readonly global::CosmoStore.EventStore<JToken, long> store;
         private readonly Func<string, Type> typeResolver;
 
-        public CosmoStoreEventStore(Uri serviceEndpoint, string authKey,
+        public CosmoStoreEventStore(string connectionString,
             Func<string, Type> typeResolver)
         {
             this.store = global::CosmoStore.CosmosDb.EventStore
                 .getEventStore(global::CosmoStore.CosmosDb
-                .Configuration.CreateDefault(serviceEndpoint, authKey));
+                .Configuration.CreateDefault(connectionString));
             this.typeResolver = typeResolver;
         }
 
         public async Task<long> AppendToStreamAsync(string streamName, long version, IEvent[] events)
         {
             var expectedNewVersion = version + 1;
-            var position = version == 0 ? global::CosmoStore.ExpectedPosition.NoStream : global::CosmoStore.ExpectedPosition.NewExact(expectedNewVersion);
+            var position = version == 0 ? global::CosmoStore.ExpectedVersion<long>.NoStream : global::CosmoStore.ExpectedVersion<long>.NewExact(expectedNewVersion);
 
             await this.store.AppendEvents
                 .Invoke(streamName)
@@ -37,8 +38,8 @@ namespace Fiffi.CosmoStore
         {
             var r = await this.store.GetEvents
                 .Invoke(streamName)
-                .Invoke(global::CosmoStore.EventsReadRange.NewFromPosition(version));
-            return (r.Select(x => x.ToEvent(this.typeResolver)), r.Any() ? r.Last().Position : 0);
+                .Invoke(global::CosmoStore.EventsReadRange<long>.NewFromVersion(version));
+            return (r.Select(x => x.ToEvent(this.typeResolver)), r.Any() ? r.Last().Version : 0); //TODO store meta
         }
     }
 }

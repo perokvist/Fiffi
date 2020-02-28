@@ -24,7 +24,7 @@ namespace Fiffi.CosmoStore.Configuration
                 .Configure(options)
                 .ValidateDataAnnotations())
             .AddSingleton<IEventStore>(sp => sp.GetRequiredService<IOptions<TOptions>>()
-                .Value.Pipe(c => new CosmoStoreEventStore(c.ServiceUri, c.Key, c.TypeResolver)))
+                .Value.Pipe(c => new CosmoStoreEventStore(c.ConnectionString, c.TypeResolver)))
             .AddSingleton(sp => moduleFactory(sp, sp.GetRequiredService<IEventStore>()));
 
 
@@ -40,7 +40,7 @@ namespace Fiffi.CosmoStore.Configuration
                 var logger = sp.GetRequiredService<ILogger<TModule>>();
                 var module = sp.GetRequiredService<TModule>();
                 var cf = await ChangeFeed
-                .CreateProcessorAsync(opt.ServiceUri, opt.Key, opt.HostName, opt.TypeResolver, dispatcherProvider(sp, module, logger), logger);
+                .CreateProcessorAsync(opt.ServiceUri, opt.Key , opt.HostName, opt.TypeResolver, dispatcherProvider(sp, module, logger), logger);
                 return cf;
             })
             .AddHostedService<ChangeFeedHostedService>();
