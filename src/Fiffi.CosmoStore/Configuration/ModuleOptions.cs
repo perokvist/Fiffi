@@ -12,7 +12,7 @@ namespace Fiffi.CosmoStore.Configuration
 
         [Required]
         public string ConnectionString
-            => $"AccountEndpoint={ServiceUri};AccountKey={Key}==";
+            => $"AccountEndpoint={ServiceUri};AccountKey={Key}";
         //AccountEndpoint=https://accountname.documents.azure.com:443/‌​;AccountKey=accountk‌​ey==;Database=database
 
         [Required]
