@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using static Domain;
+using static RPS.GameState;
 
 namespace RPS
 {
@@ -24,7 +24,7 @@ namespace RPS
                                Title = command.Title,
                                Rounds = command.Rounds,
                                Created = DateTime.UtcNow,
-                               Status = GameState.GameStatus.Started
+                               Status = GameStatus.Started
                     }
                   };
 
@@ -35,14 +35,14 @@ namespace RPS
 
             if (state.Players.PlayerTwo == default)
             {
-                yield return new GameStarted(command.GameId, command.PlayerId, null);
+                yield return new GameStarted { GameId = command.GameId, PlayerId = command.PlayerId };
                 yield return new RoundStarted { GameId = command.GameId, Round = 1 };
             }
         }
 
         public static IEnumerable<IEvent> Handle(PlayGame command, GameState state)
         {
-            if (state.Status != GameState.GameStatus.Started)
+            if (state.Status != GameStatus.Started)
                 yield break;
 
             if (command.Hand == Hand.None) //TODO validation
@@ -50,8 +50,8 @@ namespace RPS
 
             var players = state.Players switch
             {
-                { } p when command.PlayerId == p.PlayerOne.Id => (Active: state.Players.PlayerOne, Passive: state.Players.PlayerTwo),
-                { } p when command.PlayerId == p.PlayerTwo.Id => (Active: state.Players.PlayerTwo, Passive: state.Players.PlayerOne),
+                { } p when command.PlayerId == p.Item1.Id => (Active: state.Players.Item1, Passive: state.Players.Item2),
+                { } p when command.PlayerId == p.Item2.Id => (Active: state.Players.Item2, Passive: state.Players.Item1),
                 _ => throw new ArgumentException("Player not in game")
             };
 
@@ -90,13 +90,22 @@ namespace RPS
 
             yield return (state.Rounds == state.Round) switch
             {
-                true => new GameEnded(command.GameId, null),
+                true => new GameEnded { GameId = command.GameId },
                 _ => new RoundStarted { GameId = command.GameId, Round = state.Round + 1 }
             };
         }
 
     }
-   
+
+    public class GameEnded : IEvent
+    {
+        public Guid GameId { get; set; }
+
+        string IEvent.SourceId => GameId.ToString();
+
+        IDictionary<string, string> IEvent.Meta { get; set; }
+    }
+
     public class RoundTied : IEvent
     {
         public Guid GameId { get; set; }
@@ -158,6 +167,17 @@ namespace RPS
         public Guid GameId { get; set; }
 
         public int Round { get; set; }
+
+        string IEvent.SourceId => GameId.ToString();
+
+        IDictionary<string, string> IEvent.Meta { get; set; }
+    }
+
+    public class GameStarted : IEvent
+    {
+        public Guid GameId { get; set; }
+
+        public string PlayerId { get; set; }
 
         string IEvent.SourceId => GameId.ToString();
 
@@ -254,7 +274,7 @@ namespace RPS
         public string Title { get; set; }
         public int Rounds { get; set; }
         public DateTime Created { get; set; }
-        public GameState.GameStatus Status { get; set; } = GameState.GameStatus.Started;
+        public GameStatus Status { get; set; } = GameStatus.Started;
         string IEvent.SourceId => GameId.ToString();
         IDictionary<string, string> IEvent.Meta { get; set; }
     }

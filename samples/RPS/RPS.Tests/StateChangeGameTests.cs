@@ -6,7 +6,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
-using static Domain;
 
 namespace RPS.Tests
 {
@@ -68,7 +67,7 @@ namespace RPS.Tests
             //Given
             context.Given<GameState>(new AggregateId(gameId), 
                 new GameCreated { GameId = gameId, PlayerId = "test@tester.com", Rounds = 1, Title = "test game" },
-                new GameStarted(gameId, "foo@tester.com", null),
+                new GameStarted { GameId = gameId, PlayerId = "foo@tester.com" },
                 new RoundStarted { GameId = gameId, Round = 1 });
 
             //When
@@ -89,7 +88,7 @@ namespace RPS.Tests
             //Given
             context.Given<GameState>(new AggregateId(gameId),
                 new GameCreated { GameId = gameId, PlayerId = "test@tester.com", Rounds = 1, Title = "test game" },
-                new GameStarted(gameId, "foo@tester.com", null),
+                new GameStarted { GameId = gameId, PlayerId = "foo@tester.com" },
                 new RoundStarted { GameId = gameId, Round = 1 },
                 new HandShown { GameId = gameId, PlayerId = "test@tester.com", Hand = Hand.Paper }
                 );

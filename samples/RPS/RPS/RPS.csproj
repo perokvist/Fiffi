@@ -7,7 +7,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\src\Fiffi\Fiffi.csproj" />
-    <ProjectReference Include="..\RPS.Domain\RPS.Domain.fsproj" />
   </ItemGroup>
 
 </Project>
