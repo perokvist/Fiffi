@@ -50,8 +50,8 @@ namespace RPS
 
             var players = state.Players switch
             {
-                { } p when command.PlayerId == p.Item1.Id => (Active: state.Players.Item1, Passive: state.Players.Item2),
-                { } p when command.PlayerId == p.Item2.Id => (Active: state.Players.Item2, Passive: state.Players.Item1),
+                { } p when command.PlayerId == p.PlayerOne.Id => (Active: state.Players.PlayerOne, Passive: state.Players.PlayerTwo), { } p when command.PlayerId == p.Item1.Id => (Active: state.Players.Item1, Passive: state.Players.Item2),
+                { } p when command.PlayerId == p.PlayerTwo.Id => (Active: state.Players.PlayerTwo, Passive: state.Players.PlayerOne),
                 _ => throw new ArgumentException("Player not in game")
             };
 

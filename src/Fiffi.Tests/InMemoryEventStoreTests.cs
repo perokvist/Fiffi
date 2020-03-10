@@ -1,5 +1,6 @@
 ﻿using Fiffi.Testing;
 using System.Data;
+using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -23,6 +24,33 @@ namespace Fiffi.Tests
             Assert.Equal(2, r2.Item2);
             Assert.Equal(v2, r2.Item2);
         }
+
+        [Fact]
+        public async Task VersionAndPositionAsync()
+        {
+            var store = new InMemoryEventStore();
+
+            var version1 = await store.AppendToStreamAsync("test", 0,
+                new IEvent[] { new TestEvent().AddTestMetaData<string>(new AggregateId("t")) });
+
+            var version2 = await store.AppendToStreamAsync("test2", 0,
+                new IEvent[] {
+                    new TestEvent().AddTestMetaData<string>(new AggregateId("t2")),
+                    new TestEvent().AddTestMetaData<string>(new AggregateId("t2"))
+                });
+
+            var stream1 = await store.LoadEventStreamAsync("test", 0);
+            var stream2 = await store.LoadEventStreamAsync("test2", 0);
+
+            Assert.Equal(1, version1);
+            Assert.Equal(2, version2);
+            Assert.Equal(1, stream1.Version);
+            Assert.Equal(2, stream2.Version);
+            Assert.Equal(1, stream1.Events.First().Meta.GetEventStoreMetaData().EventPosition);
+            Assert.Equal(2, stream2.Events.First().Meta.GetEventStoreMetaData().EventPosition);
+            Assert.Equal(3, stream2.Events.Last().Meta.GetEventStoreMetaData().EventPosition);
+        }
+
 
         [Fact]
         public async Task ConcurrencyAsync()
