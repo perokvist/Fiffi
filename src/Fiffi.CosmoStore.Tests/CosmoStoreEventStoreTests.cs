@@ -68,12 +68,5 @@ namespace Fiffi.CosmoStore.Tests
             Assert.Equal(id.Id, e.First().SourceId);
             Assert.True(e.All(x => x.Meta.Keys.Any()));
         }
-
-        public class TestEvent : IEvent
-        {
-            public IDictionary<string, string> Meta { get; set; } = new Dictionary<string, string>();
-
-            public string SourceId { get; set; }
-        }
     }
 }
