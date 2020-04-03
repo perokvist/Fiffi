@@ -9,8 +9,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\src\Fiffi.Fx\Fiffi.Fx.fsproj" />
-    <ProjectReference Include="..\..\..\src\Fiffi\Fiffi.csproj" />
+    <ProjectReference Include="..\Fiffi\Fiffi.csproj" />
   </ItemGroup>
 
 </Project>
