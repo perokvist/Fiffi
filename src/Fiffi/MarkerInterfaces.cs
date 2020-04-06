@@ -6,7 +6,6 @@
 	public interface IIntegrationEvent
 	{ }
 
-    public interface IKillStreamEvent
-    { }
-
+	public interface IEphemeralEvent
+	{ }
 }

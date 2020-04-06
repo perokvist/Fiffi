@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using static RPS.GameState;
 
 namespace RPS
 {
@@ -22,8 +23,10 @@ namespace RPS
                                PlayerId = command.PlayerId,
                                Title = command.Title,
                                Rounds = command.Rounds,
-                               Created = DateTime.UtcNow }
-                    };
+                               Created = DateTime.UtcNow,
+                               Status = GameStatus.Started
+                    }
+                  };
 
         public static IEnumerable<IEvent> Handle(JoinGame command, GameState state)
         {
@@ -39,7 +42,7 @@ namespace RPS
 
         public static IEnumerable<IEvent> Handle(PlayGame command, GameState state)
         {
-            if (state.Status != GameState.GameStatus.Started)
+            if (state.Status != GameStatus.Started)
                 yield break;
 
             if (command.Hand == Hand.None) //TODO validation
@@ -47,7 +50,7 @@ namespace RPS
 
             var players = state.Players switch
             {
-                { } p when command.PlayerId == p.PlayerOne.Id => (Active: state.Players.PlayerOne, Passive: state.Players.PlayerTwo),
+                { } p when command.PlayerId == p.PlayerOne.Id => (Active: state.Players.PlayerOne, Passive: state.Players.PlayerTwo), { } p when command.PlayerId == p.Item1.Id => (Active: state.Players.Item1, Passive: state.Players.Item2),
                 { } p when command.PlayerId == p.PlayerTwo.Id => (Active: state.Players.PlayerTwo, Passive: state.Players.PlayerOne),
                 _ => throw new ArgumentException("Player not in game")
             };
@@ -238,7 +241,7 @@ namespace RPS
 
         public GameState When(RoundTied @event)
         {
-            Players.PlayerOne.Hand = Hand.None;
+            Players.PlayerOne.Hand = Hand.None; //TODO set all hand and status trough events
             Players.PlayerTwo.Hand = Hand.None;
             return this;
         }
@@ -271,7 +274,7 @@ namespace RPS
         public string Title { get; set; }
         public int Rounds { get; set; }
         public DateTime Created { get; set; }
-
+        public GameStatus Status { get; set; } = GameStatus.Started;
         string IEvent.SourceId => GameId.ToString();
         IDictionary<string, string> IEvent.Meta { get; set; }
     }

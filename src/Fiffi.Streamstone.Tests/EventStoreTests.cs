@@ -91,11 +91,5 @@ namespace Fiffi.Streamstone.Tests
             public Guid Id { get; private set; }
         }
 
-        public class TestEvent : IEvent
-        {
-            public IDictionary<string, string> Meta { get; set; } = new Dictionary<string, string>();
-
-            public string SourceId { get; set; }
-        }
     }
 }

@@ -1,10 +1,8 @@
 using System;
 using Xunit;
 using Fiffi.Testing;
-using System.Collections.Generic;
 using System.Threading.Tasks;
-using System.Linq;
-using Microsoft.Azure.Documents.Client;
+using Fiffi.CosmoStore.Configuration;
 
 namespace Fiffi.CosmoStore.Tests
 {
@@ -18,7 +16,13 @@ namespace Fiffi.CosmoStore.Tests
         [Trait("Category", "Integration")]
         public async Task AppendToEventStoreAsync()
         {
-            var s = new CosmoStoreEventStore(serviceUri, key,
+            var settings = new ModuleOptions
+            {
+                Key = key,
+                ServiceUri = serviceUri
+            };
+
+            var s = new CosmoStoreEventStore(settings.ConnectionString,
                  TypeResolver.FromMap(TypeResolver.GetEventsFromTypes(typeof(TestEvent))));
 
             var r = await s.LoadEventStreamAsync("test", 0);
@@ -26,11 +30,5 @@ namespace Fiffi.CosmoStore.Tests
             _ = await s.AppendToStreamAsync("test", r.Version, new IEvent[] { new TestEvent().AddTestMetaData<string>(id) });
         }
 
-        public class TestEvent : IEvent
-        {
-            public IDictionary<string, string> Meta { get; set; } = new Dictionary<string, string>();
-
-            public string SourceId { get; set; }
-        }
     }
 }

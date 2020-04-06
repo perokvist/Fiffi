@@ -1,6 +1,8 @@
 ﻿using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.ChangeFeedProcessor.FeedProcessing;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -39,7 +41,7 @@ namespace Fiffi.CosmoStore
         {
             var events = docs
                 .Where(d => d.GetPropertyValue<string>("type") == "Event")
-                .Select(d => global::CosmoStore.CosmosDb.Conversion.documentToEventRead(d))
+                .Select(d => d.ToEventRead())
                 .Select(d => d.ToEvent(this.typeResolver))
                 .ToArray();
             try
@@ -54,4 +56,21 @@ namespace Fiffi.CosmoStore
             await context.CheckpointAsync();
         }
     }
+
+    public static class ConversionExtensions
+    {
+        public static global::CosmoStore.EventRead<JToken, long> ToEventRead(this Document doc)
+            => new global::CosmoStore.EventRead<JToken, long>(
+                doc.GetPropertyValue<Guid>("id"),
+                doc.GetPropertyValue<Guid>("correlationId"),
+                doc.GetPropertyValue<Guid>("causationId"),
+                doc.GetPropertyValue<string>("streamId"),
+                doc.GetPropertyValue<long>("version"),
+                doc.GetPropertyValue<string>("name"),
+                doc.GetPropertyValue<JToken>("data"),
+                doc.GetPropertyValue<JToken>("metadata"),
+                doc.GetPropertyValue<DateTime>("createdUtc")
+                );
+    }
 }
+

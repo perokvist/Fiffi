@@ -3,33 +3,46 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Fiffi
 {
     public class InMemoryEventStore : IEventStore
     {
-        readonly IDictionary<string, IEvent[]> store = new ConcurrentDictionary<string, IEvent[]>();
+        readonly ConcurrentDictionary<string, IEvent[]> innerStore = new ConcurrentDictionary<string, IEvent[]>();
+        IDictionary<string, IEvent[]> store => innerStore;
 
         public Task<long> AppendToStreamAsync(string streamName, long version, IEvent[] events)
+         => Task.FromResult(innerStore.AddOrUpdate(
+                    streamName,
+                    key => AppendToStream(Array.Empty<IEvent>(), key, version, events, () => store.Values.Count()),
+                    (key, value) => AppendToStream(value, key, version, events, () => store.Values.Count()))
+             .Last().Meta.GetEventStoreMetaData().EventVersion
+             );
+
+        static IEvent[] AppendToStream(IEvent[] currentValue, string streamName, long version, IEvent[] events, Func<long> positionProvider)
         {
-            var currentEvents = store.ContainsKey(streamName) ? store[streamName] : new IEvent[] { };
+            var lastVersion = currentValue.Any() ? currentValue.Last().Meta.GetEventStoreMetaData().EventVersion : 0;
+            
+            if (lastVersion != version)
+                throw new DBConcurrencyException($"wrong version - expected {version} but was {lastVersion} - in stream {streamName}");
 
-            if (currentEvents.Any() && currentEvents.Last().GetVersion() != version)
-                throw new DBConcurrencyException($"wrong version - expected {version} but was {currentEvents.Last().GetVersion()}");
+            var duplicates = events.Where(x => currentValue.Any(e => e.EventId() == x.EventId()));
+            if (duplicates.Any())
+                throw new Exception($"Tried to append duplicates in stream - {streamName}. {string.Join(',', duplicates.Select(d => $"{d.GetEventName()} - {d.EventId()}"))}");
 
-            if(currentEvents.Any() && events.Any(x => x.GetVersion() == currentEvents.Last().GetVersion()))
-                throw new DBConcurrencyException($"wrong version - events to write has the same version as last {currentEvents.Last().GetVersion()}");
+            var position = positionProvider(); //TODO naive
 
-            var newStream = currentEvents.Concat(events).ToArray();
-            store[streamName] = newStream;
-            return Task.FromResult(newStream.Last().GetVersion());
+            var newStream = currentValue
+                .Concat(events.Select((e, i) => e.Tap(x => x.Meta.AddStoreMetaData(new EventStoreMetaData { EventVersion = version + (i + 1), EventPosition = position + (i + 1) }))))
+                .ToArray();
+
+            return newStream;
         }
 
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
         public async Task<(IEnumerable<IEvent> Events, long Version)> LoadEventStreamAsync(string streamName, long version) =>
 #pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
-            store.ContainsKey(streamName) ? (store[streamName].Where(x => x.GetVersion() >= version).ToArray(), store[streamName].Last().GetVersion()) : (new IEvent[] { }, 0);
+            store.ContainsKey(streamName) ? (store[streamName].Where(x => x.Meta.GetEventStoreMetaData().EventVersion >= version).ToArray(), store[streamName].Last().Meta.GetEventStoreMetaData().EventVersion) : (new IEvent[] { }, 0);
     }
 }

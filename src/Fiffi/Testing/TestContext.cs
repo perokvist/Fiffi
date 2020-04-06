@@ -26,7 +26,7 @@ namespace Fiffi.Testing
         public void Given(params IEvent[] events)
             => this.init(store =>
             Task.WhenAll(events
-            .GroupBy(x => x.GetStreamName())
+            .GroupBy(x => x.GetStreamName()) //TODO version and position ?
             .Select(x => store.AppendToStreamAsync(x.Key, 0, x.ToArray())))
             ).GetAwaiter().GetResult();
 
