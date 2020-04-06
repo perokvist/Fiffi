@@ -158,8 +158,8 @@ module App =
     let dispatch cmd : Async<unit> =
         let store = InMemoryEventStore()
         match cmd with
-        | Game.CreateGame(c) -> App.applicationService store State.DefaultGameState State.When cmd c Game.handle
-        | Game.JoinGame(c) -> App.applicationService store State.DefaultGameState State.When cmd c Game.handle
+        | Game.CreateGame c -> App.applicationService store State.DefaultGameState State.When cmd c Game.handle
+        | Game.JoinGame c -> App.applicationService store State.DefaultGameState State.When cmd c Game.handle
         | _ -> async.Return()
 
   

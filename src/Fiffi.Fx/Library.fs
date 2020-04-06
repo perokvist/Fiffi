@@ -10,22 +10,29 @@ module EventStore =
     type Version =
         | Version of int64
 
+    type StreamName =
+        | StreamName of string
+
     let apply f (Version e) = f e
     let value e = apply id e
 
-    type Load = IEventStore -> string -> Version -> Async<Version * IEvent list>
+    type Load = IEventStore -> StreamName -> Version -> Async<Version * IEvent list>
 
-    type Append = IEventStore-> string -> Version -> IEvent list -> Async<Version>
+    type Append = IEventStore-> StreamName -> Version -> IEvent list -> Async<Version>
 
     let load : Load = fun store streamName version ->
         async {
-            let! struct(events,version) = store.LoadEventStreamAsync(streamName, value version) |> Async.AwaitTask
+            let (Version v) = version
+            let (StreamName sn) = streamName
+            let! struct(events,version) = store.LoadEventStreamAsync(sn, v) |> Async.AwaitTask
             return (version |> Version, events |> List.ofSeq )
             }
 
     let append : Append = fun store streamName version events ->
         async {
-            let! version = store.AppendToStreamAsync(streamName, value version, events |> Seq.toArray) |> Async.AwaitTask
+            let (Version v) = version
+            let (StreamName sn) = streamName
+            let! version = store.AppendToStreamAsync(sn, v, events |> Seq.toArray) |> Async.AwaitTask
             return version |> Version
         }
 
@@ -36,9 +43,9 @@ module App =
         return (f v)
     }
 
-    type Append = string -> EventStore.Version -> IEvent list -> Async<EventStore.Version>
-    type AsyncAppend = string -> Async<EventStore.Version * IEvent list> -> Async<EventStore.Version>
-    type Read = string -> EventStore.Version -> Async<EventStore.Version * IEvent list>
+    type Append = EventStore.StreamName -> EventStore.Version -> IEvent list -> Async<EventStore.Version>
+    type AsyncAppend = EventStore.StreamName -> Async<EventStore.Version * IEvent list> -> Async<EventStore.Version>
+    type Read = EventStore.StreamName -> EventStore.Version -> Async<EventStore.Version * IEvent list>
     type Handler<'TCommand, 'TState> = 'TCommand -> EventStore.Version * 'TState -> EventStore.Version * IEvent list
     type AsyncHandler<'TCommand, 'TState> = 'TCommand -> Async<EventStore.Version * 'TState> -> Async<EventStore.Version * IEvent list>
     type AsyncRehydrate<'T> = Async<EventStore.Version * IEvent list> -> Async<EventStore.Version * 'T>
@@ -67,10 +74,11 @@ module App =
             let l = EventStore.load store
             l streamName version
 
-        let aggregateStreamReader (cmd:ICommand) = read (cmd.AggregateId.ToString()) startFrom
-        let aggregateStreamAppender (cmd:ICommand) = asyncAppend append (cmd.AggregateId.ToString())
+        let aggregateStreamReader (cmd:ICommand) = read (cmd.AggregateId.ToString() |> EventStore.StreamName) startFrom
+        let aggregateStreamAppender (cmd:ICommand) = asyncAppend append (cmd.AggregateId.ToString() |> EventStore.StreamName)
 
-        aggregateStreamReader cmdMeta
+        cmdMeta //TODO to streamName
+        |> aggregateStreamReader
         |> asyncRehydrate defaultState apply
         |> fun(x) -> 
             async {
