@@ -13,7 +13,7 @@
     <PackageIconUrl>https://github.com/perokvist/Fiffi/raw/master/fiffi.ico</PackageIconUrl>
     <Description>Exploration kit for eventdriven services</Description>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <PackageTags>event-driven microservices infrastructure</PackageTags>
+    <PackageTags>event-driven infrastructure</PackageTags>
     <LangVersion>preview</LangVersion>
     <Platform>x64</Platform>
     <PlatformTarget>x64</PlatformTarget>
