@@ -26,7 +26,10 @@ namespace Fiffi.Dapr
         public async Task<(IEnumerable<IEvent> Events, long Version)> LoadEventStreamAsync(string streamName, long version)
         {
             var (events, v) = await eventStore.LoadEventStreamAsync(streamName, version);
-            return (events.Select(e => ToEvent(e.Data, typeResolver(e.EventName))), v);
+            return (events.Select(e => 
+            ToEvent(e.Data, typeResolver(e.EventName))
+                .Tap(x => x.Meta.AddStoreMetaData(new EventStoreMetaData { EventVersion = e.Version, EventPosition = e.Version }))),
+                v);
         }
 
         public static IEvent ToEvent(string data, Type type)
