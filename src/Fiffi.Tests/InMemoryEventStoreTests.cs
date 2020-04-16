@@ -63,5 +63,34 @@ namespace Fiffi.Tests
                 await store.AppendToStreamAsync("test", 0, new IEvent[] { new TestEvent().AddTestMetaData<string>(new AggregateId("t2")) });
             });
         }
+
+        [Fact]
+        public async Task LoadGetsVersionAsync()
+        {
+            var store = new InMemoryEventStore();
+            _ = await Projections.ProjectionExtensions.AppendToStreamAsync(store, "test", new IEvent[] { new TestEvent().AddTestMetaData<string>(new AggregateId("t")) });
+            var r = await store.LoadEventStreamAsync("test", 0);
+
+            Assert.Equal(1, r.Version);
+        }
+
+        [Fact]
+        public async Task LoadGetStartVersionAsync()
+        {
+            var store = new InMemoryEventStore();
+            var r = await store.LoadEventStreamAsync("test", 0);
+
+            Assert.Equal(0, r.Version);
+        }
+
+        [Fact]
+        public async Task AppendWithoutVersionAsync()
+        { 
+            var store = new InMemoryEventStore();
+            _ = await Projections.ProjectionExtensions.AppendToStreamAsync(store, "test", new IEvent[] { new TestEvent().AddTestMetaData<string>(new AggregateId("t")) });
+            var r = await Projections.ProjectionExtensions.AppendToStreamAsync(store, "test", new IEvent[] { new TestEvent().AddTestMetaData<string>(new AggregateId("t")) });
+
+            Assert.Equal(2, r);
+        }
     }
 }

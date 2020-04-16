@@ -37,7 +37,7 @@ namespace Fiffi.Dapr
 
         public static EventData ToEventData(IEvent e)
             => new EventData {
-                EventId = Guid.NewGuid(),
+                EventId = e.EventId(),
                 EventName = e.GetType().Name,
                 Data = JsonSerializer.Serialize(e)
             };

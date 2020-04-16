@@ -97,21 +97,53 @@ namespace RPS
 
     }
 
+    public class GameCreated : IEvent
+    {
+        public Guid GameId { get; set; }
+        public string PlayerId { get; set; }
+        public string Title { get; set; }
+        public int Rounds { get; set; }
+        public DateTime Created { get; set; }
+        public GameStatus Status { get; set; } = GameStatus.Started;
+        public string SourceId => GameId.ToString();
+        public IDictionary<string, string> Meta { get; set; }
+    }
+
+    public class RoundStarted : IEvent
+    {
+        public Guid GameId { get; set; }
+
+        public int Round { get; set; }
+
+        public string SourceId => GameId.ToString();
+        public IDictionary<string, string> Meta { get; set; }
+    }
+
+    public class GameStarted : IEvent
+    {
+        public Guid GameId { get; set; }
+
+        public string PlayerId { get; set; }
+
+        public string SourceId => GameId.ToString();
+        public IDictionary<string, string> Meta { get; set; }
+    }
+
     public class GameEnded : IEvent
     {
         public Guid GameId { get; set; }
 
-        string IEvent.SourceId => GameId.ToString();
+        public string SourceId => GameId.ToString();
 
-        IDictionary<string, string> IEvent.Meta { get; set; }
+        public IDictionary<string, string> Meta { get; set; }
     }
 
     public class RoundTied : IEvent
     {
         public Guid GameId { get; set; }
         public int Round { get; set; }
-        string IEvent.SourceId => GameId.ToString();
-        IDictionary<string, string> IEvent.Meta { get; set; }
+        public string SourceId => GameId.ToString();
+        public IDictionary<string, string> Meta { get; set; }
     }
 
     public class RoundEnded : IEvent
@@ -120,9 +152,8 @@ namespace RPS
         public string Winner { get; set; }
         public string Looser { get; set; }
         public int Round { get; set; }
-        string IEvent.SourceId => GameId.ToString();
-
-        IDictionary<string, string> IEvent.Meta { get; set; }
+        public string SourceId => GameId.ToString();
+        public IDictionary<string, string> Meta { get; set; }
     }
 
     public class HandShown : IEvent
@@ -131,8 +162,8 @@ namespace RPS
         public string PlayerId { get; set; }
         public Hand Hand { get; set; }
 
-        string IEvent.SourceId => GameId.ToString();
-        IDictionary<string, string> IEvent.Meta { get; set; }
+        public string SourceId => GameId.ToString();
+        public IDictionary<string, string> Meta { get; set; }
     }
 
     public enum Hand
@@ -162,34 +193,24 @@ namespace RPS
         Guid ICommand.CausationId { get; set; }
     }
 
-    public class RoundStarted : IEvent
-    {
-        public Guid GameId { get; set; }
-
-        public int Round { get; set; }
-
-        string IEvent.SourceId => GameId.ToString();
-
-        IDictionary<string, string> IEvent.Meta { get; set; }
-    }
-
-    public class GameStarted : IEvent
-    {
-        public Guid GameId { get; set; }
-
-        public string PlayerId { get; set; }
-
-        string IEvent.SourceId => GameId.ToString();
-
-        IDictionary<string, string> IEvent.Meta { get; set; }
-    }
-
     public class JoinGame : IGameCommand
     {
         public Guid GameId { get; set; }
 
         public string PlayerId { get; set; }
 
+        IAggregateId ICommand.AggregateId => new AggregateId(GameId);
+        Guid ICommand.CorrelationId { get; set; }
+        Guid ICommand.CausationId { get; set; }
+    }
+
+
+    public class CreateGame : IGameCommand
+    {
+        public Guid GameId { get; set; }
+        public string PlayerId { get; set; }
+        public string Title { get; set; }
+        public int Rounds { get; set; }
         IAggregateId ICommand.AggregateId => new AggregateId(GameId);
         Guid ICommand.CorrelationId { get; set; }
         Guid ICommand.CausationId { get; set; }
@@ -265,29 +286,6 @@ namespace RPS
             Started = 20,
             Ended = 50
         }
-    }
-
-    public class GameCreated : IEvent
-    {
-        public Guid GameId { get; set; }
-        public string PlayerId { get; set; }
-        public string Title { get; set; }
-        public int Rounds { get; set; }
-        public DateTime Created { get; set; }
-        public GameStatus Status { get; set; } = GameStatus.Started;
-        string IEvent.SourceId => GameId.ToString();
-        IDictionary<string, string> IEvent.Meta { get; set; }
-    }
-
-    public class CreateGame : IGameCommand
-    {
-        public Guid GameId { get; set; }
-        public string PlayerId { get; set; }
-        public string Title { get; set; }
-        public int Rounds { get; set; }
-        IAggregateId ICommand.AggregateId => new AggregateId(GameId);
-        Guid ICommand.CorrelationId { get; set; }
-        Guid ICommand.CausationId { get; set; }
     }
 
     public interface IGameCommand : ICommand

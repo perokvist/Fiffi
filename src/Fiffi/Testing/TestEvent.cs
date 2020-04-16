@@ -20,5 +20,7 @@ namespace Fiffi.Testing
         public string SourceId { get; set; }
 
         public IDictionary<string, string> Meta { get; set; } = new Dictionary<string, string>();
+
+        public string Message { get; set; }
     }
 }
