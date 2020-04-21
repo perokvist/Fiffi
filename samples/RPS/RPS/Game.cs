@@ -1,6 +1,7 @@
 ﻿using Fiffi;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using static RPS.GameState;
 
@@ -24,7 +25,7 @@ namespace RPS
                                Title = command.Title,
                                Rounds = command.Rounds,
                                Created = DateTime.UtcNow,
-                               Status = GameStatus.Started
+                               Status = GameStatus.ReadyToStart
                     }
                   };
 
@@ -183,6 +184,7 @@ namespace RPS
 
     public class PlayGame : IGameCommand
     {
+        [ScaffoldColumn(false)]
         public Guid GameId { get; set; }
         public Hand Hand { get; set; }
         public string PlayerId { get; set; }
@@ -195,6 +197,7 @@ namespace RPS
 
     public class JoinGame : IGameCommand
     {
+        [ScaffoldColumn(false)]
         public Guid GameId { get; set; }
 
         public string PlayerId { get; set; }
@@ -207,9 +210,16 @@ namespace RPS
 
     public class CreateGame : IGameCommand
     {
+        [Required]
+        [ScaffoldColumn(false)]
         public Guid GameId { get; set; }
+
+        [Required]
         public string PlayerId { get; set; }
+        [Required]
         public string Title { get; set; }
+
+        [Required]
         public int Rounds { get; set; }
         IAggregateId ICommand.AggregateId => new AggregateId(GameId);
         Guid ICommand.CorrelationId { get; set; }
@@ -227,7 +237,7 @@ namespace RPS
 
         public GameState When(GameCreated @event)
         {
-            Status = GameStatus.Created;
+            Status = GameStatus.ReadyToStart;
             Id = @event.GameId;
             Players = (new Player { Id = @event.PlayerId }, default);
             Rounds = @event.Rounds;
@@ -282,7 +292,7 @@ namespace RPS
         public enum GameStatus
         {
             None = 0,
-            Created = 10,
+            ReadyToStart = 10,
             Started = 20,
             Ended = 50
         }

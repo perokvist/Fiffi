@@ -26,8 +26,18 @@ namespace RPS.Web
                             .AddSingleton(TypeResolver.FromMap(TypeResolver.GetEventsInNamespace<GameCreated>()))
                             .AddSingleton(sp => GameModule.Initialize(
                                 new InMemoryEventStore(), async events => {
-                                    var dc = sp.GetRequiredService<DaprClient>();
+                                    var logger = sp.GetRequiredService<ILogger<Program>>();
+                                    var env = sp.GetRequiredService<IWebHostEnvironment>();
                                     var m = sp.GetRequiredService<GameModule>();
+
+                                    if (env.IsEnvironment("local"))
+                                    {
+                                        logger.LogInformation("Local When.");
+                                        await m.WhenAsync(events); // Local non dapr only !
+                                        return;
+                                    }
+
+                                    var dc = sp.GetRequiredService<DaprClient>();
 
                                     await Task.WhenAll(events.Select(e => dc.PublishEventAsync<object>("in", e)));
 
@@ -35,10 +45,10 @@ namespace RPS.Web
                                         .OfType<IIntegrationEvent>()
                                         .Select(e => dc.PublishEventAsync("out", e)));
 
-                                    //await m.WhenAsync(events); // Local only !
                                 }))
                             .AddLogging()
-                            .AddControllers()
+                            .AddMvc()
+                            //.AddControllers()
                             .AddDapr()
                     )
                     .Configure(app =>
@@ -50,6 +60,7 @@ namespace RPS.Web
                         {
                             endpoints.MapSubscribeHandler();
                             endpoints.MapControllers();
+                            endpoints.MapDefaultControllerRoute();
                         });
                     })
                 );

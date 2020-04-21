@@ -1,0 +1,33 @@
+﻿@model RPS.ScoresView
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@{
+    Layout = "/game/_Layout.cshtml";
+    ViewData["Title"] = "Game Scores";
+}
+
+<h1>Game Scores</h1>
+
+<table class="pure-table">
+    @foreach (var score in Model.Scores)
+    {
+        <tr>
+            <td>
+                @score.Id
+            </td>
+            <td>
+                @score.Title
+            </td>
+            <td>
+                @score.Winner
+            </td>
+            <td>
+                @score.Looser
+            </td>
+        </tr>
+
+    }
+</table>
+
+
+<a href="/games">Games</a>
+

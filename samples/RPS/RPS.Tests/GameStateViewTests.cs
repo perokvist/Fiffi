@@ -17,7 +17,7 @@ namespace RPS.Tests
             }.Rehydrate<GameState>();
 
             //Then  
-            Assert.Equal(GameState.GameStatus.Created, state.Status);
+            Assert.Equal(GameState.GameStatus.ReadyToStart, state.Status);
         }
 
         [Fact]
