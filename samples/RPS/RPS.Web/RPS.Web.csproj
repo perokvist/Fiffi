@@ -9,6 +9,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\src\Fiffi.Dapr\Fiffi.Dapr.csproj" />
     <ProjectReference Include="..\RPS\RPS.csproj" />
   </ItemGroup>
 

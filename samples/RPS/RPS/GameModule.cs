@@ -14,7 +14,7 @@ namespace RPS
             : base(dispatcher, publish, queryDispatcher)
         {}
 
-        public static GameModule Initialize(IEventStore store, Func<IEvent[], Task> pub)
+        public static GameModule Initialize(IAdvancedEventStore store, Func<IEvent[], Task> pub)
             => new ModuleConfiguration<GameModule>((c, p, q) => new GameModule(c, p, q))
             .Command<IGameCommand>(
                 Commands.Validate<IGameCommand>(),
@@ -23,7 +23,7 @@ namespace RPS
             .Projection<GameCreated>(e => store.AppendToStreamAsync(Streams.Games, e))
             .Projection<GameStarted>(e => store.AppendToStreamAsync(Streams.Games, e))
             .Projection<GameEnded>(e => store.AppendToStreamAsync(Streams.Games, e))
-            .Projection<IEvent>(e => store.AppendToStreamAsync(Streams.All, e))
+            .Projection<IEvent>(e => store.AppendToStreamAsync(Streams.All, new[] { e }))
             //.Projection<GameEnded>(e => store.Projector<GamePlayed>().Publish(Streams.All, pub)) //TODO meta data
             //.Policy<IEvent>((e, ctx) => ctx.ExecuteAsync()
             .Query<GamesQuery, GamesView>(q => store.Projector<GamesView>().ProjectAsync(Streams.Games)) //TODO ext with stream name only

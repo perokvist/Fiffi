@@ -9,6 +9,7 @@ namespace Fiffi.Projections
           where T : class, new()
           => new Projector<T>(store);
 
+
         public static async Task<long> AppendToStreamAsync(this IEventStore store, string streamName, params IEvent[] events)
         {
             var r = await store.LoadEventStreamAsync(streamName, 0); //TODO optimize :)

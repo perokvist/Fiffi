@@ -53,15 +53,29 @@ namespace RPS
 
         public ScoresView When(IEvent @event) => this;
 
-        public ScoresView When(RoundEnded @event)
+        public ScoresView When(GameCreated @event)
         {
             scores[@event.GameId] = new RoundView
             {
                 Id = @event.GameId,
-                Looser = @event.Looser,
-                Winner = @event.Winner,
-                Rounds = @event.Round
+                Title = @event.Title,
+                Rounds = @event.Rounds,
+                Host = @event.PlayerId
             };
+            return this;
+        }
+
+        public ScoresView When(RoundTied @event)
+        {
+            scores[@event.GameId].Looser = "tied";
+            scores[@event.GameId].Winner = "tied";
+            return this;
+        }
+
+        public ScoresView When(RoundEnded @event)
+        {
+            scores[@event.GameId].Looser = @event.Looser;
+            scores[@event.GameId].Winner = @event.Winner;
             return this;
         }
     }
@@ -70,6 +84,7 @@ namespace RPS
     {
         public Guid Id { get; set; }
         public string Title { get; set; }
+        public string Host { get; set; }
         public string Looser { get; set; }
         public string Winner { get; set; }
         public int Rounds { get; set; }

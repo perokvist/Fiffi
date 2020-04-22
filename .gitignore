@@ -29,4 +29,5 @@ project.lock.json
 pkg/
 nupkgs/
 release.bat
+statestore.yaml
 

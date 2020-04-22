@@ -7,6 +7,7 @@ using Fiffi;
 using System.Threading.Tasks;
 using Dapr.Client;
 using System.Linq;
+using Fiffi.Dapr;
 
 namespace RPS.Web
 {
@@ -19,31 +20,36 @@ namespace RPS.Web
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
-                .ConfigureLogging(b => b.AddConsole())
                 .ConfigureWebHostDefaults(webBuilder =>
                     webBuilder.ConfigureServices(services =>
                         services
                             .AddSingleton(TypeResolver.FromMap(TypeResolver.GetEventsInNamespace<GameCreated>()))
+                            .AddSingleton<global::Dapr.EventStore.DaprEventStore>()
+                            .AddSingleton<IAdvancedEventStore, DaprEventStore>()
                             .AddSingleton(sp => GameModule.Initialize(
-                                new InMemoryEventStore(), async events => {
+                                sp.GetRequiredService<IAdvancedEventStore>(), async events => {
                                     var logger = sp.GetRequiredService<ILogger<Program>>();
                                     var env = sp.GetRequiredService<IWebHostEnvironment>();
                                     var m = sp.GetRequiredService<GameModule>();
 
-                                    if (env.IsEnvironment("local"))
-                                    {
-                                        logger.LogInformation("Local When.");
-                                        await m.WhenAsync(events); // Local non dapr only !
-                                        return;
-                                    }
+                                    //if (env.IsEnvironment("local"))
+                                    //{
+                                    //    logger.LogInformation("Local When.");
+                                    //    await m.WhenAsync(events); // Local non dapr only !
+                                    //    return;
+                                    //}
 
                                     var dc = sp.GetRequiredService<DaprClient>();
 
-                                    await Task.WhenAll(events.Select(e => dc.PublishEventAsync<object>("in", e)));
+                                    foreach (var @event in events)
+                                    {
+                                        logger.LogInformation("Publishing {eventName}", @event.GetType().Name);
+                                        await dc.PublishEventAsync<object>("in", @event);
+                                    }
 
-                                    await Task.WhenAll(events
-                                        .OfType<IIntegrationEvent>()
-                                        .Select(e => dc.PublishEventAsync("out", e)));
+                                    //await Task.WhenAll(events
+                                    //    .OfType<IIntegrationEvent>()
+                                    //    .Select(e => dc.PublishEventAsync("out", e)));
 
                                 }))
                             .AddLogging()
