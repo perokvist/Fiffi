@@ -6,11 +6,11 @@ namespace Fiffi
     {
         Task<long> AppendToStreamAsync(string streamName, IEvent[] events);
 
-        Task DeleteStreamAsync(string streamName);
+        //Task DeleteStreamAsync(string streamName);
     }
 
-    public interface IAdvancedEventStore<T> : IAdvancedEventStore
-    {
-        public T InnerStore { get; }
-    }
+    //public interface IAdvancedEventStore<T> : IAdvancedEventStore
+    //{
+    //    public T InnerStore { get; }
+    //}
 }
