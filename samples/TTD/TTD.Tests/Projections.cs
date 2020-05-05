@@ -2,15 +2,16 @@ using Fiffi;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using TTD.Domain;
 using Xunit;
 
 namespace TTD.Tests
 {
-    public class UnitTest1
+    public class Projections
     {
         [Fact]
-        public async System.Threading.Tasks.Task Test1Async()
+        public async Task AB_Projections()
         {
             var events = new List<Event>
             {
@@ -21,7 +22,7 @@ namespace TTD.Tests
                     Kind = Kind.Truck,
                     Location = Location.Factory,
                     Destination = Location.Port,
-                    Cargo = new [] { new Cargo { CargoId = 0, Destination = Location.A, Origin = Location.Factory } }
+                    Cargo = new [] { new Cargo(0, Location.A, Location.Factory) }
                 },
                new Event {
                     EventName = EventType.DEPART,
@@ -30,7 +31,7 @@ namespace TTD.Tests
                     Kind = Kind.Truck,
                     Location = Location.Factory,
                     Destination = Location.B,
-                    Cargo = new [] { new Cargo { CargoId = 1, Destination = Location.B, Origin = Location.Factory } }
+                    Cargo = new [] { new Cargo(1, Location.B, Location.Factory) }
                 },
                new Event {
                     EventName = EventType.ARRVIVE,
@@ -38,7 +39,7 @@ namespace TTD.Tests
                     TransportId = 0,
                     Kind = Kind.Truck,
                     Location = Location.Port,
-                    Cargo = new [] { new Cargo { CargoId = 0, Destination = Location.A, Origin = Location.Factory } }
+                    Cargo = new [] { new Cargo(0, Location.A, Location.Factory) }
                 },
                new Event {
                     EventName = EventType.DEPART,
@@ -55,7 +56,7 @@ namespace TTD.Tests
                     Kind = Kind.Ship,
                     Location = Location.Port,
                     Destination = Location.A,
-                    Cargo = new [] { new Cargo { CargoId = 0, Destination = Location.A, Origin = Location.Factory } }
+                    Cargo = new [] { new Cargo(0, Location.A, Location.Factory) }
                 },
                new Event {
                     EventName = EventType.ARRVIVE,
@@ -70,7 +71,7 @@ namespace TTD.Tests
                     TransportId = 1,
                     Kind = Kind.Truck,
                     Location = Location.B,
-                    Cargo = new [] { new Cargo { CargoId = 1, Destination = Location.B, Origin = Location.Factory } }
+                    Cargo = new [] { new Cargo(1, Location.B, Location.Factory) }
                 },
                 new Event {
                     EventName = EventType.DEPART,
@@ -94,7 +95,7 @@ namespace TTD.Tests
                     TransportId = 2,
                     Kind = Kind.Ship,
                     Location = Location.A,
-                    Cargo = new [] { new Cargo { CargoId = 0, Destination = Location.A, Origin = Location.Factory } }
+                    Cargo = new [] { new Cargo(0, Location.A, Location.Factory) }
                 },
                 new Event {
                     EventName = EventType.DEPART,
