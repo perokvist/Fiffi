@@ -18,6 +18,7 @@ namespace TTD.Domain
         public string SourceId { get; set; } = Guid.NewGuid().ToString();
 
         public IDictionary<string, string> Meta { get; set; } = new Dictionary<string, string>();
+        public int ETA { get; set; }
     }
 
     public class Cargo
@@ -36,7 +37,7 @@ namespace TTD.Domain
 
     public enum EventType
     { 
-        ARRVIVE = 10,
+        ARRIVE = 10,
         DEPART = 20
     }
 

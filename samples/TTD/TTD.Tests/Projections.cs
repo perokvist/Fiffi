@@ -34,7 +34,7 @@ namespace TTD.Tests
                     Cargo = new [] { new Cargo(1, Location.B, Location.Factory) }
                 },
                new Event {
-                    EventName = EventType.ARRVIVE,
+                    EventName = EventType.ARRIVE,
                     Time = 1,
                     TransportId = 0,
                     Kind = Kind.Truck,
@@ -59,14 +59,14 @@ namespace TTD.Tests
                     Cargo = new [] { new Cargo(0, Location.A, Location.Factory) }
                 },
                new Event {
-                    EventName = EventType.ARRVIVE,
+                    EventName = EventType.ARRIVE,
                     Time = 2,
                     TransportId = 0,
                     Kind = Kind.Truck,
                     Location = Location.Factory
                 },
                new Event {
-                    EventName = EventType.ARRVIVE,
+                    EventName = EventType.ARRIVE,
                     Time = 5,
                     TransportId = 1,
                     Kind = Kind.Truck,
@@ -90,7 +90,7 @@ namespace TTD.Tests
                     Destination = Location.Factory
                 },
                 new Event {
-                    EventName = EventType.ARRVIVE,
+                    EventName = EventType.ARRIVE,
                     Time = 5,
                     TransportId = 2,
                     Kind = Kind.Ship,

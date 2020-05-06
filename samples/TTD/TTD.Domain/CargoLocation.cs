@@ -16,7 +16,7 @@ namespace TTD.Domain
                     Cargo = Cargo.Where(c => !@event.Cargo.Any(x => x.CargoId == c.CargoId)).ToArray()
                 };
 
-            if (@event.EventName == EventType.ARRVIVE)
+            if (@event.EventName == EventType.ARRIVE)
                 return new CargoLocation
                 {
                     Location = @event.Location,

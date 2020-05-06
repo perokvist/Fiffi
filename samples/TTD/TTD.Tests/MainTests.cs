@@ -23,10 +23,27 @@ namespace TTD.Tests
         {
             var (_, events) = Main.Run("B");
 
-            Assert.Equal(2, events.Length);
+            Assert.Equal(3, events.Length);
             Assert.True(events.First().EventName == EventType.DEPART);
-            Assert.True(events.Last().EventName == EventType.ARRVIVE);
+            Assert.True(events.Skip(1).First().EventName == EventType.ARRIVE);
+        }
 
+        [Fact] //TODO inline data
+        public void Scenario_AB_Time()
+        {
+            var (time, _) = Main.Run("A", "B");
+
+            Assert.Equal(5, time);
+        }
+
+        [Fact]
+        public void Scenario_AB_Events()
+        {
+            var (_, events) = Main.Run("A", "B");
+
+            Assert.Equal(10, events.Length);
+            Assert.True(events.First().EventName == EventType.DEPART);
+            Assert.True(events.Last().EventName == EventType.DEPART);
         }
 
     }

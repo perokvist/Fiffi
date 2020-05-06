@@ -10,9 +10,9 @@ namespace TTD.Domain
         public static (int, Event[]) Run(params string[] scenarioCargo)
         {
             var routes = new List<Route> {
-                new Route(Location.Factory, Location.Port, TimeSpan.FromHours(1)),
-                new Route(Location.Port, Location.B, TimeSpan.FromHours(4)),
-                new Route(Location.Factory, Location.B, TimeSpan.FromHours(5))
+                new Route(Location.Factory, Location.Port, TimeSpan.FromHours(1), Kind.Truck),
+                new Route(Location.Port, Location.A, TimeSpan.FromHours(4), Kind.Ship),
+                new Route(Location.Factory, Location.B, TimeSpan.FromHours(5), Kind.Truck)
             };
 
             var locations = new List<CargoLocation>
@@ -24,43 +24,53 @@ namespace TTD.Domain
                         new Cargo(0, Location.Factory, (Location) Enum.Parse(typeof(Location) , x, true))
                     ).ToArray()
                 }
-            };
-
-            var transports = new List<Transport>
-            {
-                new Transport(0, Kind.Truck, Location.Factory),
-                new Transport(1, Kind.Truck, Location.Factory),
-                new Transport(2, Kind.Ship, Location.Port)
-            };
+            }.ToArray();
 
             var events = new List<Event>();
 
             var time = 0;
-            while (!locations.All(l => l.Location == Location.A || l.Location == Location.B))
+            while (!GetCargoLocations(events.ToArray(), locations).All(l => l.Location == Location.A || l.Location == Location.B))
             {
-                events.AddRange(Unload(time, locations.ToArray(), transports.ToArray()));
-                events.AddRange(Load(time, locations.ToArray(), transports.ToArray()));
-
-                if (events.Any())
-                {
-                    locations = locations.Select(x => events.Aggregate(x, (s, e) => s.When(e))).ToList();
-                    transports = transports.Select(x => events.Aggregate(x, (s, e) => s.When(e))).ToList();
-                }
+                events.AddRange(Unload(time, events.ToArray().GetCargoLocations(locations), GetTransports(events.ToArray())));
+                events.AddRange(Load(time, events.ToArray().GetCargoLocations(locations), GetTransports(events.ToArray()), routes.ToArray()));
+                events.AddRange(Return(time, GetTransports(events.ToArray()), routes.ToArray()));
 
                 time++;
             }
 
-            return (time, events.ToArray());
+            return (time - 1, events.ToArray());
         }
+
+        public static IEnumerable<Event> Return(int time, Transport[] transports, Route[] routes)
+         => transports
+               .Where(x => !x.EnRoute)
+               .Where(x => !x.HasCargo)
+               .Where(x => routes.GetReturnRoute(x.Kind, x.Location) != null)
+               .Select(t =>
+               {
+                   var route = routes.GetReturnRoute(t.Kind, t.Location);
+                   return new Event
+                   {
+                       EventName = EventType.DEPART,
+                       Cargo = Array.Empty<Cargo>(),
+                       Destination = route.Start,
+                       Kind = t.Kind,
+                       Location = t.Location,
+                       Time = time,
+                       TransportId = t.TransportId,
+                       ETA = time + route.Length.Hours
+                   };
+               });
+
 
         public static IEnumerable<Event> Unload(int time, CargoLocation[] cargos, Transport[] transports)
         {
             var arrived = transports
-                .Where(x => x.ETA != 0)
+                .Where(x => x.EnRoute)
                 .Where(x => x.ETA == time);
             return arrived.Select(x => new Event
             {
-                EventName = EventType.ARRVIVE,
+                EventName = EventType.ARRIVE,
                 Cargo = x.Cargo,
                 Kind = x.Kind,
                 Location = x.Location,
@@ -70,37 +80,72 @@ namespace TTD.Domain
         }
 
 
-        public static IEnumerable<Event> Load(int time, CargoLocation[] cargos, Transport[] transports)
+        public static IEnumerable<Event> Load(
+            int time,
+            CargoLocation[] cargoLocations,
+            Transport[] transports,
+            Route[] routes)
         {
-            foreach (var location in cargos)
-            {
-                foreach (var cargo in location.Cargo)
-                {
-                    var t = transports.FirstOrDefault(x => x.Location == location.Location); //TODO same transport every time
+            var availableTransports = transports
+                .Where(t => !t.EnRoute)
+                .Where(t => !t.HasCargo)
+                .Where(t => routes.GetReturnRoute(t.Kind, t.Location) == null)
+                .ToList();
 
-                    yield return new Event
+            foreach (var location in cargoLocations)
+            {
+                foreach (var item in location.Cargo)
+                {
+                    var t = availableTransports
+                        .FirstOrDefault(x => x.Location == location.Location);
+
+                    if (t != null)
                     {
-                        EventName = EventType.DEPART,
-                        Cargo = new[] { cargo },
-                        Destination = cargo.Destination,
-                        Kind = t.Kind,
-                        Location = t.Location,
-                        Time = time,
-                        TransportId = t.TransportId
-                    };
+                        availableTransports.Remove(t);
+                        var route = routes.GetCargoRoute(t.Kind, t.Location, item.Destination);
+
+                        yield return new Event
+                        {
+                            EventName = EventType.DEPART,
+                            Cargo = new[] { item },
+                            Destination = route.End,
+                            Kind = t.Kind,
+                            Location = t.Location,
+                            Time = time,
+                            TransportId = t.TransportId,
+                            ETA = time + route.Length.Hours
+                        };
+                    }
                 }
             }
         }
 
-
-        public static IEnumerable<Transport> When(Event @event, IEnumerable<Transport> transports)
-        {
-            if (@event.EventName == EventType.DEPART)
+        public static Transport[] GetTransports(this Event[] events)
+            => new List<Transport>
             {
-                var t = transports.Single(t => t.TransportId == @event.TransportId);
-                t.Cargo = @event.Cargo;
+                new Transport(0, Kind.Truck, Location.Factory),
+                new Transport(1, Kind.Truck, Location.Factory),
+                new Transport(2, Kind.Ship, Location.Port)
             }
-            return transports;
-        }
+            .Select(t => events.Aggregate(t, (s, e) => s.When(e)))
+            .ToArray();
+
+        public static CargoLocation[] GetCargoLocations(this Event[] events, CargoLocation[] cargoLocations)
+            => cargoLocations
+            .Select(t => events.Aggregate(t, (s, e) => s.When(e)))
+            .ToArray();
+
+        public static Route GetCargoRoute(this Route[] routes, Kind kind, Location start, Location destination)
+        => routes
+               .Where(x => x.Kind == kind)
+               .Where(x => x.Start == start)
+               .Where(x => x.End == destination || routes.Where(y => y.Start == x.End).Any(y => y.End == destination)) //Connects
+               .Single();
+
+        public static Route GetReturnRoute(this Route[] routes, Kind kind, Location location)
+        => routes
+           .Where(x => x.Kind == kind)
+           .Where(x => x.End == location)
+           .SingleOrDefault();
     }
 }
