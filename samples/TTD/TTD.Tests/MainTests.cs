@@ -9,42 +9,26 @@ namespace TTD.Tests
 {
     public class MainTests
     {
-
-        [Fact]
-        public void Scenario_B_Time()
+        [Theory]
+        [InlineData(5, "B")]
+        [InlineData(5, "A")]
+        [InlineData(5, "A", "B")]
+        //[InlineData(7, "A", "B", "B")]
+        public void Scenarios(int expectedTime, params string[] cargo)
         {
-            var (time, _) = Main.Run("B");
+            var (time, _) = Main.Run(cargo);
 
-            Assert.Equal(5, time);
+            Assert.Equal(expectedTime, time);
         }
 
-        [Fact]
-        public void Scenario_B_Events()
+        [Theory]
+        [InlineData(3, "B")]
+        [InlineData(10, "A", "B")]
+        public void Scenarios_Events(int expectedEventCount, params string[] cargo)
         {
-            var (_, events) = Main.Run("B");
+            var (_, events) = Main.Run(cargo);
 
-            Assert.Equal(3, events.Length);
-            Assert.True(events.First().EventName == EventType.DEPART);
-            Assert.True(events.Skip(1).First().EventName == EventType.ARRIVE);
+            Assert.Equal(expectedEventCount, events.Length);
         }
-
-        [Fact] //TODO inline data
-        public void Scenario_AB_Time()
-        {
-            var (time, _) = Main.Run("A", "B");
-
-            Assert.Equal(5, time);
-        }
-
-        [Fact]
-        public void Scenario_AB_Events()
-        {
-            var (_, events) = Main.Run("A", "B");
-
-            Assert.Equal(10, events.Length);
-            Assert.True(events.First().EventName == EventType.DEPART);
-            Assert.True(events.Last().EventName == EventType.DEPART);
-        }
-
     }
 }

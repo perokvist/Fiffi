@@ -27,4 +27,15 @@ namespace TTD.Domain
         }
     }
 
+    public static class CargoLocationExtensions
+    {
+        public static CargoLocation[] GetCargoLocations(this Event[] events, CargoLocation[] cargoLocations)
+        => cargoLocations
+        .Select(t => events.Aggregate(t, (s, e) => s.When(e)))
+        .ToArray();
+
+        public static bool AllDelivered(this CargoLocation[] cargoLocations)
+            => cargoLocations.All(l => l.Location == Location.A || l.Location == Location.B);
+    }
+
 }
