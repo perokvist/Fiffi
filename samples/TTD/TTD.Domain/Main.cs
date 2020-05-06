@@ -1,7 +1,7 @@
-﻿using System;
+﻿using Fiffi.Visualization;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace TTD.Domain
 {
@@ -9,18 +9,19 @@ namespace TTD.Domain
     {
         public static (int, Event[]) Run(params string[] scenarioCargo)
         {
+            var cargo = scenarioCargo
+                .Select((x, i) =>
+                    new Cargo(i, Location.Factory, (Location)Enum.Parse(typeof(Location), x, true))).ToArray();
+
             var locations = new[]
-   {
-                new CargoLocation
-                {
-                    Location = Location.Factory,
-                    Cargo = scenarioCargo.Select(x =>
-                        new Cargo(0, Location.Factory, (Location) Enum.Parse(typeof(Location) , x, true))
-                    ).ToArray()
-                }
+            {
+                new CargoLocation(Location.Factory, cargo),
+                new CargoLocation(Location.Port),
+                new CargoLocation(Location.A),
+                new CargoLocation(Location.B),
             };
 
-            var routes = new List<Route> {
+            var routes = new [] {
                 new Route(Location.Factory, Location.Port, TimeSpan.FromHours(1), Kind.Truck),
                 new Route(Location.Port, Location.A, TimeSpan.FromHours(4), Kind.Ship),
                 new Route(Location.Factory, Location.B, TimeSpan.FromHours(5), Kind.Truck)
@@ -33,17 +34,23 @@ namespace TTD.Domain
                 new Transport(2, Kind.Ship, Location.Port)
             };
 
-            var events = new List<Event>();
+            var events = Array.Empty<Event>();
+
+            Console.Write(events.GetCargoLocations(locations).DrawTable());
+
 
             var time = 0;
-            while (!events.ToArray().GetCargoLocations(locations.ToArray()).AllDelivered())
+            while (!events.GetCargoLocations(locations).AllDelivered(cargo))
             {
-                events.AddRange(events.ToArray().GetTransports(transports).Unload(time));
-                events.AddRange(Load(time, events.ToArray().GetCargoLocations(locations), events.ToArray().GetTransports(transports), routes.ToArray()));
-                events.AddRange(events.ToArray().GetTransports(transports).Return(time, routes.ToArray()));
+                events = events.Append(events.GetTransports(transports).Unload(time).ToArray());
+                events = events.Append(Load(time, events.GetCargoLocations(locations), events.GetTransports(transports), routes).ToArray());
+                events = events.Append(events.GetTransports(transports).Return(time, routes).ToArray());
 
                 time++;
             }
+
+            Console.Write(events.GetTransports(transports).DrawTable());
+            Console.Write(events.GetCargoLocations(locations).DrawTable());
 
             return (time - 1, events.ToArray());
         }

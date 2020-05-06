@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Fiffi.Visualization;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -88,6 +89,22 @@ namespace TTD.Domain
                     Time = time,
                     TransportId = x.TransportId
                 });
+
+        public static string DrawTable(this Transport[] transports)
+        {
+            var table = new AsciiTable();
+            table.Columns.Add(new AsciiColumn("Id", 15));
+            table.Columns.Add(new AsciiColumn("Location", 65));
+            table.Columns.Add(new AsciiColumn("Kind", 10));
+            table.Columns.Add(new AsciiColumn("ETA", 10));
+
+            foreach (var item in transports)
+            {
+                table.Rows.Add(new List<string> { item.TransportId.ToString(), item.Location.ToString(), item.Kind.ToString(), item.ETA.ToString() });
+            }
+
+            return table.ToString();
+        }
 
     }
 }
