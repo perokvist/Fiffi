@@ -1,4 +1,5 @@
-﻿using Fiffi.Visualization;
+﻿using Fiffi;
+using Fiffi.Visualization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,8 +8,11 @@ namespace TTD.Domain
 {
     public class CargoLocation
     {
+        public CargoLocation() : this(Location.Factory)
+        { }
+
         public CargoLocation(Location location) : this(location, Array.Empty<Cargo>())
-        {}
+        { }
 
         public CargoLocation(Location location, Cargo[] cargo)
         {
@@ -19,37 +23,78 @@ namespace TTD.Domain
         public Location Location { get; }
         public Cargo[] Cargo { get; }
 
-        public CargoLocation When(Event @event)
-        {
-            if (@event.EventName == EventType.DEPART && @event.Location == Location)
-                return new CargoLocation(
+        public CargoLocation When(IEvent @event) => this;
+
+        public CargoLocation When(Depareted @event)
+            => @event.Location == Location ?
+                new CargoLocation(
                     Location,
                     Cargo.Where(c => !@event.Cargo.Any(x => x.CargoId == c.CargoId)).ToArray()
-                );
+                    )
+                : this;
 
-            if (@event.EventName == EventType.ARRIVE && @event.Location == Location)
-                return new CargoLocation
-                (
+        public CargoLocation When(Arrived @event)
+            => @event.Location == Location ?
+                new CargoLocation(
                     @event.Location,
                     Cargo.Concat(@event.Cargo).ToArray()
-                );
+                    )
+                : this;
 
+        public CargoLocation When(CargoPlanned @event)
+            => new CargoLocation(@event.Origin, Cargo.Concat(new[] { new Cargo(@event.CargoId, @event.Origin, @event.Destination) }).ToArray());
+    }
+
+    public class CargoLocations
+    {
+        public CargoLocations()
+        {
+            this.inner = new Dictionary<Location, CargoLocation>();
+        }
+        public CargoLocation[] Locations => inner.Values.ToArray();
+
+        private readonly IDictionary<Location, CargoLocation> inner;
+
+        public CargoLocations When(IEvent @event) => this;
+        public CargoLocations When(Depareted @event)
+        {
+            if (!inner.ContainsKey(@event.Location))
+                inner.Add(@event.Location, new CargoLocation(@event.Location));
+
+            var p = inner[@event.Location];
+            inner[@event.Location] = p.When(@event);
+            return this;
+        }
+        public CargoLocations When(Arrived @event)
+        {
+            if(!inner.ContainsKey(@event.Location))
+                inner.Add(@event.Location, new CargoLocation(@event.Location));
+
+
+            var p = inner[@event.Location];
+            inner[@event.Location] = p.When(@event);
+            return this;
+        }
+        public CargoLocations When(CargoPlanned @event)
+        {
+            if (inner.ContainsKey(@event.Origin))
+                inner[@event.Origin] = inner[@event.Origin].When(@event);
+            else
+                inner.Add(@event.Origin, new CargoLocation().When(@event));
             return this;
         }
     }
 
     public static class CargoLocationExtensions
     {
-        public static CargoLocation[] GetCargoLocations(this Event[] events, CargoLocation[] cargoLocations)
+        public static CargoLocation[] GetCargoLocations(this IEvent[] events, CargoLocation[] cargoLocations)
         => cargoLocations
-        .Select(t => events.Aggregate(t, (s, e) => s.When(e)))
+        .Select(t => events.Aggregate(t, (s, e) => s.When((dynamic)e)))
         .ToArray();
 
-        public static bool AllDelivered(this CargoLocation[] cargoLocations)
+        public static bool AllDelivered(this CargoLocation[] cargoLocations, int cargo)
             => cargoLocations
-            .Where(l => l.Location != Location.A) 
-            .Where(l => l.Location != Location.B)
-            .All(x => !x.Cargo.Any());
+            .Sum(x => x.Cargo.Count(c => c.Destination == x.Location)) == cargo;
 
         public static bool AllDelivered(this CargoLocation[] cargoLocations, Cargo[] cargo)
         {

@@ -4,36 +4,63 @@ using System.Collections.Generic;
 
 namespace TTD.Domain
 {
+    public interface ITransportEvent : IEvent { }
 
-    public class Event : IEvent
+    public class Depareted : ITransportEvent
     {
-        public EventType EventName { get; set; }
         public int Time { get; set; }
         public int TransportId { get; set; }
         public Kind Kind { get; set; }
         public Location Location { get; set; }
         public Location Destination { get; set; }
         public Cargo[] Cargo { get; set; }
-
-        public string SourceId { get; set; } = Guid.NewGuid().ToString();
-
-        public IDictionary<string, string> Meta { get; set; } = new Dictionary<string, string>();
         public int ETA { get; set; }
+        public string SourceId => TransportId.ToString();
+        public IDictionary<string, string> Meta { get; set; } = new Dictionary<string, string>();
     }
 
-    public class Cargo
+    public class Arrived : ITransportEvent
     {
-        public Cargo(int cargoId, Location origin, Location destination)
+        public int Time { get; set; }
+        public int TransportId { get; set; }
+        public Kind Kind { get; set; }
+        public Location Location { get; set; }
+        public Cargo[] Cargo { get; set; }
+        public string SourceId => TransportId.ToString();
+        public IDictionary<string, string> Meta { get; set; } = new Dictionary<string, string>();
+    }
+
+    public class TransportReady : ITransportEvent
+    {
+        public TransportReady(int transportId, Kind kind, Location location)
         {
-            CargoId = cargoId;
-            Origin = origin;
-            Destination = destination;
+            TransportId = transportId;
+            Kind = kind;
+            Location = location;
         }
+        public int TransportId { get; set; }
+        public Kind Kind { get; set; }
+        public Location Location { get; set; }
+        public string SourceId => TransportId.ToString();
+        public IDictionary<string, string> Meta { get; set; }
+    }
+
+    public class CargoPlanned : IEvent
+    {
+        public CargoPlanned(int CargoId, Location Destination, Location origin)
+        {
+            this.CargoId = CargoId;
+            this.Destination = Destination;
+            Origin = origin;
+        }
+
         public int CargoId { get; set; }
         public Location Destination { get; set; }
         public Location Origin { get; set; }
-
+        public string SourceId => CargoId.ToString();
+        public IDictionary<string, string> Meta { get; set; }
     }
+
 
     public enum EventType
     { 

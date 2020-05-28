@@ -10,8 +10,11 @@ namespace Fiffi
             where T : ICommand
         {
             var cmd = f();
-            cmd.CorrelationId = @event.GetCorrelation();
-            cmd.CausationId = @event.EventId();
+            if (cmd != null)
+            {
+                cmd.CorrelationId = @event.GetCorrelation();
+                cmd.CausationId = @event.EventId();
+            }
             return cmd;
         }
 
@@ -25,6 +28,14 @@ namespace Fiffi
 
         public static Func<TEvent, PolicyContext, Task> On<TEvent>(Func<TEvent, ICommand> policy)
             => (e, ctx) => ctx.ExecuteAsync(policy(e));
+
+        public static Func<TEvent, PolicyContext, Task> On<TEvent>(Func<TEvent, ICommand[]> policy)
+            where TEvent : IEvent
+            => async (e, ctx) =>
+            {
+                foreach (var cmd in policy(e))
+                    await ctx.ExecuteAsync(Issue(e, () => cmd));
+            };
     }
 
     public class PolicyContext

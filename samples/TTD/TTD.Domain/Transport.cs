@@ -1,12 +1,17 @@
-﻿using Fiffi.Visualization;
+﻿using Fiffi;
+using Fiffi.Visualization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace TTD.Domain
 {
     public class Transport
     {
+        public Transport()
+        {}
+
         public Transport(int transportId, Kind kind, Location location)
         {
             TransportId = transportId;
@@ -21,41 +26,59 @@ namespace TTD.Domain
         public bool EnRoute => ETA != 0;
         public bool HasCargo => Cargo != null && Cargo.Any();
 
+        public Transport When(IEvent @event) => this;
 
-        public Transport When(Event @event)
-        {
-            if (@event.EventName == EventType.DEPART && this.TransportId == @event.TransportId)
-                return new Transport(@event.TransportId, @event.Kind, @event.Location)
+        public Transport When(Depareted @event)
+            => this.TransportId == @event.TransportId ?
+                new Transport(@event.TransportId, @event.Kind, @event.Location)
                 {
                     ETA = @event.ETA,
                     Cargo = @event.Cargo,
                     Kind = @event.Kind,
                     Location = @event.Destination,
                     TransportId = @event.TransportId
-                };
+                } : this;
 
-            if (@event.EventName == EventType.ARRIVE && this.TransportId == @event.TransportId)
-                return new Transport(@event.TransportId, @event.Kind, @event.Location)
+        public Transport When(Arrived @event)
+           => this.TransportId == @event.TransportId ?
+                new Transport(@event.TransportId, @event.Kind, @event.Location)
                 {
-                    ETA = @event.ETA,
+                    ETA = 0,
                     Cargo = Array.Empty<Cargo>(),
                     Kind = @event.Kind,
                     Location = @event.Location,
                     TransportId = @event.TransportId
-                };
+                } : this;
+
+        public Transport When(TransportReady @event)
+        { 
+            if(this.Kind == 0)
+                return new Transport(@event.TransportId, @event.Kind, @event.Location);
 
             return this;
         }
     }
 
+
     public static class TransportExtensions
     {
-        public static Transport[] GetTransports(this Event[] events, Transport[] transports)
+        public static async Task<Transport[]> GetTransports(this IEventStore store, string streamName)
+        {
+            var r = await store.LoadEventStreamAsync(streamName, 0);
+            return r.Events
+                .OfType<ITransportEvent>()
+                .GroupBy(x => x.SourceId)
+                .Select(x => x.Rehydrate<Transport>())
+                .ToArray();
+        }
+
+
+        public static Transport[] GetTransports(this IEvent[] events, Transport[] transports)
             => transports
-            .Select(t => events.Aggregate(t, (s, e) => s.When(e)))
+            .Select(t => events.Aggregate(t, (s, e) => s.When((dynamic)e)))
             .ToArray();
 
-        public static IEnumerable<Event> Return(this Transport[] transports, int time, Route[] routes)
+        public static IEnumerable<IEvent> Return(this Transport[] transports, int time, Route[] routes)
         => transports
         .Where(x => !x.EnRoute)
         .Where(x => !x.HasCargo)
@@ -63,9 +86,8 @@ namespace TTD.Domain
         .Select(t =>
         {
             var route = routes.GetReturnRoute(t.Kind, t.Location);
-            return new Event
+            return new Depareted
             {
-                EventName = EventType.DEPART,
                 Cargo = Array.Empty<Cargo>(),
                 Destination = route.Start,
                 Kind = t.Kind,
@@ -76,13 +98,12 @@ namespace TTD.Domain
             };
         });
 
-        public static IEnumerable<Event> Unload(this Transport[] transports, int time)
+        public static IEnumerable<IEvent> Unload(this Transport[] transports, int time)
             => transports
                 .Where(x => x.EnRoute)
                 .Where(x => x.ETA == time)
-                .Select(x => new Event
+                .Select(x => new Arrived
                 {
-                    EventName = EventType.ARRIVE,
                     Cargo = x.Cargo,
                     Kind = x.Kind,
                     Location = x.Location,

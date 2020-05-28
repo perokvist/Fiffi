@@ -1,4 +1,5 @@
-﻿using Fiffi.Visualization;
+﻿using Fiffi;
+using Fiffi.FileSystem;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,12 +8,13 @@ namespace TTD.Domain
 {
     public static class Main
     {
-        public static (int, Event[]) Run(params string[] scenarioCargo)
+        public static (int, IEvent[]) Run(params string[] scenarioCargo)
         {
             var cargo = scenarioCargo
                 .Select((x, i) =>
                     new Cargo(i, Location.Factory, (Location)Enum.Parse(typeof(Location), x, true))).ToArray();
 
+            //Projections
             var locations = new[]
             {
                 new CargoLocation(Location.Factory, cargo),
@@ -21,11 +23,7 @@ namespace TTD.Domain
                 new CargoLocation(Location.B),
             };
 
-            var routes = new [] {
-                new Route(Location.Factory, Location.Port, TimeSpan.FromHours(1), Kind.Truck),
-                new Route(Location.Port, Location.A, TimeSpan.FromHours(4), Kind.Ship),
-                new Route(Location.Factory, Location.B, TimeSpan.FromHours(5), Kind.Truck)
-            };
+            var routes = Route.GetRoutes();
 
             var transports = new[]
             {
@@ -34,10 +32,9 @@ namespace TTD.Domain
                 new Transport(2, Kind.Ship, Location.Port)
             };
 
-            var events = Array.Empty<Event>();
+            var events = Array.Empty<IEvent>();
 
             Console.Write(events.GetCargoLocations(locations).DrawTable());
-
 
             var time = 0;
             while (!events.GetCargoLocations(locations).AllDelivered(cargo))
@@ -52,11 +49,15 @@ namespace TTD.Domain
             Console.Write(events.GetTransports(transports).DrawTable());
             Console.Write(events.GetCargoLocations(locations).DrawTable());
 
+            new FileSystemEventStore("teststore", TypeResolver.Default())
+                .AppendToStreamAsync("main", events.Select(e => e.Tap(x => x.Meta.AddTypeInfo(e))).ToArray())
+                .GetAwaiter().GetResult();
+
             return (time - 1, events.ToArray());
         }
 
 
-        public static IEnumerable<Event> Load(
+        public static IEnumerable<IEvent> Load(
             int time,
             CargoLocation[] cargoLocations,
             Transport[] transports,
@@ -80,9 +81,8 @@ namespace TTD.Domain
                         availableTransports.Remove(t);
                         var route = routes.GetCargoRoute(t.Kind, t.Location, item.Destination);
 
-                        yield return new Event
+                        yield return new Depareted
                         {
-                            EventName = EventType.DEPART,
                             Cargo = new[] { item },
                             Destination = route.End,
                             Kind = t.Kind,
