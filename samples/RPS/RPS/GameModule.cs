@@ -23,7 +23,7 @@ namespace RPS
             .Projection<GameCreated>(e => store.AppendToStreamAsync(Streams.Games, e))
             .Projection<GameStarted>(e => store.AppendToStreamAsync(Streams.Games, e))
             .Projection<GameEnded>(e => store.AppendToStreamAsync(Streams.Games, e))
-            .Projection<IEvent>(e => store.AppendToStreamAsync(Streams.All, new[] { e }))
+            .ProjectionBatch<IEvent>(e => store.AppendToStreamAsync(Streams.All, e))
             //.Projection<GameEnded>(e => store.Projector<GamePlayed>().Publish(Streams.All, pub)) //TODO meta data
             //.Policy<IEvent>((e, ctx) => ctx.ExecuteAsync()
             .Query<GamesQuery, GamesView>(q => store.Projector<GamesView>().ProjectAsync(Streams.Games)) //TODO ext with stream name only

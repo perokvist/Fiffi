@@ -57,7 +57,24 @@ namespace RPS.Tests
             });
         }
 
-  
+        [Fact]
+        public async Task JoinGameAsCreator()
+        {
+            var gameId = Guid.NewGuid();
+
+            //Given
+            context.Given(new GameCreated { GameId = gameId, PlayerId = "test@tester.com", Rounds = 1, Title = "test game" }
+                                .AddTestMetaData<GameState>(new AggregateId(gameId)));
+
+            //When
+            await context.WhenAsync(new JoinGame { GameId = gameId, PlayerId = "test@tester.com" });
+
+            //Then  
+            context.Then((events, visual) => {
+                this.helper.WriteLine(visual);
+                Assert.False(events.Any());
+            });
+        }
 
         [Fact]
         public async Task Handshown()

@@ -13,10 +13,9 @@ namespace TTD.Tests
         [Fact]
         public async Task AB_Projections()
         {
-            var events = new List<Event>
+            var events = new List<IEvent>
             {
-                new Event {
-                    EventName = EventType.DEPART,
+                new Depareted {
                     Time = 0,
                     TransportId = 0,
                     Kind = Kind.Truck,
@@ -24,8 +23,7 @@ namespace TTD.Tests
                     Destination = Location.Port,
                     Cargo = new [] { new Cargo(0, Location.A, Location.Factory) }
                 },
-               new Event {
-                    EventName = EventType.DEPART,
+               new Depareted {
                     Time = 0,
                     TransportId = 1,
                     Kind = Kind.Truck,
@@ -33,24 +31,21 @@ namespace TTD.Tests
                     Destination = Location.B,
                     Cargo = new [] { new Cargo(1, Location.B, Location.Factory) }
                 },
-               new Event {
-                    EventName = EventType.ARRIVE,
+               new Arrived {
                     Time = 1,
                     TransportId = 0,
                     Kind = Kind.Truck,
                     Location = Location.Port,
                     Cargo = new [] { new Cargo(0, Location.A, Location.Factory) }
                 },
-               new Event {
-                    EventName = EventType.DEPART,
+               new Depareted {
                     Time = 1,
                     TransportId = 0,
                     Kind = Kind.Truck,
                     Location = Location.Port,
                     Destination = Location.Factory
                 },
-               new Event {
-                    EventName = EventType.DEPART,
+               new Depareted {
                     Time = 1,
                     TransportId = 2,
                     Kind = Kind.Ship,
@@ -58,47 +53,41 @@ namespace TTD.Tests
                     Destination = Location.A,
                     Cargo = new [] { new Cargo(0, Location.A, Location.Factory) }
                 },
-               new Event {
-                    EventName = EventType.ARRIVE,
+               new Arrived {
                     Time = 2,
                     TransportId = 0,
                     Kind = Kind.Truck,
                     Location = Location.Factory
                 },
-               new Event {
-                    EventName = EventType.ARRIVE,
+               new Arrived {
                     Time = 5,
                     TransportId = 1,
                     Kind = Kind.Truck,
                     Location = Location.B,
                     Cargo = new [] { new Cargo(1, Location.B, Location.Factory) }
                 },
-                new Event {
-                    EventName = EventType.DEPART,
+                new Depareted {
                     Time = 5,
                     TransportId = 1,
                     Kind = Kind.Truck,
                     Location = Location.B,
                     Destination = Location.Factory
                 },
-                new Event {
-                    EventName = EventType.DEPART,
+                new Depareted {
                     Time = 5,
                     TransportId = 1,
                     Kind = Kind.Truck,
                     Location = Location.B,
                     Destination = Location.Factory
                 },
-                new Event {
-                    EventName = EventType.ARRIVE,
+                new Arrived {
                     Time = 5,
                     TransportId = 2,
                     Kind = Kind.Ship,
                     Location = Location.A,
                     Cargo = new [] { new Cargo(0, Location.A, Location.Factory) }
                 },
-                new Event {
-                    EventName = EventType.DEPART,
+                new Depareted {
                     Time = 5,
                     TransportId = 2,
                     Kind = Kind.Ship,
@@ -108,7 +97,7 @@ namespace TTD.Tests
             };
 
             var eventsWithMeta = events.Select(e => e.Tap(x => e.Meta.AddTypeInfo(e))).ToArray();
-            var store = new Fiffi.FileSystem.FileSystemEventStore("teststore", TypeResolver.FromMap(TypeResolver.GetEventsFromTypes(typeof(Event))));
+            var store = new Fiffi.FileSystem.FileSystemEventStore("teststore", TypeResolver.FromMap(TypeResolver.GetEventsFromTypes(typeof(Depareted), typeof(Arrived))));
             _ = await store.AppendToStreamAsync("all", eventsWithMeta);
 
             //{ "event": "DEPART", "time": 0, "transport_id": 0, "kind": "TRUCK", "location": "FACTORY", "destination": "PORT", "cargo": [{"cargo_id": 0, "destination": "A", "origin": "FACTORY"}]}

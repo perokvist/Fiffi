@@ -1,10 +1,11 @@
-﻿using System.Linq;
+﻿using Fiffi;
+using System.Linq;
 
 namespace TTD.Domain
 {
     public static class StreamExtensions
     {
-        public static Event[] Append(this Event[] current, Event[] events)
+        public static IEvent[] Append(this IEvent[] current, IEvent[] events)
             => current.Concat(events).ToArray();
     }
 }
