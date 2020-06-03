@@ -1,11 +1,18 @@
 ﻿using Fiffi.Projections;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Fiffi
 {
     public static class Policy
     {
+        public static T[] Issue<T>(IEvent @event, Func<T[]> f)
+        where T : ICommand
+            => f()
+            .Select(x => Issue(@event, () => x))
+            .ToArray();
+
         public static T Issue<T>(IEvent @event, Func<T> f)
             where T : ICommand
         {

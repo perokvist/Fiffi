@@ -1,4 +1,4 @@
-﻿namespace TTD.Domain
+﻿namespace TTD
 {
     public class Cargo
     {

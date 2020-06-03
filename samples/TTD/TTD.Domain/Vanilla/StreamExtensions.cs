@@ -1,7 +1,7 @@
 ﻿using Fiffi;
 using System.Linq;
 
-namespace TTD.Domain
+namespace TTD.Vanilla
 {
     public static class StreamExtensions
     {

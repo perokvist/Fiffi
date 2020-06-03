@@ -1,7 +1,8 @@
 ﻿using Fiffi;
+using System.Collections.Generic;
 using System.Linq;
 
-namespace TTD.Domain.Fiffied
+namespace TTD.Fiffied
 {
     public class GameEngine
     {
@@ -15,7 +16,7 @@ namespace TTD.Domain.Fiffied
             return new PickUp
             {
                 Cargo = new[] { cargoInLocation.Cargo.First() },
-                Time = 0,
+                Time = @event.Time,
                 TransportId = @event.TransportId
             };
         }
@@ -27,16 +28,16 @@ namespace TTD.Domain.Fiffied
                    .Select(x => new Unload { TransportId = x.TransportId, Location = x.Location, Time = @event.Time })
                    .ToArray();
 
-        public static ICommand When(Arrived @event, Transport[] transports)
+        public static IEnumerable<ICommand> When(Arrived @event, Transport[] transports)
         {
-          //  var cmd = transports //duplicate logic
-          //.Where(x => x.EnRoute)
-          //.Where(x => x.ETA == @event.Time)
-          //.Select(x => new Unload { TransportId = x.TransportId, Location = x.Location, Time = @event.Time })
-          //.FirstOrDefault();
+            yield return new Return
+            {
+                Time = @event.Time,
+                TransportId = @event.TransportId
+            };
 
-            //if (cmd != null)
-                //return cmd;
+            if (!@event.Cargo.Any())
+                yield break;
 
             if (@event.Cargo.First().Destination != @event.Location)
             {
@@ -45,18 +46,20 @@ namespace TTD.Domain.Fiffied
                   .Where(t => t.Location == @event.Location)
                   .Where(t => !t.EnRoute)
                   .Where(t => !t.HasCargo)
-                  //.Where(t => routes.GetReturnRoute(t.Kind, t.Location) == null)
                   .FirstOrDefault();
 
-                return new PickUp
+                if (t == null)
+                    yield break;
+
+                yield return new PickUp
                 {
                     Cargo = new[] { @event.Cargo.First() },
-                    Time = 0,
+                    Time = @event.Time,
                     TransportId = t.TransportId
                 };
             }
 
-            return null;
+            yield break;
         }
     }
 }

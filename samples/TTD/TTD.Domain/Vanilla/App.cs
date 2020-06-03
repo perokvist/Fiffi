@@ -4,9 +4,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace TTD.Domain
+namespace TTD.Vanilla
 {
-    public static class Main
+    public static class App
     {
         public static (int, IEvent[]) Run(params string[] scenarioCargo)
         {
@@ -14,7 +14,6 @@ namespace TTD.Domain
                 .Select((x, i) =>
                     new Cargo(i, Location.Factory, (Location)Enum.Parse(typeof(Location), x, true))).ToArray();
 
-            //Projections
             var locations = new[]
             {
                 new CargoLocation(Location.Factory, cargo),
@@ -37,7 +36,7 @@ namespace TTD.Domain
             Console.Write(events.GetCargoLocations(locations).DrawTable());
 
             var time = 0;
-            while (!events.GetCargoLocations(locations).AllDelivered(cargo))
+            while (!events.GetCargoLocations(locations).AllDelivered(cargo.Length))
             {
                 events = events.Append(events.GetTransports(transports).Unload(time).ToArray());
                 events = events.Append(Load(time, events.GetCargoLocations(locations), events.GetTransports(transports), routes).ToArray());

@@ -1,14 +1,8 @@
-﻿using Fiffi;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using TTD.Domain;
-using Xunit;
+﻿using Xunit;
 
 namespace TTD.Tests
 {
-    public class MainTests
+    public class AppTests
     {
         [Theory]
         [InlineData(5, "B")]
@@ -20,7 +14,7 @@ namespace TTD.Tests
         [InlineData(49, "B", "B", "B", "B", "A", "A", "A", "A")]
         public void Scenarios(int expectedTime, params string[] cargo)
         {
-            var (time, _) = Main.Run(cargo);
+            var (time, _) = Vanilla.App.Run(cargo);
 
             Assert.Equal(expectedTime, time);
         }
@@ -31,7 +25,7 @@ namespace TTD.Tests
         [InlineData(13, "A", "B", "B")]
         public void Scenarios_Events(int expectedEventCount, params string[] cargo)
         {
-            var (_, events) = Main.Run(cargo);
+            var (_, events) = Vanilla.App.Run(cargo);
 
             Assert.Equal(expectedEventCount, events.Length);
         }

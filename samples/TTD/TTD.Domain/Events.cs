@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace TTD.Domain
+namespace TTD
 {
     public interface ITransportEvent : IEvent { }
 
@@ -32,15 +32,17 @@ namespace TTD.Domain
 
     public class TransportReady : ITransportEvent
     {
-        public TransportReady(int transportId, Kind kind, Location location)
+        public TransportReady(int transportId, Kind kind, Location location, int time)
         {
             TransportId = transportId;
             Kind = kind;
             Location = location;
+            Time = time;
         }
         public int TransportId { get; set; }
         public Kind Kind { get; set; }
         public Location Location { get; set; }
+        public int Time { get; set; }
         public string SourceId => TransportId.ToString();
         public IDictionary<string, string> Meta { get; set; }
     }

@@ -3,8 +3,17 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace TTD.Domain.Fiffied
+namespace TTD.Fiffied
 {
+    public class Return : ICommand
+    {
+        public int TransportId { get; set; }
+        public int Time { get; set; }
+        IAggregateId ICommand.AggregateId => new AggregateId(TransportId.ToString());
+        Guid ICommand.CorrelationId { get; set; }
+        Guid ICommand.CausationId { get; set; }
+    }
+
     public class AdvanceTime : ICommand
     {
         public int Time { get; set; }
@@ -27,6 +36,8 @@ namespace TTD.Domain.Fiffied
         public int TransportId { get; set; }
         public Kind Kind { get; set; }
         public Location Location { get; set; }
+        public int Time { get; set; }
+
         IAggregateId ICommand.AggregateId => new AggregateId(TransportId.ToString());
         Guid ICommand.CorrelationId { get; set; }
         Guid ICommand.CausationId { get; set; }

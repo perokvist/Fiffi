@@ -1,7 +1,7 @@
 ﻿using Fiffi;
 using System.Collections.Generic;
 
-namespace TTD.Domain.Fiffied
+namespace TTD.Fiffied
 {
     public class TimePassed : IEvent
     {

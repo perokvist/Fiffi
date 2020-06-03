@@ -1,21 +1,21 @@
 ﻿using Fiffi;
-using Fiffi.FileSystem;
 using Fiffi.Modularization;
-using Fiffi.Visualization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using TTD.Vanilla;
 
-namespace TTD.Domain.Fiffied
+namespace TTD.Fiffied
 {
-    public static class MainFiffi
+    public static class App
     {
         public static async Task<(int, IEvent[])> RunAsync(params string[] scenarioCargo)
         {
             var events = new List<IEvent>();
             Module module = null;
-            module = TTDModule.Initialize(new InMemoryEventStore(), async evts =>
+            var store = new InMemoryEventStore();
+            module = TTDModule.Initialize(store, async evts =>
             {
                 events.AddRange(evts);
                 await module.WhenAsync(evts);
@@ -64,7 +64,15 @@ namespace TTD.Domain.Fiffied
                 time++;
             }
 
-            return (time -1, events.ToArray());
+            var l = (await module.QueryAsync(new CargoLocationQuery())).Locations;
+            var b = l.AllDelivered(scenarioCargo.Length);
+            Console.WriteLine(l.DrawTable());
+
+            var t = await store.GetTransports("all");
+            Console.WriteLine(t.ToArray().DrawTable());
+
+
+            return (time - 1, events.ToArray());
         }
     }
 }

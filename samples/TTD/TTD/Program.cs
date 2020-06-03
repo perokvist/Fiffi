@@ -1,12 +1,12 @@
 ﻿using System;
 
-namespace TTD
+namespace TTD.Console
 {
     class Program
     {
         static void Main(string[] args)
         {
-            var (time, _) = TTD.Domain.Main.Run(args);
+            var (time, _) = TTD.Fiffied.App.RunAsync(args).GetAwaiter().GetResult();
         }
     }
 }
