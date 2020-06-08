@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace TTD.Fiffied
 {
-    public class GameEngine
+    public static class GameEngine
     {
         public static ICommand When(TransportReady @event, CargoLocation[] cargoLocations)
         {
@@ -41,21 +41,21 @@ namespace TTD.Fiffied
 
             if (@event.Cargo.First().Destination != @event.Location)
             {
-                var t = transports
+                var availableTransport = transports
                   .Where(t => t.TransportId != @event.TransportId)
                   .Where(t => t.Location == @event.Location)
                   .Where(t => !t.EnRoute)
                   .Where(t => !t.HasCargo)
                   .FirstOrDefault();
 
-                if (t == null)
+                if (availableTransport == null)
                     yield break;
 
                 yield return new PickUp
                 {
                     Cargo = new[] { @event.Cargo.First() },
                     Time = @event.Time,
-                    TransportId = t.TransportId
+                    TransportId = availableTransport.TransportId
                 };
             }
 

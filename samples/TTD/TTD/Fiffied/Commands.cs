@@ -1,7 +1,5 @@
 ﻿using Fiffi;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace TTD.Fiffied
 {

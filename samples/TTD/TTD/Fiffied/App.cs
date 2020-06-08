@@ -1,5 +1,6 @@
 ﻿using Fiffi;
 using Fiffi.Modularization;
+using Fiffi.Projections;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -68,9 +69,8 @@ namespace TTD.Fiffied
             var b = l.AllDelivered(scenarioCargo.Length);
             Console.WriteLine(l.DrawTable());
 
-            var t = await store.GetTransports("all");
-            Console.WriteLine(t.ToArray().DrawTable());
-
+            var t = await store.GetAsync<Transport, ITransportEvent>("all");
+            Console.WriteLine(t.DrawTable());
 
             return (time - 1, events.ToArray());
         }

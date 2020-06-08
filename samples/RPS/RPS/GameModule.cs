@@ -25,7 +25,6 @@ namespace RPS
             .Projection<GameEnded>(e => store.AppendToStreamAsync(Streams.Games, e))
             .ProjectionBatch<IEvent>(e => store.AppendToStreamAsync(Streams.All, e))
             //.Projection<GameEnded>(e => store.Projector<GamePlayed>().Publish(Streams.All, pub)) //TODO meta data
-            //.Policy<IEvent>((e, ctx) => ctx.ExecuteAsync()
             .Query<GamesQuery, GamesView>(q => store.Projector<GamesView>().ProjectAsync(Streams.Games)) //TODO ext with stream name only
             .Query<GameQuery, GameView>(async q => (await store.Projector<GamesView>().ProjectAsync(Streams.Games)).Games.First(x => x.Key == q.GameId).Value) //TODO ext with stream name only
             .Query<ScoreQuery, ScoresView>(q => store.Projector<ScoresView>().ProjectAsync(Streams.All))

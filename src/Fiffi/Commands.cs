@@ -22,9 +22,13 @@ namespace Fiffi
                 return Task.CompletedTask;
             };
 
-        public static void GuaranteeCorrelation(this ICommand cmd) =>
-            Guid.NewGuid()
-                .Tap(x => cmd.CorrelationId = x)
-                .Tap(x => cmd.CausationId = x);
+        public static void GuaranteeCorrelation(this ICommand cmd)
+        {
+            if (cmd.CorrelationId == default || cmd.CorrelationId == null)
+                cmd.CorrelationId = Guid.NewGuid();
+
+            if (cmd.CausationId == default || cmd.CausationId == null)
+                cmd.CausationId = Guid.NewGuid();
+        }
     }
 }
