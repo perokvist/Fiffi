@@ -12,6 +12,5 @@ namespace Fiffi
 		public long BasedOnStreamVersion { get; set; }
 		public string TriggeredBy { get; set; }
 		public long OccuredAt { get; set; }
-		public int TriggeredById { get; set; }
 	}
 }

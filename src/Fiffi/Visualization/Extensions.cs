@@ -35,7 +35,7 @@ namespace Fiffi.Visualization
 
 		static IEnumerable<(string Name, int Time, string AggregateId)> BuildBlocks(this IEvent[] events)
 		{
-			var g = events.GroupBy(x => $"{x.GetTrigger()} : {x.GetTriggerId()}");
+			var g = events.GroupBy(x => $"{x.GetTrigger()} : {x.GetCausationId()}");
 			var blocks = new List<(string, int, string)>();
 
 			var commandPosition = 0;

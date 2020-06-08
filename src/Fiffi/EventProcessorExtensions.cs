@@ -17,12 +17,18 @@ namespace Fiffi
             if (!events.All(e => e.HasCorrelation()))
                 throw new ArgumentException("CorrelationId required");
 
+           var arrayContexts = events.SelectMany(e => handlers
+                .Where(h => h.Item1.IsArray)
+                .Where(h => typeof(IEvent[]).IsAssignableFrom(h.Item1))
+                .Select(f(e)))
+                .ToArray();
+
             var executionContext = events.SelectMany(e => handlers
                 .Where(e.DelegatefForTypeOrInterface<T>())
                 .Select(f(e)))
                 .ToArray();
 
-            await Task.WhenAll(executionContext.Select(x => x.EventHandler));
+            await Task.WhenAll(arrayContexts.Concat(executionContext).Select(x => x.EventHandler));
 
             locks.ReleaseIfPresent(executionContext.Select(x => (x.AggregateId, x.CorrelationId)).ToArray());
         }

@@ -38,6 +38,13 @@ namespace Fiffi.Modularization
             return this;
         }
 
+        public ModuleConfiguration<T> ProjectionBatch<TEvent>(Func<TEvent[], Task> f)
+        where TEvent : IEvent
+        {
+            Projections.RegisterAll(f);
+            return this;
+        }
+
         public ModuleConfiguration<T> Policy<TEvent>(Func<TEvent, PolicyContext, Task> f)
             where TEvent : IEvent
         {

@@ -1,17 +1,28 @@
 ﻿using Fiffi.Projections;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Fiffi
 {
     public static class Policy
     {
+        public static T[] Issue<T>(IEvent @event, Func<T[]> f)
+        where T : ICommand
+            => f()
+            .Select(x => Issue(@event, () => x))
+            .ToArray();
+
         public static T Issue<T>(IEvent @event, Func<T> f)
             where T : ICommand
         {
             var cmd = f();
-            cmd.CorrelationId = @event.GetCorrelation();
-            cmd.CausationId = @event.EventId();
+            if (cmd != null)
+            {
+                //cmd.CommandId = $"{@event.EventId()}-{cmd.GetType()}-{commandIndex}";
+                cmd.CorrelationId = @event.GetCorrelation();
+                cmd.CausationId = @event.EventId();
+            }
             return cmd;
         }
 
@@ -21,10 +32,23 @@ namespace Fiffi
 
         public static Func<TEvent, PolicyContext, Task> On<TEvent, TProjection>(string streamName, Func<TEvent, TProjection, ICommand> policy)
             where TProjection : class, new()
-            => (e, ctx) => ctx.ExecuteAsync<TProjection>(streamName, p => policy(e, p));
+                => (e, ctx) => ctx.ExecuteAsync<TProjection>(streamName, p => policy(e, p));
+
+        public static Func<TEvent, PolicyContext, Task> On<TEvent, TProjection, TEventFilter>(string streamName, Func<TEvent, TProjection[], ICommand[]> policy)
+            where TProjection : class, new()
+            where TEventFilter : IEvent
+               => (e, ctx) => ctx.ExecuteAsync<TProjection, TEventFilter>(streamName, p => policy(e, p));
 
         public static Func<TEvent, PolicyContext, Task> On<TEvent>(Func<TEvent, ICommand> policy)
             => (e, ctx) => ctx.ExecuteAsync(policy(e));
+
+        public static Func<TEvent, PolicyContext, Task> On<TEvent>(Func<TEvent, ICommand[]> policy)
+            where TEvent : IEvent
+            => (e, ctx) => ctx
+            .ExecuteAsync(
+                policy(e)
+                .Select(cmd => Issue(e, () => cmd))
+                .ToArray());
     }
 
     public class PolicyContext
@@ -41,11 +65,35 @@ namespace Fiffi
 
         public Task ExecuteAsync(ICommand cmd) => cmd.DoIfAsync(c => c != null, c => this.Dispatcher.Dispatch(c));
 
+        public async Task ExecuteAsync(ICommand[] cmds)
+        {
+            foreach (var cmd in cmds)
+            {
+                await ExecuteAsync(cmd);
+            }
+        }
+
         public async Task ExecuteAsync<T>(string streamName, Func<T, ICommand> policy)
             where T : class, new()
         {
             var p = await this.Store.Projector<T>().ProjectAsync(streamName);
-            await policy(p).DoIfAsync(cmd => cmd != null, cmd => this.Dispatcher.Dispatch(cmd));
+            await ExecuteAsync(policy(p));
+        }
+
+        public async Task ExecuteAsync<T, TEventFilter>(string streamName, Func<T[], ICommand> policy)
+            where T : class, new()
+            where TEventFilter : IEvent
+        {
+            var p = await this.Store.Projector<T>().ProjectAsync<TEventFilter>(streamName);
+            await ExecuteAsync(policy(p));
+        }
+
+        public async Task ExecuteAsync<T, TEventFilter>(string streamName, Func<T[], ICommand[]> policy)
+            where T : class, new()
+            where TEventFilter : IEvent
+        {
+            var p = await this.Store.Projector<T>().ProjectAsync<TEventFilter>(streamName);
+            await ExecuteAsync(policy(p));
         }
     }
 }

@@ -38,7 +38,7 @@ namespace Fiffi
 
 		public static string GetTrigger(this IEvent @event) => @event.Require(nameof(EventMetaData.TriggeredBy));
 
-		public static int GetTriggerId(this IEvent @event) => int.Parse(@event.Require(nameof(EventMetaData.TriggeredById)));
+		public static Guid GetCausationId(this IEvent @event) => Guid.Parse(@event.Require(nameof(EventMetaData.CausationId)));
 
 		public static long GetBasedOnStreamVersion(this IEvent @event) => long.Parse(@event.Require(nameof(EventMetaData.BasedOnStreamVersion)));
 
@@ -58,7 +58,7 @@ namespace Fiffi
 		=> new EventMetaData {
 			AggregateName = meta.GetMetaOrDefault<string>(nameof(EventMetaData.AggregateName)),
 			CorrelationId = Guid.Parse(meta.GetMetaOrDefault<Guid>(nameof(EventMetaData.CorrelationId))),
-            CausationId = Guid.Parse(meta.GetMetaOrDefault<Guid>(nameof(EventMetaData.CausationId))),
+            CausationId = Guid.Parse(meta.GetMetaOrDefault<string>(nameof(EventMetaData.CausationId))),
             EventId = Guid.Parse(meta.GetMetaOrDefault<Guid>(nameof(EventMetaData.EventId))),
 			OccuredAt = long.Parse(meta.GetMetaOrDefault<long>(nameof(EventMetaData.OccuredAt))),
 			StreamName = meta.GetMetaOrDefault<string>(nameof(EventMetaData.StreamName)),
@@ -71,12 +71,11 @@ namespace Fiffi
 		{
 			AggregateName = aggregateName,
 			CorrelationId = command.CorrelationId,
-            CausationId = command.CorrelationId,
+            CausationId = command.CausationId,
 			EventId = Guid.NewGuid(),
 			OccuredAt = occuredAt == default(long) ? DateTime.UtcNow.Ticks : occuredAt,
 			StreamName = streamName,
 			TriggeredBy = command.GetType().Name,
-			TriggeredById = command.GetHashCode(),
 			BasedOnStreamVersion = version
 		});
 
@@ -89,7 +88,6 @@ namespace Fiffi
 			meta[nameof(EventMetaData.CorrelationId).ToLower()] = metaData.CorrelationId.ToString();
             meta[nameof(EventMetaData.CausationId).ToLower()] = metaData.CausationId.ToString();
             meta[nameof(EventMetaData.TriggeredBy).ToLower()] = metaData.TriggeredBy;
-			meta[nameof(EventMetaData.TriggeredById).ToLower()] = metaData.TriggeredById.ToString();
 			meta[nameof(EventMetaData.OccuredAt).ToLower()] = metaData.OccuredAt.ToString();
 		}
 

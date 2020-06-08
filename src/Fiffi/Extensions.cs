@@ -35,10 +35,10 @@ namespace Fiffi
         }
 
         public static TState Rehydrate<TState>(this IEnumerable<IEvent> events) where TState : new()
-            => events.Aggregate(new TState(), (s, @event) => s.Tap(x => ((dynamic)x).When((dynamic)@event)));
+            => events.Aggregate(new TState(), (s, @event) => ((dynamic)s).When((dynamic)@event));
 
         public static TState Apply<TState>(this IEnumerable<IEvent> events, TState currentState) where TState : new()
-            => events.Aggregate(currentState, (s, @event) => s.Tap(x => ((dynamic)x).When((dynamic)@event)));
+            => events.Aggregate(currentState, (s, @event) => ((dynamic)s).When((dynamic)@event));
 
 
         public static void Guard<T>(this Action<Func<T, bool>> f, Func<T, bool> guard)

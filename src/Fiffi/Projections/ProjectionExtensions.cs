@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
+using Fiffi;
 
 namespace Fiffi.Projections
 {
@@ -26,6 +28,19 @@ namespace Fiffi.Projections
             var r = await store.LoadEventStreamAsync(streamName, 0);
             var projection = r.Item1.Rehydrate<T>();
             return projection;
+        }
+
+        public static async Task<T[]> GetAsync<T, TEventFilter>(this IEventStore store, string streamName)
+            where T : class, new()
+            where TEventFilter : IEvent
+        {
+            var r = await store.LoadEventStreamAsync(streamName, 0);
+            return r.Events
+                .OfType<TEventFilter>()
+                .Cast<IEvent>()
+                .GroupBy(x => x.SourceId)
+                .Select(x => x.Rehydrate<T>())
+                .ToArray();
         }
 
         public static async Task Publish<T>(this Projector<T> projector, string streamName, Func<IEvent[], Task> pub)

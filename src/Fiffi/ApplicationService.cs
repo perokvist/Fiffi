@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Fiffi.Testing;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -7,33 +8,78 @@ namespace Fiffi
 {
     public static class ApplicationService
     {
+        public static Task ExecuteAsync(ICommand command, Func<IEvent[]> action, Func<IEvent[], Task> pub)
+        {
+            var events = action();
+
+            events.AddMetaData(command, string.Empty, string.Empty, 0);
+
+            return pub(events);       
+        }
+
+
+        public static Task ExecuteAsync(IEventStore store, ICommand command, string streamName, Func<IEvent[]> action, Func<IEvent[], Task> pub)
+            => ExecuteAsync<TestState>(store, command, ("none", streamName), state => Task.FromResult(action()), pub);
+
+        public static Task ExecuteAsync<TState, TEventInterface>(IEventStore store, ICommand command, string streamName, Func<TState, IEvent[]> action, Func<IEvent[], Task> pub)
+            where TState : class, new()
+            where TEventInterface : IEvent
+            => ExecuteAsync<TState, TEventInterface>(store, command, (typeof(TState).Name.AsStreamName(command.AggregateId).AggregateName, streamName), state => Task.FromResult(action(state)), pub);
+
         public static Task ExecuteAsync<TState>(IEventStore store, ICommand command, Func<TState, IEvent[]> action, Func<IEvent[], Task> pub)
             where TState : class, new()
-            => ExecuteAsync<TState>(store, command, state => Task.FromResult(action(state)), pub);
+            => ExecuteAsync<TState>(store, command, typeof(TState).Name.AsStreamName(command.AggregateId), state => Task.FromResult(action(state)), pub);
 
-        public static async Task ExecuteAsync<TState>(IEventStore store, ICommand command, Func<TState, Task<IEvent[]>> action, Func<IEvent[], Task> pub)
+        public static Task ExecuteAsync<TState>(IEventStore store, ICommand command,
+            (string aggregateName, string streamName) naming, Func<TState, Task<IEvent[]>> action, Func<IEvent[], Task> pub)
             where TState : class, new()
+            => ExecuteAsync(store, command, naming,
+                events => events.Rehydrate<TState>(),
+                action, ThrowOnCausation(command), pub);
+
+        public static Task ExecuteAsync<TState, TEventInterface>(IEventStore store, ICommand command,
+            (string aggregateName, string streamName) naming, Func<TState, Task<IEvent[]>> action, Func<IEvent[], Task> pub)
+            where TState : class, new()
+            where TEventInterface : IEvent
+            => ExecuteAsync(store, command, naming,
+                events => events
+                .OfType<TEventInterface>()
+                .Where(x => x.SourceId == command.AggregateId.Id)
+                .Cast<IEvent>()
+                .Rehydrate<TState>(),
+                action, None(command), pub);
+
+        public static async Task ExecuteAsync<TState>(IEventStore store, ICommand command,
+          (string aggregateName, string streamName) naming, 
+          Func<IEnumerable<IEvent>, TState> rehydrate, 
+          Func<TState, Task<IEvent[]>> action, 
+          Action<IEnumerable<IEvent>> guard,
+          Func<IEvent[], Task> pub)
+          where TState : class, new()
         {
             if (command.CorrelationId == default)
                 throw new ArgumentException("CorrelationId required");
 
-            var (aggregateName, streamName) = typeof(TState).Name.AsStreamName(command.AggregateId);
-            var happend = await store.LoadEventStreamAsync(streamName, 0);
-            var state = happend.Events.Rehydrate<TState>();
+            var happend = await store.LoadEventStreamAsync(naming.streamName, 0);
+ 
+            var state = rehydrate(happend.Events);
+
+            guard(happend.Events);
+
             var events = await action(state);
 
-            events.AddMetaData(command, aggregateName, streamName, happend.Version);
+            events.AddMetaData(command, naming.aggregateName, naming.streamName, happend.Version);
 
             if (events.Any())
-                await store.AppendToStreamAsync(streamName, happend.Version, events);
+                await store.AppendToStreamAsync(naming.streamName, happend.Version, events);
 
-            await pub(events); //need to always execute due to locks
+            await pub(events); //need to always execute due to locks        
         }
 
         public static async Task ExecuteAsync<TState>(IEventStore store, ICommand command, Func<TState, Task<IEvent[]>> action, Func<IEvent[], Task> pub, AggregateLocks aggregateLocks)
             where TState : class, new()
             => await aggregateLocks.UseLockAsync(command.AggregateId, command.CorrelationId, pub, async (publisher) =>
-                 await ExecuteAsync(store, command, action, publisher)
+                 await ExecuteAsync(store, command, typeof(TState).Name.AsStreamName(command.AggregateId), action, publisher)
             );
 
         public static Task ExecuteAsync<TState>(IEventStore store, ICommand command, Func<TState, IEvent[]> action, Func<IEvent[], Task> pub, AggregateLocks aggregateLocks)
@@ -66,9 +112,10 @@ namespace Fiffi
             await pub(events);
         }
 
-        static void AddMetaData(this IEvent[] events, ICommand command, string aggregateName, string streamName, long version)
+        public static void AddMetaData(this IEvent[] events, ICommand command, string aggregateName, string streamName, long version)
         {
-            if (!events.All(x => x.SourceId == command.AggregateId.Id)) throw new InvalidOperationException("Event SourceId not set or not matching the triggering command");
+            if (!events.All(x => x.SourceId == command.AggregateId.Id))
+                throw new InvalidOperationException($"Event SourceId not set or not matching the triggering command - {command.GetType()}");
 
             events
                 .Where(x => x.Meta == null)
@@ -80,5 +127,15 @@ namespace Fiffi
                         .Tap(e => e.Meta.AddTypeInfo(e))
                     );
         }
+
+        public static Action<IEnumerable<IEvent>> None(ICommand command)
+            => events => { };
+
+        public static Action<IEnumerable<IEvent>> ThrowOnCausation(ICommand command)
+         => events =>
+         {
+             if (events.Any(e => e.GetCausationId() == command.CausationId))
+                 throw new Exception($"Duplicate Execution of command based on causation - ({command.CausationId}) - {command.GetType()}. This events with the same causation already exsist.");
+         };
     }
 }

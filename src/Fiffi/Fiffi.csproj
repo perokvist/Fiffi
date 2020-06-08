@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <!--<RuntimeIdentifier>win7-x64</RuntimeIdentifier>-->
-    <VersionPrefix>0.7.7</VersionPrefix>
+    <VersionPrefix>0.7.8</VersionPrefix>
     <VersionSuffix>alpha</VersionSuffix>
     <PackageId>Fiffi</PackageId>
     <Title>Fiffi</Title>
@@ -18,6 +18,10 @@
     <Platform>x64</Platform>
     <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\.editorconfig" Link=".editorconfig" />
+  </ItemGroup>
 
 </Project>
 
