@@ -28,7 +28,7 @@ namespace Fiffi.Tests
             var id = new AggregateId(Guid.NewGuid());
             await context.WhenAsync(new TestCommand(id));
 
-            context.Then(events => events.OfType<OtherEvent>().Happened());
+            context.Then(events => Assert.True(events.OfType<OtherEvent>().Happened()));
         }
 
         public class TestModule : Module

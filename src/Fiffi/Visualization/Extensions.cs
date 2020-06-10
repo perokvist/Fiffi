@@ -24,7 +24,7 @@ namespace Fiffi.Visualization
 
 			var blocks = events.BuildBlocks();
 
-			var total = events.GroupBy(x => x.OccuredAt().ToString()).Count() * 2;
+			var total = events.GroupBy(x => x.OccuredAtTicks()).Count() * 2;
 
 			blocks.ForEach((x, i) =>
 				table.Rows.Add(new List<string> { x.Name, DrawBar(0, total, x.Time, x.Time + 1, '\u2593', '\u2591', 60), x.Time.ToString(), x.AggregateId })
@@ -39,11 +39,11 @@ namespace Fiffi.Visualization
 			var blocks = new List<(string, int, string)>();
 
 			var commandPosition = 0;
-			var lastOccured = string.Empty;
+			var lastOccured = (long)0;
 
 			g.ForEach((x, i) =>
 			{
-				var occured = x.First().OccuredAt().ToString();
+				var occured = x.First().OccuredAtTicks();//.ToString();
 				commandPosition = lastOccured == occured ? commandPosition : i * 2;
 				lastOccured = occured;
 				blocks.Add((x.Key.Split(':')[0].Trim(), commandPosition, x.First().SourceId.ToString()));

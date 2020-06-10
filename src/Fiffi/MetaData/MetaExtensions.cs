@@ -44,6 +44,8 @@ namespace Fiffi
 
 		public static DateTime OccuredAt(this IEvent @event) => new DateTime(long.Parse(@event.Require(nameof(EventMetaData.OccuredAt))));
 
+		public static long OccuredAtTicks(this IEvent @event) => long.Parse(@event.Require(nameof(EventMetaData.OccuredAt)));
+
 		internal static string Require(this IEvent @event, string keyName)
 			=> @event.Meta.ContainsKey(keyName.ToLower()) ? @event.Meta[keyName.ToLower()] : throw new ArgumentException($"{keyName.ToLower()} for {@event.GetType()} required");
 		//TODO switch case for handling meta == null (when testing)
