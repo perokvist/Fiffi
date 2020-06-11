@@ -24,14 +24,14 @@ namespace Warehouse
 
     public class PickGoods : ICommand
     {
-        IAggregateId ICommand.AggregateId => new AggregateId("warehouse");
+        IAggregateId ICommand.AggregateId => new AggregateId("warehouse.order");
         Guid ICommand.CorrelationId { get; set; }
         Guid ICommand.CausationId { get; set; }
     }
 
     public class GoodsPicked : IEvent
     {
-        public string SourceId => "warehouse";
+        public string SourceId => "warehouse.order";
 
         public IDictionary<string, string> Meta { get; set; }
     }

@@ -23,10 +23,10 @@ namespace Order.Tests
                 ShippingModule.Initialize
                 );
             //var id = new AggregateId(Guid.NewGuid());
-            await context.WhenAsync(new Sales.Order());
+            await context.WhenAsync(new Sales.PlaceOrder());
 
             context.Then((events, table) => {
-                Assert.True(events.OfType<GoodsShipped>().Happened());
+                Assert.True(events.OfType<OrderCompleted>().Happened());
             });
         }
     }

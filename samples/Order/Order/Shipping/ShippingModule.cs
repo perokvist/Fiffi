@@ -18,43 +18,42 @@ namespace Shipping
               .Command<Ship>(
                 Commands.GuaranteeCorrelation<Ship>(),
                 cmd => ApplicationService.ExecuteAsync(cmd, () => new[] { new GoodsShipped() }, pub))
-            .Projection<Payment.PaymentRecieved>(e => store.AppendToStreamAsync("foo", e))
-            .Projection<Warehouse.GoodsPicked>(e => store.AppendToStreamAsync("foo", e))
-            .Policy<Payment.PaymentRecieved>((e, ctx) => ctx.ExecuteAsync<ShippingState>("foo", p => Policy.Issue(e, () => ShippingPolicy.When(e, p))))
-            .Policy<Warehouse.GoodsPicked>((e, ctx) => ctx.ExecuteAsync<ShippingState>("foo", p => Policy.Issue(e, () => ShippingPolicy.When(e, p))))
+            .Projection<Payment.PaymentRecieved>(e => store.AppendToStreamAsync("order", e))
+            .Projection<Warehouse.GoodsPicked>(e => store.AppendToStreamAsync("order", e))
+            .Policy<Payment.PaymentRecieved>((e, ctx) => ctx.ExecuteAsync<Order>("order", p => Policy.Issue(e, () => ShippingPolicy.When(e, p))))
+            .Policy<Warehouse.GoodsPicked>((e, ctx) => ctx.ExecuteAsync<Order>("order", p => Policy.Issue(e, () => ShippingPolicy.When(e, p))))
             .Create(store);
     }
 
-    public class ShippingState
+    public class Order
     {
         public bool Payed;
         public bool Packed;
 
-        public ShippingState When(IEvent @event) => this;
+        public Order When(IEvent @event) => this;
 
-        public ShippingState When(Payment.PaymentRecieved @event) => this.Tap(x => x.Payed = true);
-        public ShippingState When(Warehouse.GoodsPicked @event) => this.Tap(x => x.Packed = true);
+        public Order When(Payment.PaymentRecieved @event) => this.Tap(x => x.Payed = true);
+        public Order When(Warehouse.GoodsPicked @event) => this.Tap(x => x.Packed = true);
 
     }
 
     public class ShippingPolicy
     {
-        public static ICommand When(Payment.PaymentRecieved @event, ShippingState state) => Foo(state);
-        public static ICommand When(Warehouse.GoodsPicked @event, ShippingState state) => Foo(state);
+        public static ICommand When(Payment.PaymentRecieved @event, Order state) => Ship(state);
+        public static ICommand When(Warehouse.GoodsPicked @event, Order state) => Ship(state);
 
-        private static ICommand Foo(ShippingState state)
+        private static ICommand Ship(Order state)
         {
             if (state.Packed && state.Payed)
                 return new Ship();
 
             return null;
         }
-
     }
 
     public class Ship : ICommand
     {
-        public IAggregateId AggregateId => new AggregateId("ship");
+        public IAggregateId AggregateId => new AggregateId("shipping.order");
 
         public Guid CorrelationId { get; set; }
         public Guid CausationId { get; set; }
@@ -62,7 +61,7 @@ namespace Shipping
 
     public class GoodsShipped : IEvent
     {
-        public string SourceId => "ship";
+        public string SourceId => "shipping.order";
 
         public IDictionary<string, string> Meta { get; set; }
     }

@@ -24,14 +24,14 @@ namespace Payment
 
     public class Pay : ICommand
     {
-        IAggregateId ICommand.AggregateId => new AggregateId("pay");
+        IAggregateId ICommand.AggregateId => new AggregateId("payment.order");
         Guid ICommand.CorrelationId { get; set; }
         Guid ICommand.CausationId { get; set; }
     }
 
     public class PaymentRecieved : IEvent
     {
-        public string SourceId => "pay";
+        public string SourceId => "payment.order";
         public IDictionary<string, string> Meta { get; set; }
     }
 
