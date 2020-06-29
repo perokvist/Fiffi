@@ -22,7 +22,7 @@ namespace Order.Tests
                 WarehouseModule.Initialize,
                 ShippingModule.Initialize
                 );
-            //var id = new AggregateId(Guid.NewGuid());
+
             await context.WhenAsync(new Sales.PlaceOrder());
 
             context.Then((events, table) => {

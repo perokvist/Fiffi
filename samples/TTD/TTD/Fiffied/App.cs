@@ -15,7 +15,6 @@ namespace TTD.Fiffied
         {
             var events = new List<IEvent>();
             Module module = null;
-            //var store = new InMemoryEventStore();
             module = TTDModule.Initialize(store, async evts =>
             {
                 events.AddRange(evts);
