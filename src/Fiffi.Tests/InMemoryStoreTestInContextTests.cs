@@ -37,7 +37,7 @@ namespace Fiffi.Tests
             }
             public bool Called { get; set; }
 
-            public void When(IEvent e) => Called = true;
+            public TestState When(IEvent e) => this.Tap(x => x.Called = true);
         }
 
         public class TestEvent : IEvent
