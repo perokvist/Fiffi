@@ -15,6 +15,7 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: 3.1.101
+        source-url: https://nuget.pkg.github.com/perokvist/index.json
     - name: Install dependencies
       run: dotnet restore
     - name: Build
