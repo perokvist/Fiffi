@@ -40,7 +40,8 @@ namespace Fiffi
                => (e, ctx) => ctx.ExecuteAsync<TProjection, TEventFilter>(streamName, p => policy(e, p));
 
         public static Func<TEvent, PolicyContext, Task> On<TEvent>(Func<TEvent, ICommand> policy)
-            => (e, ctx) => ctx.ExecuteAsync(policy(e));
+            where TEvent : IEvent
+            => (e, ctx) => ctx.ExecuteAsync(Issue(e, () => policy(e)));
 
         public static Func<TEvent, PolicyContext, Task> On<TEvent>(Func<TEvent, ICommand[]> policy)
             where TEvent : IEvent

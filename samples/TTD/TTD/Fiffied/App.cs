@@ -11,11 +11,10 @@ namespace TTD.Fiffied
 {
     public static class App
     {
-        public static async Task<(int, IEvent[])> RunAsync(params string[] scenarioCargo)
+        public static async Task<(int, IEvent[])> RunAsync(IAdvancedEventStore store, params string[] scenarioCargo)
         {
             var events = new List<IEvent>();
             Module module = null;
-            var store = new InMemoryEventStore();
             module = TTDModule.Initialize(store, async evts =>
             {
                 events.AddRange(evts);

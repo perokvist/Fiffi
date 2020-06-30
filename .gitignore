@@ -1,3 +1,9 @@
+
+
+#dapr
+**/*binding.yaml
+**/*state.yaml
+
 .vs
 [Oo]bj/
 [Bb]in/
@@ -31,3 +37,6 @@ nupkgs/
 release.bat
 statestore.yaml
 
+
+.fake
+.ionide

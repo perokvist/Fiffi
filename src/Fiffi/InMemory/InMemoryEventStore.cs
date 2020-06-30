@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Fiffi
@@ -23,7 +24,7 @@ namespace Fiffi
                     streamName,
                     key => AppendToStream(Array.Empty<IEvent>(), key, concurreny, events, () => store.Values.Count()),
                     (key, value) => AppendToStream(value, key, concurreny, events, () => store.Values.Count()))
-             .Last().Meta.GetEventStoreMetaData().EventVersion
+             .Last().Meta.GetEventStoreMetaData().EventVersion //TODO better impl
              );
 
         static IEvent[] AppendToStream(IEvent[] currentValue, string streamName, (long version, bool check) concurreny, IEvent[] events, Func<long> positionProvider)
@@ -33,9 +34,12 @@ namespace Fiffi
             if (concurreny.check && lastVersion != concurreny.version)
                 throw new DBConcurrencyException($"wrong version - expected {concurreny.version} but was {lastVersion} - in stream {streamName}");
 
+
+            //TODO check duplicates in passed events
             var duplicates = events.Where(x => currentValue.Any(e => e.EventId() == x.EventId()));
             if (duplicates.Any())
                 throw new Exception($"Tried to append duplicates in stream - {streamName}. {string.Join(',', duplicates.Select(d => $"{d.GetEventName()} - {d.EventId()}"))}");
+
 
             var position = positionProvider(); //TODO naive
 
@@ -50,7 +54,6 @@ namespace Fiffi
         public async Task<(IEnumerable<IEvent> Events, long Version)> LoadEventStreamAsync(string streamName, long version) =>
 #pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
             store.ContainsKey(streamName) ? (store[streamName].Where(x => x.Meta.GetEventStoreMetaData().EventVersion >= version).ToArray(), store[streamName].Last().Meta.GetEventStoreMetaData().EventVersion) : (new IEvent[] { }, 0);
-
 
     }
 }

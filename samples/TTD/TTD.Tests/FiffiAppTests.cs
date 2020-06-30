@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using Fiffi;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace TTD.Tests
@@ -15,7 +16,7 @@ namespace TTD.Tests
         [InlineData(49, "B", "B", "B", "B", "A", "A", "A", "A")]
         public async Task ScenariosAsync(int expectedTime, params string[] cargo)
         {
-            var (time, events) = await Fiffied.App.RunAsync(cargo);
+            var (time, events) = await Fiffied.App.RunAsync(new InMemoryEventStore(),cargo);
 
             Assert.Equal(expectedTime, time);
         }
