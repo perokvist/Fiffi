@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <!--<RuntimeIdentifier>win7-x64</RuntimeIdentifier>-->
-    <VersionPrefix>0.7.8</VersionPrefix>
+    <VersionPrefix>0.7.9</VersionPrefix>
     <VersionSuffix>alpha</VersionSuffix>
     <PackageId>Fiffi</PackageId>
     <Title>Fiffi</Title>
@@ -17,6 +17,7 @@
     <LangVersion>preview</LangVersion>
     <Platform>x64</Platform>
     <PlatformTarget>x64</PlatformTarget>
+    <RepositoryUrl>https://github.com/perokvist/Fiffi</RepositoryUrl>
   </PropertyGroup>
 
   <ItemGroup>
