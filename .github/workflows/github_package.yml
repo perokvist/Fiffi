@@ -20,10 +20,8 @@ jobs:
         NUGET_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
     - name: Install dependencies
       run: dotnet restore
-    - name: Build
-      run: dotnet build --configuration Release --no-restore
     - name: Pack
-      run: dotnet pack --configuration Release -o artifacts --no-build
+      run: dotnet pack src/Fiffi/Fiffi.csproj --configuration Release -o artifacts
     - name: Publish artifact
       uses: actions/upload-artifact@master
       with:
@@ -32,7 +30,7 @@ jobs:
     - name: Push Nupkg to GitHub Packages
       uses: tanaka-takayoshi/nuget-publish-to-github-packages-action@v2.1
       with:
-          nupkg-path:  './**.nupkg'
+          nupkg-path:  './Fiffi.nupkg'
           repo-owner:  'perokvist'
           gh-user:  'perokvist'
           token:  ${{ secrets.GITHUB_TOKEN }}
