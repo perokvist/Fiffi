@@ -6,7 +6,7 @@
 
   <ItemGroup>
     <PackageReference Include="Dapr.Client" Version="0.7.0-preview01" />
-    <PackageReference Include="Dapr.EventStore" Version="0.2.2-alpha" />
+    <PackageReference Include="Dapr.EventStore" Version="0.2.1-alpha" />
   </ItemGroup>
 
   <ItemGroup>
