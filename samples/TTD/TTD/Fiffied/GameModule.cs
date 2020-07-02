@@ -19,25 +19,30 @@ namespace TTD.Fiffied
             .Command<AdvanceTime>(cmd => ApplicationService.ExecuteAsync(cmd, () => new IEvent[] { new TimePassed { Time = cmd.Time } }, pub))
             .Command<PlanCargo>(
                 Commands.GuaranteeCorrelation<PlanCargo>(),
-                cmd => ApplicationService.ExecuteAsync(store, cmd, "all", () => new[] { new CargoPlanned(cmd.CargoId, cmd.Destination, Location.Factory) }, pub))
+                cmd => ApplicationService.ExecuteAsync(store, cmd, Streams.All, () => new[] { new CargoPlanned(cmd.CargoId, cmd.Destination, Location.Factory) }, pub))
             .Command<PickUp>(
                 Commands.GuaranteeCorrelation<PickUp>(),
-                cmd => ApplicationService.ExecuteAsync<Transport, ITransportEvent>(store, cmd, "all", state => state.Handle(cmd, Route.GetRoutes()), pub))
+                cmd => ApplicationService.ExecuteAsync<Transport, ITransportEvent>(store, cmd, Streams.All, state => state.Handle(cmd, Route.GetRoutes()), pub))
             .Command<Unload>(
                 Commands.GuaranteeCorrelation<Unload>(),
-                cmd => ApplicationService.ExecuteAsync<Transport, ITransportEvent>(store, cmd, "all", state => state.Handle(cmd), pub))
+                cmd => ApplicationService.ExecuteAsync<Transport, ITransportEvent>(store, cmd, Streams.All, state => state.Handle(cmd), pub))
             .Command<ReadyTransport>(
                 Commands.GuaranteeCorrelation<ReadyTransport>(),
-                cmd => ApplicationService.ExecuteAsync(store, cmd, "all", () => new[] { new TransportReady(cmd.TransportId, cmd.Kind, cmd.Location, cmd.Time) }, pub))
+                cmd => ApplicationService.ExecuteAsync(store, cmd, Streams.All, () => new[] { new TransportReady(cmd.TransportId, cmd.Kind, cmd.Location, cmd.Time) }, pub))
             .Command<Return>(
                 Commands.GuaranteeCorrelation<Return>(),
-                cmd => ApplicationService.ExecuteAsync<Transport, ITransportEvent>(store, cmd, "all", state => state.Handle(cmd, Route.GetRoutes()), pub))
-            .Policy<TimePassed>((e, ctx) => ctx.ExecuteAsync<Transport, ITransportEvent>("all", p => GameEngine.When(e, p)))
-            .Policy<TransportReady>((e, ctx) => ctx.ExecuteAsync<CargoLocations>("all", p => Policy.Issue(e, () => GameEngine.When(e, p.Locations))))
-            .Policy(Policy.On<Arrived, Transport, ITransportEvent>("all", (e, p) => Policy.Issue(e, () => GameEngine.When(e, p).ToArray())))
-            .Query<CargoLocationQuery, CargoLocations>(q => store.Projector<CargoLocations>().ProjectAsync("all"))
+                cmd => ApplicationService.ExecuteAsync<Transport, ITransportEvent>(store, cmd, Streams.All, state => state.Handle(cmd, Route.GetRoutes()), pub))
+            .Policy(Policy.On<TimePassed, Transport, ITransportEvent>(Streams.All, GameEngine.When))
+            .Policy(Policy.On<TransportReady, CargoLocations>(Streams.All, (e, p) => GameEngine.When(e, p.Locations)))
+            .Policy(Policy.On<Arrived, Transport, ITransportEvent>(Streams.All, GameEngine.When))
+            .Query<CargoLocationQuery, CargoLocations>(q => store.Projector<CargoLocations>().ProjectAsync(Streams.All))
             .Create(store);
     }
+}
+
+public class Streams
+{
+    public const string All = "all";
 }
 
 public class CargoLocationQuery : IQuery<CargoLocations>
