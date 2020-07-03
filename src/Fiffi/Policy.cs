@@ -1,5 +1,6 @@
 ﻿using Fiffi.Projections;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -27,17 +28,26 @@ namespace Fiffi
         }
 
         public static Func<TEvent, PolicyContext, Task> On<TEvent, TProjection>(Func<TEvent, string> streamNameProvider, Func<TEvent, TProjection, ICommand> policy)
-        where TProjection : class, new()
-        => (e, ctx) => ctx.ExecuteAsync<TProjection>(streamNameProvider(e), p => policy(e, p));
+            where TEvent : IEvent
+            where TProjection : class, new()
+        => (e, ctx) => ctx.ExecuteAsync<TProjection>(streamNameProvider(e), p => Issue(e, () => policy(e, p)));
 
         public static Func<TEvent, PolicyContext, Task> On<TEvent, TProjection>(string streamName, Func<TEvent, TProjection, ICommand> policy)
+            where TEvent : IEvent
             where TProjection : class, new()
-                => (e, ctx) => ctx.ExecuteAsync<TProjection>(streamName, p => policy(e, p));
+                => (e, ctx) => ctx.ExecuteAsync<TProjection>(streamName, p => Issue(e, () => policy(e, p)));
+
+        public static Func<TEvent, PolicyContext, Task> On<TEvent, TProjection, TEventFilter>(string streamName, Func<TEvent, TProjection[], IEnumerable<ICommand>> policy)
+          where TEvent : IEvent
+          where TProjection : class, new()
+          where TEventFilter : IEvent
+            => On<TEvent, TProjection, TEventFilter>(streamName, (e, p) => policy(e, p).ToArray());
 
         public static Func<TEvent, PolicyContext, Task> On<TEvent, TProjection, TEventFilter>(string streamName, Func<TEvent, TProjection[], ICommand[]> policy)
+            where TEvent : IEvent
             where TProjection : class, new()
             where TEventFilter : IEvent
-               => (e, ctx) => ctx.ExecuteAsync<TProjection, TEventFilter>(streamName, p => policy(e, p));
+               => (e, ctx) => ctx.ExecuteAsync<TProjection, TEventFilter>(streamName, p => Issue(e, () => policy(e, p)));
 
         public static Func<TEvent, PolicyContext, Task> On<TEvent>(Func<TEvent, ICommand> policy)
             where TEvent : IEvent
