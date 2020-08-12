@@ -1,12 +1,13 @@
-﻿using System;
-using Fiffi;
-using Fiffi.CosmoStore.Configuration;
-using Fiffi.Testing;
-using Microsoft.AspNetCore;
+﻿using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Fiffi.CosmosChangeFeed.Configuration;
+using Fiffi;
+using System;
+using Fiffi.Testing;
+using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace ChangeFeedSample
 {
@@ -20,22 +21,19 @@ namespace ChangeFeedSample
                 .ConfigureLogging(lb => lb.AddConsole())
                 .ConfigureServices((ctx, sc) =>
                     sc
-                    .Tap(x => x.AddMvc())
-                    .AddModule<SampleModule, SampleOptions>(
+                    .AddChangeFeedSubscription(
                         ctx.Configuration,
-                        (sp, es) => SampleModule.Initialize(es, sp.GetRequiredService<ILoggerFactory>()),
                         opt =>
                         {
                             opt.HostName = nameof(ChangeFeedSample);
                             opt.Key = "C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==";
                             opt.ServiceUri = new Uri("https://localhost:8081");
+                            opt.CollectionName = "events";
+                            opt.DatabaseName = "dapr";
                             opt.TypeResolver = TypeResolver.FromMap(TypeResolver.GetEventsFromTypes(typeof(TestEvent)));
-                        })
-                    .AddChangeFeedSubscription<SampleModule, SampleOptions>((sp, module, logger) => events =>
-                    {
-                        logger.LogInformation($"Change feed hosted service got {events.Length} events");
-                        return module.WhenAsync(events);
-                    }))
+                        },
+                        sp => docs => Task.CompletedTask)
+                    .AddMvc())
                 .Configure(builder => builder.UseMvcWithDefaultRoute());
 
 

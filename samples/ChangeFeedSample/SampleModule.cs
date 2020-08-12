@@ -2,7 +2,6 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Fiffi;
-using Fiffi.CosmoStore.Configuration;
 using Fiffi.Testing;
 using Fiffi.Visualization;
 using Microsoft.Extensions.Logging;
@@ -55,8 +54,6 @@ namespace ChangeFeedSample
 
         public Task DispatchAsync(ICommand command) => this.dispatcher.Dispatch(command);
     }
-    public class SampleOptions : ModuleOptions
-    { }
 
 }
 
