@@ -8,9 +8,4 @@ namespace Fiffi
 
         //Task DeleteStreamAsync(string streamName);
     }
-
-    //public interface IAdvancedEventStore<T> : IAdvancedEventStore
-    //{
-    //    public T InnerStore { get; }
-    //}
 }

@@ -11,6 +11,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Text.Json;
 using Fiffi.CosmosChangeFeed;
+using Dapr.Client;
 
 namespace RPS.Web
 {
@@ -31,7 +32,8 @@ namespace RPS.Web
                                 sp.GetRequiredService<IAdvancedEventStore>(), events => Task.CompletedTask))
                             .AddChangeFeedSubscription<JToken>(
                                 ctx.Configuration,
-                                opt => { //TODO use dapr secrets + ext to map secrets -> opt | or via config ?
+                                opt =>
+                                { //TODO use dapr secrets + ext to map secrets -> opt | or via config ?
                                     opt.InstanceName = "RPS.Web";
                                     opt.ServiceUri = new System.Uri("https://localhost:8081");
                                     opt.Key = "C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==";
@@ -39,17 +41,10 @@ namespace RPS.Web
                                     opt.ContainerId = "events";
                                     opt.ProcessorName = "eventsubscription";
                                 },
-                                sp => async (docs, ct) => {
-                                    var logger = sp.GetService<ILogger<ChangeFeedHostedService>>();
-                                    var typeProvider = sp.GetService<Func<string, Type>>();
+                                Fiffi.Dapr.Extensions.FeedFilter,
+                                async (sp, events) =>
+                                {
                                     var module = sp.GetService<GameModule>();
-                                    var events = docs
-                                        .Select(x => JsonDocument.Parse(x.ToString()))
-                                        .FeedFilter(sp.GetService<Func<string, Type>>());
-                                    ct.ThrowIfCancellationRequested();
-                                    logger.LogInformation($"Feed subscription dispatches {events.Count()} events from {docs.Count} changes. " +
-                                        $" # {string.Join(',', events.Select(e => e.GetEventName()).ToArray())}" +
-                                        $" ## {string.Join(',', docs.Select(e => e.Value<string>("id")).ToArray())}");
                                     await module.WhenAsync(events.ToArray());
                                 })
                             .AddLogging()

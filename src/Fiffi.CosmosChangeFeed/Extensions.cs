@@ -5,6 +5,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -32,6 +34,32 @@ namespace Fiffi.CosmosChangeFeed
                 .WithPollInterval(TimeSpan.FromSeconds(1))
                 .Build();
         }
+
+        public static IServiceCollection AddChangeFeedSubscription<T>(
+            this IServiceCollection sc,
+            IConfiguration configuration,
+            Action<SubscriptionOptions> options,
+            Func<IEnumerable<JsonDocument>, Func<string, Type>, ILogger, IEnumerable<IEvent>> filter,
+            Func<IServiceProvider, IEnumerable<IEvent>, Task> handler)
+            => AddChangeFeedSubscription<T>(
+                sc, configuration, options, sp => async (docs, ct) =>
+                {
+                    var logger = sp.GetService<ILogger<ChangeFeedHostedService>>();
+
+                    try
+                    {
+                        var typeProvider = sp.GetService<Func<string, Type>>();
+                        var convertedDocs = docs.Select(x => JsonDocument.Parse(x.ToString()));
+                        await handler(sp, filter(convertedDocs, typeProvider, logger));
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogError(ex, $"Fail to proccess events. {ex.Message}");
+                        throw;
+                    }
+
+                });
+                
 
         public static IServiceCollection AddChangeFeedSubscription<T>(
             this IServiceCollection sc,
