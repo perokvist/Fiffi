@@ -8,13 +8,13 @@ namespace RPS
 {
     public class GamesView
     {
-        public Dictionary<Guid, GameView> Games = new Dictionary<Guid, GameView>();
+        public Dictionary<string, GameView> Games { get; set; } = new Dictionary<string, GameView>();
 
         public GamesView When(IEvent @event) => this;
 
         public GamesView When(GameCreated @event)
         {
-            Games.Add(@event.GameId, new GameView
+            Games.Add(@event.GameId.ToString(), new GameView
             {
                 Id = @event.GameId,
                 Title = @event.Title,
@@ -26,13 +26,13 @@ namespace RPS
 
         public GamesView When(GameStarted @event)
         {
-            var game = Games[@event.GameId].Status = GameState.GameStatus.Started.ToString();
+            var game = Games[@event.GameId.ToString()].Status = GameState.GameStatus.Started.ToString();
             return this;
         }
 
         public GamesView When(GameEnded @event)
         {
-            var game = Games[@event.GameId].Status = GameState.GameStatus.Ended.ToString();
+            var game = Games[@event.GameId.ToString()].Status = GameState.GameStatus.Ended.ToString();
             //Games.Remove(@event.GameId);
             return this;
         }

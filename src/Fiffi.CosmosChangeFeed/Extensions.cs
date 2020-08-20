@@ -1,4 +1,5 @@
-﻿using Microsoft.Azure.Cosmos;
+﻿using Fiffi.Modularization;
+using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -35,10 +36,21 @@ namespace Fiffi.CosmosChangeFeed
                 .Build();
         }
 
+        public static IServiceCollection AddChangeFeedSubscription<T, TModule>
+            (this IServiceCollection sc,
+            IConfiguration configuration,
+            Action<SubscriptionOptions> options,
+            Func<T, JsonDocument> converter,
+            Func<IEnumerable<JsonDocument>, Func<string, Type>, ILogger, IEnumerable<IEvent>> filter)
+            where TModule : Module
+            => AddChangeFeedSubscription(sc, configuration, options, converter, filter,
+                (sp, events) => sp.GetService<TModule>().WhenAsync(events.ToArray()));
+
         public static IServiceCollection AddChangeFeedSubscription<T>(
             this IServiceCollection sc,
             IConfiguration configuration,
             Action<SubscriptionOptions> options,
+            Func<T, JsonDocument> converter,
             Func<IEnumerable<JsonDocument>, Func<string, Type>, ILogger, IEnumerable<IEvent>> filter,
             Func<IServiceProvider, IEnumerable<IEvent>, Task> handler)
             => AddChangeFeedSubscription<T>(
@@ -49,7 +61,7 @@ namespace Fiffi.CosmosChangeFeed
                     try
                     {
                         var typeProvider = sp.GetService<Func<string, Type>>();
-                        var convertedDocs = docs.Select(x => JsonDocument.Parse(x.ToString()));
+                        var convertedDocs = docs.Select(converter);
                         await handler(sp, filter(convertedDocs, typeProvider, logger));
                     }
                     catch (Exception ex)
@@ -59,20 +71,21 @@ namespace Fiffi.CosmosChangeFeed
                     }
 
                 });
-                
+
 
         public static IServiceCollection AddChangeFeedSubscription<T>(
             this IServiceCollection sc,
             IConfiguration configuration,
             Action<SubscriptionOptions> options,
-            Func<IServiceProvider, Func<IReadOnlyCollection<T>, CancellationToken ,Task>> f)
+            Func<IServiceProvider, Func<IReadOnlyCollection<T>, CancellationToken, Task>> f)
             => sc
             .Tap(x =>
                 x.AddOptions<SubscriptionOptions>()
                 .Bind(configuration)
                 .Configure(options)
                 .ValidateDataAnnotations())
-            .AddTransient<Func<CosmosClient>>(sp => () => { 
+            .AddTransient<Func<CosmosClient>>(sp => () =>
+            {
                 var opt = sp.GetRequiredService<IOptions<SubscriptionOptions>>().Value;
                 return new CosmosClient(opt.ServiceUri.ToString(), opt.Key);
             })
@@ -80,7 +93,7 @@ namespace Fiffi.CosmosChangeFeed
             {
                 var opt = sp.GetRequiredService<IOptions<SubscriptionOptions>>().Value;
                 return await client.CreateProcessorAsync(
-                    opt.DatabaseName, 
+                    opt.DatabaseName,
                     "leases",
                     opt.ContainerId,
                     opt.ProcessorName,

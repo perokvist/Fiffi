@@ -58,7 +58,6 @@ namespace Fiffi.Dapr
 
             return await append(streamName, events);
         }
-        //=> 
 
         public Task<long> AppendToStreamAsync(string streamName, long version, params IEvent[] events)
          => eventStore.AppendToStreamAsync(streamName, version, events.Select(e => ToEventData(e)).ToArray());

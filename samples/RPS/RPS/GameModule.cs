@@ -10,23 +10,35 @@ namespace RPS
 {
     public class GameModule : Module
     {
-        public GameModule(Dispatcher<ICommand, Task> dispatcher, Func<IEvent[], Task> publish, QueryDispatcher queryDispatcher) 
+        public GameModule(Dispatcher<ICommand, Task> dispatcher, Func<IEvent[], Task> publish, QueryDispatcher queryDispatcher)
             : base(dispatcher, publish, queryDispatcher)
-        {}
+        { }
 
-        public static GameModule Initialize(IAdvancedEventStore store, Func<IEvent[], Task> pub)
+        public static GameModule Initialize(
+            IAdvancedEventStore store,
+            ISnapshotManager snapshotManager,
+            Func<IEvent[], Task> pub)
             => new ModuleConfiguration<GameModule>((c, p, q) => new GameModule(c, p, q))
             .Command<IGameCommand>(
                 Commands.Validate<IGameCommand>(),
                 Commands.GuaranteeCorrelation<IGameCommand>(),
-                cmd => store.ExecuteAsync<GameState>(cmd, state => Game.Handle(cmd, state), pub))
-            .Projection<GameCreated>(e => store.AppendToStreamAsync(Streams.Games, e))
-            .Projection<GameStarted>(e => store.AppendToStreamAsync(Streams.Games, e))
-            .Projection<GameEnded>(e => store.AppendToStreamAsync(Streams.Games, e))
-            .ProjectionBatch<IEvent>(e => store.AppendToStreamAsync(Streams.All, e))
-            //.Projection<GameEnded>(e => store.Projector<GamePlayed>().Publish(Streams.All, pub)) //TODO meta data
-            .Query<GamesQuery, GamesView>(q => store.Projector<GamesView>().ProjectAsync(Streams.Games)) //TODO ext with stream name only
-            .Query<GameQuery, GameView>(async q => (await store.Projector<GamesView>().ProjectAsync(Streams.Games)).Games.First(x => x.Key == q.GameId).Value) //TODO ext with stream name only
+                cmd => store.ExecuteAsync(cmd, (GameState state) => Game.Handle(cmd, state), async events =>
+                {
+                    await snapshotManager.Apply((Func<GamesView, GamesView>)events.Apply);
+                    await pub(events);
+                }))
+            .Projection<IEvent>(async events =>
+            {
+                await store.AppendToStreamAsync(Streams.Games, events.Filter(typeof(GameCreated), typeof(GameStarted), typeof(GameEnded)));
+                await store.Projector<GamesView>().Project(Streams.Games, snapshotManager);
+            })
+            //.Projection<IEvent>(events => snapshotManager.Apply<GamesView>(events.Apply))
+            //.Projection<GameCreated>(e => snapshotManager.Apply<GamesView>(nameof(GamesView), snap => snap.When(e)))
+
+            .Projection<IEvent>(events => store.AppendToStreamAsync(Streams.All, events.ToArray()))
+            .Policy<GameEnded>((e, ctx) => ctx.Store.Projector<GamePlayed>().Publish(Streams.All, pub))  //TODO ext with stream name only
+            .Query<GamesQuery, GamesView>(q => snapshotManager.Get<GamesView>())
+            .Query<GameQuery, GameView>(async q => (await store.Projector<GamesView>().ProjectAsync(Streams.Games)).Games.First(x => x.Key == q.GameId.ToString()).Value) //TODO ext with stream name only
             .Query<ScoreQuery, ScoresView>(q => store.Projector<ScoresView>().ProjectAsync(Streams.All))
             .Create(store);
     }

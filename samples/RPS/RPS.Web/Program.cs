@@ -28,9 +28,13 @@ namespace RPS.Web
                             .AddSingleton(TypeResolver.FromMap(TypeResolver.GetEventsInNamespace<GameCreated>()))
                             .AddSingleton<global::Dapr.EventStore.DaprEventStore>()
                             .AddSingleton<IAdvancedEventStore, DaprEventStore>()
+                            .AddTransient<ISnapshotManager, Fiffi.Dapr.SnapshotManager>()
                             .AddSingleton(sp => GameModule.Initialize(
-                                sp.GetRequiredService<IAdvancedEventStore>(), events => Task.CompletedTask))
-                            .AddChangeFeedSubscription<JToken>(
+                                sp.GetRequiredService<IAdvancedEventStore>(), 
+                                sp.GetRequiredService<ISnapshotManager>(),
+                                Fiffi.Dapr.Extensions.IntegrationPublisher(sp, "in")
+                                ))
+                            .AddChangeFeedSubscription<JToken, GameModule>(
                                 ctx.Configuration,
                                 opt =>
                                 { //TODO use dapr secrets + ext to map secrets -> opt | or via config ?
@@ -41,12 +45,8 @@ namespace RPS.Web
                                     opt.ContainerId = "events";
                                     opt.ProcessorName = "eventsubscription";
                                 },
-                                Fiffi.Dapr.Extensions.FeedFilter,
-                                async (sp, events) =>
-                                {
-                                    var module = sp.GetService<GameModule>();
-                                    await module.WhenAsync(events.ToArray());
-                                })
+                                token => JsonDocument.Parse(token.ToString()),
+                                Fiffi.Dapr.Extensions.FeedFilter)
                             .AddLogging()
                             .AddMvc()
                             .AddDapr()

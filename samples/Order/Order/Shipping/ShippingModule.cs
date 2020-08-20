@@ -17,9 +17,9 @@ namespace Shipping
             => new ModuleConfiguration<ShippingModule>((c, p, q) => new ShippingModule(c, p, q))
               .Command<Ship>(
                 Commands.GuaranteeCorrelation<Ship>(),
-                cmd => ApplicationService.ExecuteAsync(cmd, () => new[] { new GoodsShipped() }, pub))
-            .Projection<Payment.PaymentRecieved>(e => store.AppendToStreamAsync("order", e))
-            .Projection<Warehouse.GoodsPicked>(e => store.AppendToStreamAsync("order", e))
+                cmd => ApplicationService.ExecuteAsync(cmd, () => (new[] { new GoodsShipped() }), pub))
+            .Projection<Payment.PaymentRecieved>((Payment.PaymentRecieved e) => store.AppendToStreamAsync("order", e))
+            .Projection<Warehouse.GoodsPicked>((Warehouse.GoodsPicked e) => store.AppendToStreamAsync("order", e))
             .Policy<Payment.PaymentRecieved>((e, ctx) => ctx.ExecuteAsync<Order>("order", p => Policy.Issue(e, () => ShippingPolicy.When(e, p))))
             .Policy<Warehouse.GoodsPicked>((e, ctx) => ctx.ExecuteAsync<Order>("order", p => Policy.Issue(e, () => ShippingPolicy.When(e, p))))
             .Create(store);

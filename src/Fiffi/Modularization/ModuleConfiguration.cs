@@ -18,12 +18,9 @@ namespace Fiffi.Modularization
         }
 
         public EventProcessor<PolicyContext> Policies { get; }
-
-
         public EventProcessor Projections { get; }
         public Dispatcher<ICommand, Task> CommandDispatcher { get; }
         public QueryDispatcher Queries { get; }
-
         public ModuleConfiguration<T> Command<TCommand>(params Func<TCommand, Task>[] f)
             where TCommand : ICommand
         {
@@ -38,7 +35,7 @@ namespace Fiffi.Modularization
             return this;
         }
 
-        public ModuleConfiguration<T> ProjectionBatch<TEvent>(Func<TEvent[], Task> f)
+        public ModuleConfiguration<T> Projection<TEvent>(Func<TEvent[], Task> f)
         where TEvent : IEvent
         {
             Projections.RegisterAll(f);
@@ -58,7 +55,7 @@ namespace Fiffi.Modularization
             return this;
         }
 
-        public virtual T Create(IEventStore store)
+        public virtual T Create(IEventStore store, EventProcessor.DispatchMode projectionMode = EventProcessor.DispatchMode.Parallel)
         {
             var ep = new EventProcessor<EventContext>();
 
@@ -66,7 +63,7 @@ namespace Fiffi.Modularization
             .Register<IEvent, EventContext>()
             .When((e, ctx) => ctx == EventContext.Inbox)
             .Then(EventProcessor.InOrder(
-                e => Projections.PublishAsync(e),
+                e => Projections.PublishAsync(projectionMode, e),
                 e => Policies.PublishAsync(new PolicyContext(CommandDispatcher, store), e)));
 
             return f(CommandDispatcher,
