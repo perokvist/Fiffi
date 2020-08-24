@@ -112,21 +112,7 @@ namespace Fiffi
             await pub(events);
         }
 
-        public static void AddMetaData(this IEvent[] events, ICommand command, string aggregateName, string streamName, long version)
-        {
-            if (!events.All(x => x.SourceId == command.AggregateId.Id))
-                throw new InvalidOperationException($"Event SourceId not set or not matching the triggering command - {command.GetType()}");
 
-            events
-                .Where(x => x.Meta == null)
-                .ForEach(x => x.Meta = new Dictionary<string, string>());
-
-            events
-                .ForEach(x => x
-                        .Tap(e => e.Meta.AddMetaData(version, streamName, aggregateName, command))
-                        .Tap(e => e.Meta.AddTypeInfo(e))
-                    );
-        }
 
         public static Action<IEnumerable<IEvent>> None(ICommand command)
             => events => { };

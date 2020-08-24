@@ -1,4 +1,5 @@
 using Fiffi;
+using Fiffi.InMemory;
 using Fiffi.Testing;
 using Fiffi.Visualization;
 using System;
@@ -18,7 +19,7 @@ namespace RPS.Tests
          => context = TestContextBuilder.Create<InMemoryEventStore, GameModule>((store, pub) =>
             {
                 this.helper = outputHelper;
-                return GameModule.Initialize(store, pub);
+                return GameModule.Initialize(store, new InMemorySnapshotStore() ,pub);
             });
 
         [Fact]
@@ -26,7 +27,7 @@ namespace RPS.Tests
         {
             //Given
             context.Given(Array.Empty<IEvent>());
-
+            
             //When
             await context.WhenAsync(new CreateGame { Rounds = 3, GameId = Guid.NewGuid(), PlayerId = "tester", Title = "Test Game" });
 

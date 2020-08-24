@@ -20,7 +20,6 @@
 
   <ItemGroup>
     <PackageReference Include="CosmoStore.CosmosDb" Version="3.0.1" />
-    <PackageReference Include="Microsoft.Azure.DocumentDB.Core" Version="2.0" />
   </ItemGroup>
 
   <ItemGroup>

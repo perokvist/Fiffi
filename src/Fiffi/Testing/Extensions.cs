@@ -8,16 +8,6 @@ namespace Fiffi.Testing
 {
     public static class Extensions
     {
-        //public static async Task<T> Then<T>(ITestContext context, IEventStore store, IAggregateId id)
-        //{
-        //    store.
-        //    var state = (await store.LoadEventStreamAsync(typeof(T).Name.AsStreamName(id).StreamName, 0)).Events.Rehydrate<T>();
-
-        //}
-
-        //var(aggregateName, streamName) = typeof(TState).Name.AsStreamName(command.AggregateId);
-
-
         public static void Given<TState>(this ITestContext context, IAggregateId id, params IEvent[] events)
             => context.Given(events.Select(e => e.AddTestMetaData<TState>(id)).ToArray());
 

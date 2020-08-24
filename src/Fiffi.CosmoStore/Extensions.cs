@@ -1,5 +1,4 @@
-﻿using Microsoft.Azure.Documents;
-using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -27,22 +26,22 @@ namespace Fiffi.CosmoStore
 
     public static class ConversionExtensions
     {
-        public static global::CosmoStore.EventRead<JToken, long> ToEventRead(this Document doc)
+        public static global::CosmoStore.EventRead<JToken, long> ToEventRead(this JToken doc)
             => new global::CosmoStore.EventRead<JToken, long>(
-                doc.GetPropertyValue<Guid>("id"),
-                doc.GetPropertyValue<Guid>("correlationId"),
-                doc.GetPropertyValue<Guid>("causationId"),
-                doc.GetPropertyValue<string>("streamId"),
-                doc.GetPropertyValue<long>("version"),
-                doc.GetPropertyValue<string>("name"),
-                doc.GetPropertyValue<JToken>("data"),
-                doc.GetPropertyValue<JToken>("metadata"),
-                doc.GetPropertyValue<DateTime>("createdUtc")
+                doc.Value<Guid>("id"),
+                doc.Value<Guid>("correlationId"),
+                doc.Value<Guid>("causationId"),
+                doc.Value<string>("streamId"),
+                doc.Value<long>("version"),
+                doc.Value<string>("name"),
+                doc.Value<JToken>("data"),
+                doc.Value<JToken>("metadata"),
+                doc.Value<DateTime>("createdUtc")
                 );
 
-        public static IEvent[] ToEvents(this IEnumerable<Document> documents, Func<string, Type> typeResolver)
+        public static IEvent[] ToEvents(this IEnumerable<JToken> documents, Func<string, Type> typeResolver)
          =>   documents
-               .Where(d => d.GetPropertyValue<string>("type") == "Event")
+               .Where(d => d.Value<string>("type") == "Event")
                .Select(d => d.ToEventRead())
                .Select(d => d.ToEvent(typeResolver))
                .ToArray();

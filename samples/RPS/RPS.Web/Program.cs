@@ -28,10 +28,10 @@ namespace RPS.Web
                             .AddSingleton(TypeResolver.FromMap(TypeResolver.GetEventsInNamespace<GameCreated>()))
                             .AddSingleton<global::Dapr.EventStore.DaprEventStore>()
                             .AddSingleton<IAdvancedEventStore, DaprEventStore>()
-                            .AddTransient<ISnapshotManager, Fiffi.Dapr.SnapshotManager>()
+                            .AddTransient<ISnapshotStore, Fiffi.Dapr.SnapshotStore>()
                             .AddSingleton(sp => GameModule.Initialize(
                                 sp.GetRequiredService<IAdvancedEventStore>(), 
-                                sp.GetRequiredService<ISnapshotManager>(),
+                                sp.GetRequiredService<ISnapshotStore>(),
                                 Fiffi.Dapr.Extensions.IntegrationPublisher(sp, "in")
                                 ))
                             .AddChangeFeedSubscription<JToken, GameModule>(
