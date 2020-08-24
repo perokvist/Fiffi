@@ -9,12 +9,13 @@ namespace Warehouse
 {
     public class WarehouseModule : Module
     {
-        public WarehouseModule(Dispatcher<ICommand, Task> dispatcher, Func<IEvent[], Task> publish, QueryDispatcher queryDispatcher)
-       : base(dispatcher, publish, queryDispatcher)
+        public WarehouseModule(Dispatcher<ICommand, Task> dispatcher, Func<IEvent[], Task> publish, QueryDispatcher queryDispatcher,
+            Func<IEvent[], Task> onStart)
+       : base(dispatcher, publish, queryDispatcher, onStart)
         { }
 
         public static WarehouseModule Initialize(IAdvancedEventStore store, Func<IEvent[], Task> pub)
-            => new ModuleConfiguration<WarehouseModule>((c, p, q) => new WarehouseModule(c, p, q))
+            => new ModuleConfiguration<WarehouseModule>((c, p, q, s) => new WarehouseModule(c, p, q, s))
             .Command<PickGoods>(
                 Commands.GuaranteeCorrelation<PickGoods>(),
                 cmd => ApplicationService.ExecuteAsync(cmd, () => new[] { new GoodsPicked() }, pub))

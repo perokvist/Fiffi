@@ -1,11 +1,8 @@
 using System;
 using Xunit;
 using Fiffi.Testing;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Linq;
-using Fiffi.CosmoStore.Testing;
-using Fiffi.CosmoStore.Configuration;
 
 namespace Fiffi.CosmoStore.Tests
 {
@@ -16,9 +13,9 @@ namespace Fiffi.CosmoStore.Tests
 
         public CosmoStoreEventStoreTests()
         {
-            Database.DeleteEventStoreAsync(serviceUri, key)
-                .GetAwaiter()
-                .GetResult();
+            //Database.DeleteEventStoreAsync(serviceUri, key)
+            //    .GetAwaiter()
+            //    .GetResult();
         }
 
         [Fact]

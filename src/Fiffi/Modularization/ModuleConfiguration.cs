@@ -6,9 +6,9 @@ namespace Fiffi.Modularization
     public class ModuleConfiguration<T>
             where T : Module
     {
-        private readonly Func<Dispatcher<ICommand, Task>, Func<IEvent[], Task>, QueryDispatcher, T> f;
+        private readonly Func<Dispatcher<ICommand, Task>, Func<IEvent[], Task>, QueryDispatcher, Func<IEvent[], Task> ,T> f;
 
-        public ModuleConfiguration(Func<Dispatcher<ICommand, Task>, Func<IEvent[], Task>, QueryDispatcher, T> f)
+        public ModuleConfiguration(Func<Dispatcher<ICommand, Task>, Func<IEvent[], Task>, QueryDispatcher, Func<IEvent[], Task> ,T> f)
         {
             Policies = new EventProcessor<PolicyContext>();
             Projections = new EventProcessor();
@@ -55,7 +55,8 @@ namespace Fiffi.Modularization
             return this;
         }
 
-        public virtual T Create(IEventStore store, EventProcessor.DispatchMode projectionMode = EventProcessor.DispatchMode.Parallel)
+        public virtual T Create(IEventStore store, 
+            EventProcessor.DispatchMode projectionMode = EventProcessor.DispatchMode.Parallel)
         {
             var ep = new EventProcessor<EventContext>();
 
@@ -68,7 +69,8 @@ namespace Fiffi.Modularization
 
             return f(CommandDispatcher,
             events => ep.PublishAsync(EventContext.Inbox, events),
-            Queries);
+            Queries,
+            Projections.PublishAsync);
         }
     }
 }

@@ -12,9 +12,9 @@ namespace Fiffi.Testing
         readonly Queue<IEvent> q;
         readonly Func<ICommand, Task> dispatch;
         readonly Func<IEvent, Task>[] whens;
-        readonly Func<Func<IEventStore, Task>, Task> init;
+        readonly Func<IEvent[], Func<IEventStore, Task>, Task> init;
 
-        public TestContext(Func<Func<IEventStore, Task>, Task> init, Func<ICommand, Task> dispatch, Queue<IEvent> q, Func<IQuery<object>, Task<object>> queryAsync, params Func<IEvent, Task>[] whens)
+        public TestContext(Func<IEvent[], Func<IEventStore, Task>, Task> init, Func<ICommand, Task> dispatch, Queue<IEvent> q, Func<IQuery<object>, Task<object>> queryAsync, params Func<IEvent, Task>[] whens)
         {
             this.init = init;
             this.dispatch = dispatch;
@@ -37,8 +37,8 @@ namespace Fiffi.Testing
         }
 
         public void Given(string[] streamNames, IEnumerable<IEvent> events)
-                => this.init(store => Task.WhenAll(streamNames
-                    .Select(streamName => store.AppendToStreamAsync(streamName, 0, events.ToArray()))))
+                => this.init(events.ToArray(), store => Task.WhenAll(streamNames
+                     .Select(streamName => store.AppendToStreamAsync(streamName, 0, events.ToArray()))))
                     .GetAwaiter().GetResult();
 
         public Task WhenAsync(IEvent @event)

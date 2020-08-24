@@ -10,15 +10,15 @@ namespace RPS
 {
     public class GameModule : Module
     {
-        public GameModule(Dispatcher<ICommand, Task> dispatcher, Func<IEvent[], Task> publish, QueryDispatcher queryDispatcher)
-            : base(dispatcher, publish, queryDispatcher)
+        public GameModule(Dispatcher<ICommand, Task> dispatcher, Func<IEvent[], Task> publish, QueryDispatcher queryDispatcher, Func<IEvent[], Task> onStart)
+            : base(dispatcher, publish, queryDispatcher, onStart)
         { }
 
         public static GameModule Initialize(
             IAdvancedEventStore store,
             ISnapshotStore snapshotStore,
             Func<IEvent[], Task> pub)
-            => new ModuleConfiguration<GameModule>((c, p, q) => new GameModule(c, p, q))
+            => new ModuleConfiguration<GameModule>((c, p, q, s) => new GameModule(c, p, q, s))
             .Command<IGameCommand>(
                 Commands.Validate<IGameCommand>(),
                 Commands.GuaranteeCorrelation<IGameCommand>(),

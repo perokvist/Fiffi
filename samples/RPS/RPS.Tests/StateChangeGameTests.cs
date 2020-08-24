@@ -19,7 +19,7 @@ namespace RPS.Tests
          => context = TestContextBuilder.Create<InMemoryEventStore, GameModule>((store, pub) =>
             {
                 this.helper = outputHelper;
-                return GameModule.Initialize(store, new InMemorySnapshotStore() ,pub);
+                return GameModule.Initialize(store, new InMemorySnapshotStore(), pub);
             });
 
         [Fact]
@@ -27,12 +27,13 @@ namespace RPS.Tests
         {
             //Given
             context.Given(Array.Empty<IEvent>());
-            
+
             //When
             await context.WhenAsync(new CreateGame { Rounds = 3, GameId = Guid.NewGuid(), PlayerId = "tester", Title = "Test Game" });
 
             //Then  
-            context.Then((events, visual) => {
+            context.Then((events, visual) =>
+            {
                 this.helper.WriteLine(visual);
                 Assert.True(events.OfType<GameCreated>().Happened());
             });
@@ -44,14 +45,15 @@ namespace RPS.Tests
             var gameId = Guid.NewGuid();
 
             //Given
-            context.Given(new GameCreated { GameId = gameId, PlayerId = "test@tester.com", Rounds = 1, Title = "test game"  }
-                                .AddTestMetaData<GameState>(new AggregateId(gameId))); 
+            context.Given(new GameCreated { GameId = gameId, PlayerId = "test@tester.com", Rounds = 1, Title = "test game" }
+                                .AddTestMetaData<GameState>(new AggregateId(gameId)));
 
             //When
             await context.WhenAsync(new JoinGame { GameId = gameId, PlayerId = "test2@tester.com" });
 
             //Then  
-            context.Then((events, visual) => {
+            context.Then((events, visual) =>
+            {
                 this.helper.WriteLine(visual);
                 Assert.True(events.OfType<GameStarted>().Happened());
                 Assert.True(events.OfType<RoundStarted>().Happened());
@@ -71,7 +73,8 @@ namespace RPS.Tests
             await context.WhenAsync(new JoinGame { GameId = gameId, PlayerId = "test@tester.com" });
 
             //Then  
-            context.Then((events, visual) => {
+            context.Then((events, visual) =>
+            {
                 this.helper.WriteLine(visual);
                 Assert.False(events.Any());
             });
@@ -83,7 +86,7 @@ namespace RPS.Tests
             var gameId = Guid.NewGuid();
 
             //Given
-            context.Given<GameState>(new AggregateId(gameId), 
+            context.Given<GameState>(new AggregateId(gameId),
                 new GameCreated { GameId = gameId, PlayerId = "test@tester.com", Rounds = 1, Title = "test game" },
                 new GameStarted { GameId = gameId, PlayerId = "foo@tester.com" },
                 new RoundStarted { GameId = gameId, Round = 1 });
@@ -92,7 +95,8 @@ namespace RPS.Tests
             await context.WhenAsync(new PlayGame { GameId = gameId, PlayerId = "foo@tester.com", Hand = Hand.Paper });
 
             //Then  
-            context.Then((events, visual) => {
+            context.Then((events, visual) =>
+            {
                 this.helper.WriteLine(visual);
                 Assert.True(events.OfType<HandShown>().Happened());
             });
@@ -115,7 +119,8 @@ namespace RPS.Tests
             await context.WhenAsync(new PlayGame { GameId = gameId, PlayerId = "foo@tester.com", Hand = Hand.Rock });
 
             //Then  
-            context.Then((events, visual) => {
+            context.Then((events, visual) =>
+            {
                 this.helper.WriteLine(visual);
                 Assert.True(events.OfType<GameEnded>().Happened());
             });

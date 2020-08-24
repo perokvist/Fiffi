@@ -9,12 +9,13 @@ namespace Shipping
 {
     public class ShippingModule : Module
     {
-        public ShippingModule(Dispatcher<ICommand, Task> dispatcher, Func<IEvent[], Task> publish, QueryDispatcher queryDispatcher)
-       : base(dispatcher, publish, queryDispatcher)
+        public ShippingModule(Dispatcher<ICommand, Task> dispatcher, Func<IEvent[], Task> publish, QueryDispatcher queryDispatcher,
+            Func<IEvent[], Task> onStart)
+       : base(dispatcher, publish, queryDispatcher, onStart)
         { }
 
         public static ShippingModule Initialize(IAdvancedEventStore store, Func<IEvent[], Task> pub)
-            => new ModuleConfiguration<ShippingModule>((c, p, q) => new ShippingModule(c, p, q))
+            => new ModuleConfiguration<ShippingModule>((c, p, q, s) => new ShippingModule(c, p, q, s))
               .Command<Ship>(
                 Commands.GuaranteeCorrelation<Ship>(),
                 cmd => ApplicationService.ExecuteAsync(cmd, () => (new[] { new GoodsShipped() }), pub))

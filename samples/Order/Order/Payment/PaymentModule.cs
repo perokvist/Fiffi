@@ -9,12 +9,13 @@ namespace Payment
 {
     public class PaymentModule : Module
     {
-        public PaymentModule(Dispatcher<ICommand, Task> dispatcher, Func<IEvent[], Task> publish, QueryDispatcher queryDispatcher)
-       : base(dispatcher, publish, queryDispatcher)
+        public PaymentModule(Dispatcher<ICommand, Task> dispatcher, Func<IEvent[], Task> publish, QueryDispatcher queryDispatcher,
+            Func<IEvent[], Task> onStart)
+       : base(dispatcher, publish, queryDispatcher, onStart)
         { }
 
         public static PaymentModule Initialize(IAdvancedEventStore store, Func<IEvent[], Task> pub)
-            => new ModuleConfiguration<PaymentModule>((c, p, q) => new PaymentModule(c, p, q))
+            => new ModuleConfiguration<PaymentModule>((c, p, q, s) => new PaymentModule(c, p, q, s))
             .Command<Pay>(
                 Commands.GuaranteeCorrelation<Pay>(),
                 cmd => ApplicationService.ExecuteAsync(cmd, () => new[] { new PaymentRecieved() } , pub))
