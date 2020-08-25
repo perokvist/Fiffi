@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Fiffi.CosmoStore
 {
@@ -21,5 +22,28 @@ namespace Fiffi.CosmoStore
             .Pipe(t => ((IEvent)eventRead.Data.ToObject(t))
             .Tap(e => e.Meta = eventRead.Metadata.Value.ToObject<Dictionary<string, string>>())
             .Tap(e => e.Meta.AddStoreMetaData(new EventStoreMetaData { EventPosition = eventRead.Version, EventVersion = eventRead.Version })));
+    }
+
+    public static class ConversionExtensions
+    {
+        public static global::CosmoStore.EventRead<JToken, long> ToEventRead(this JToken doc)
+            => new global::CosmoStore.EventRead<JToken, long>(
+                doc.Value<Guid>("id"),
+                doc.Value<Guid>("correlationId"),
+                doc.Value<Guid>("causationId"),
+                doc.Value<string>("streamId"),
+                doc.Value<long>("version"),
+                doc.Value<string>("name"),
+                doc.Value<JToken>("data"),
+                doc.Value<JToken>("metadata"),
+                doc.Value<DateTime>("createdUtc")
+                );
+
+        public static IEvent[] ToEvents(this IEnumerable<JToken> documents, Func<string, Type> typeResolver)
+         =>   documents
+               .Where(d => d.Value<string>("type") == "Event")
+               .Select(d => d.ToEventRead())
+               .Select(d => d.ToEvent(typeResolver))
+               .ToArray();
     }
 }

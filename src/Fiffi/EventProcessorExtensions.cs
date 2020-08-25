@@ -12,7 +12,8 @@ namespace Fiffi
         public static async Task ExecuteHandlersAsync<T>(this IEvent[] events,
             List<(Type, T)> handlers,
             Func<IEvent, Func<(Type Type, T EventHandler), (Task EventHandler, IAggregateId AggregateId, Guid CorrelationId)>> f,
-            AggregateLocks locks)
+            AggregateLocks locks,
+            EventProcessor.DispatchMode mode = EventProcessor.DispatchMode.Parallel)
         {
             if (!events.All(e => e.HasCorrelation()))
                 throw new ArgumentException("CorrelationId required");
@@ -28,7 +29,13 @@ namespace Fiffi
                 .Select(f(e)))
                 .ToArray();
 
-            await Task.WhenAll(arrayContexts.Concat(executionContext).Select(x => x.EventHandler));
+            var exec = mode switch {
+                EventProcessor.DispatchMode.Parallel => Task.WhenAll(arrayContexts.Concat(executionContext).Select(x => x.EventHandler)),
+                EventProcessor.DispatchMode.Blocking => arrayContexts.Concat(executionContext).Select(x => x.EventHandler).ForEachAsync(async x => await x),
+                EventProcessor.DispatchMode.BatchParallel => Task.WhenAll(Task.WhenAll(arrayContexts.Select(x => x.EventHandler)), executionContext.Select(x => x.EventHandler).ForEachAsync(async x => await x)),
+                _ => Task.CompletedTask
+            };
+            await exec;
 
             locks.ReleaseIfPresent(executionContext.Select(x => (x.AggregateId, x.CorrelationId)).ToArray());
         }

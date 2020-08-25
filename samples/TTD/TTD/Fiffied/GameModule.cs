@@ -10,12 +10,13 @@ namespace TTD.Fiffied
 {
     public class TTDModule : Module
     {
-        public TTDModule(Dispatcher<ICommand, Task> dispatcher, Func<IEvent[], Task> publish, QueryDispatcher queryDispatcher)
-            : base(dispatcher, publish, queryDispatcher)
+        public TTDModule(Dispatcher<ICommand, Task> dispatcher, Func<IEvent[], Task> publish, QueryDispatcher queryDispatcher,
+            Func<IEvent[], Task> onStart)
+            : base(dispatcher, publish, queryDispatcher, onStart)
         { }
 
         public static Module Initialize(IAdvancedEventStore store, Func<IEvent[], Task> pub)
-            => new ModuleConfiguration<TTDModule>((c, p, q) => new TTDModule(c, p, q))
+            => new ModuleConfiguration<TTDModule>((c, p, q, s) => new TTDModule(c, p, q, s))
             .Command<AdvanceTime>(cmd => ApplicationService.ExecuteAsync(cmd, () => new IEvent[] { new TimePassed { Time = cmd.Time } }, pub))
             .Command<PlanCargo>(
                 Commands.GuaranteeCorrelation<PlanCargo>(),

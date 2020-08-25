@@ -34,12 +34,24 @@ namespace Fiffi
             }
         }
 
+        public static async Task ForEachAsync<T>(this IEnumerable<T> self, Func<T, Task> action)
+        {
+            foreach (var item in self)
+            {
+                await action(item);
+            }
+        }
+
         public static TState Rehydrate<TState>(this IEnumerable<IEvent> events) where TState : new()
             => events.Aggregate(new TState(), (s, @event) => ((dynamic)s).When((dynamic)@event));
 
         public static TState Apply<TState>(this IEnumerable<IEvent> events, TState currentState) where TState : new()
             => events.Aggregate(currentState, (s, @event) => ((dynamic)s).When((dynamic)@event));
 
+        public static IEvent[] Filter(this IEnumerable<IEvent> events, params Type[] include)
+            => events
+            .Where(x => include.Any(t => t.Equals(x.GetType())))
+            .ToArray();
 
         public static void Guard<T>(this Action<Func<T, bool>> f, Func<T, bool> guard)
             => f(guard);

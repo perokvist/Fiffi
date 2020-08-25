@@ -12,16 +12,52 @@ namespace Fiffi.Dapr
     {
         private readonly global::Dapr.EventStore.DaprEventStore eventStore;
         private readonly Func<string, Type> typeResolver;
+        private readonly Action<Exception, string, object[]> logger;
 
-        public DaprEventStore(global::Dapr.EventStore.DaprEventStore eventStore,
-            Func<string, Type> typeResolver)
+        public DaprEventStore(
+            global::Dapr.EventStore.DaprEventStore eventStore,
+            Func<string, Type> typeResolver
+            ) : this(eventStore, typeResolver, (ex, message, @params) => { })
+        {}
+
+        public DaprEventStore(
+            global::Dapr.EventStore.DaprEventStore eventStore,
+            Func<string, Type> typeResolver,
+            Action<Exception, string, object[]> logger
+            )
         {
             this.eventStore = eventStore;
             this.typeResolver = typeResolver;
+            this.logger = logger;
         }
 
-        public Task<long> AppendToStreamAsync(string streamName, IEvent[] events)
-         => eventStore.AppendToStreamAsync(streamName, events.Select(e => ToEventData(e)).ToArray());
+        public async Task<long> AppendToStreamAsync(string streamName, IEvent[] events)
+        {
+            var attempt = 1;
+
+            async Task<long> append(string sn, IEvent[] evts)
+            {
+                try
+                {
+                    return await eventStore.AppendToStreamAsync(streamName, events.Select(e => ToEventData(e)).ToArray());
+                }
+                catch (DBConcurrencyException ex)
+                {
+                    if (attempt > 2)
+                    {
+                        logger(ex, $"{ex.Message}. Attempt {0}", new object[] { attempt });
+                        throw ex;
+                    }
+
+                    attempt++;
+                    logger(ex, $"{ex.Message} - retries. Attempt {0}", new object[] { attempt });
+
+                    return await append(streamName, events);
+                }
+            }
+
+            return await append(streamName, events);
+        }
 
         public Task<long> AppendToStreamAsync(string streamName, long version, params IEvent[] events)
          => eventStore.AppendToStreamAsync(streamName, version, events.Select(e => ToEventData(e)).ToArray());

@@ -20,12 +20,14 @@ namespace Fiffi
          => AppendToStreamAsync(streamName, (version, true), events);
 
         public Task<long> AppendToStreamAsync(string streamName, (long version, bool check) concurreny, IEvent[] events)
-         => Task.FromResult(innerStore.AddOrUpdate(
+         => events.Any() ?
+            Task.FromResult(innerStore.AddOrUpdate(
                     streamName,
                     key => AppendToStream(Array.Empty<IEvent>(), key, concurreny, events, () => store.Values.Count()),
                     (key, value) => AppendToStream(value, key, concurreny, events, () => store.Values.Count()))
              .Last().Meta.GetEventStoreMetaData().EventVersion //TODO better impl
-             );
+             ) :
+            Task.FromResult((long)0);
 
         static IEvent[] AppendToStream(IEvent[] currentValue, string streamName, (long version, bool check) concurreny, IEvent[] events, Func<long> positionProvider)
         {

@@ -9,17 +9,18 @@ namespace Shipping
 {
     public class ShippingModule : Module
     {
-        public ShippingModule(Dispatcher<ICommand, Task> dispatcher, Func<IEvent[], Task> publish, QueryDispatcher queryDispatcher)
-       : base(dispatcher, publish, queryDispatcher)
+        public ShippingModule(Dispatcher<ICommand, Task> dispatcher, Func<IEvent[], Task> publish, QueryDispatcher queryDispatcher,
+            Func<IEvent[], Task> onStart)
+       : base(dispatcher, publish, queryDispatcher, onStart)
         { }
 
         public static ShippingModule Initialize(IAdvancedEventStore store, Func<IEvent[], Task> pub)
-            => new ModuleConfiguration<ShippingModule>((c, p, q) => new ShippingModule(c, p, q))
+            => new ModuleConfiguration<ShippingModule>((c, p, q, s) => new ShippingModule(c, p, q, s))
               .Command<Ship>(
                 Commands.GuaranteeCorrelation<Ship>(),
-                cmd => ApplicationService.ExecuteAsync(cmd, () => new[] { new GoodsShipped() }, pub))
-            .Projection<Payment.PaymentRecieved>(e => store.AppendToStreamAsync("order", e))
-            .Projection<Warehouse.GoodsPicked>(e => store.AppendToStreamAsync("order", e))
+                cmd => ApplicationService.ExecuteAsync(cmd, () => (new[] { new GoodsShipped() }), pub))
+            .Projection<Payment.PaymentRecieved>((Payment.PaymentRecieved e) => store.AppendToStreamAsync("order", e))
+            .Projection<Warehouse.GoodsPicked>((Warehouse.GoodsPicked e) => store.AppendToStreamAsync("order", e))
             .Policy<Payment.PaymentRecieved>((e, ctx) => ctx.ExecuteAsync<Order>("order", p => Policy.Issue(e, () => ShippingPolicy.When(e, p))))
             .Policy<Warehouse.GoodsPicked>((e, ctx) => ctx.ExecuteAsync<Order>("order", p => Policy.Issue(e, () => ShippingPolicy.When(e, p))))
             .Create(store);

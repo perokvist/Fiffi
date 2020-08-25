@@ -12,9 +12,14 @@ namespace Fiffi.Testing
         readonly Queue<IEvent> q;
         readonly Func<ICommand, Task> dispatch;
         readonly Func<IEvent, Task>[] whens;
-        readonly Func<Func<IEventStore, Task>, Task> init;
+        readonly Func<IEvent[], Func<IEventStore, Task>, Task> init;
 
-        public TestContext(Func<Func<IEventStore, Task>, Task> init, Func<ICommand, Task> dispatch, Queue<IEvent> q, Func<IQuery<object>, Task<object>> queryAsync, params Func<IEvent, Task>[] whens)
+        public TestContext(
+            Func<IEvent[], Func<IEventStore, Task>, Task> init,
+            Func<ICommand, Task> dispatch, 
+            Queue<IEvent> q, 
+            Func<IQuery<object>, Task<object>> queryAsync, 
+            params Func<IEvent, Task>[] whens)
         {
             this.init = init;
             this.dispatch = dispatch;
@@ -24,11 +29,22 @@ namespace Fiffi.Testing
         }
 
         public void Given(params IEvent[] events)
-            => this.init(store =>
-            Task.WhenAll(events
-            .GroupBy(x => x.GetStreamName()) //TODO version and position ?
-            .Select(x => store.AppendToStreamAsync(x.Key, 0, x.ToArray())))
-            ).GetAwaiter().GetResult();
+            => Given(Array.Empty<string>(), StreamName.FromMeta, events);
+
+        public void Given(string[] streams, StreamName aggregateStream = StreamName.FromMeta, params IEvent[] events)
+        {
+            if (aggregateStream == StreamName.FromMeta)
+                events
+                  .GroupBy(x => x.GetStreamName()) //TODO version and position ?
+                 .ForEach(x => Given(new[] { x.Key }.Concat(streams).ToArray(), x));
+            else
+                Given(streams, events);
+        }
+
+        public void Given(string[] streamNames, IEnumerable<IEvent> events)
+                => this.init(events.ToArray(), store => Task.WhenAll(streamNames
+                     .Select(streamName => store.AppendToStreamAsync(streamName, 0, events.ToArray()))))
+                    .GetAwaiter().GetResult();
 
         public Task WhenAsync(IEvent @event)
             => Task.WhenAll(this.whens.Select(w => w(@event)));
@@ -52,5 +68,11 @@ namespace Fiffi.Testing
         public async Task ThenAsync<T>(IQuery<T> q, Action<T> f)
             where T : class
           => f((T)await this.queryAsync((IQuery<object>)q));
+
+        public enum StreamName
+        {
+            FromMeta = 10,
+            FromStreamName = 50
+        }
     }
 }

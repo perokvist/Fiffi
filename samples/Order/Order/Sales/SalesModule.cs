@@ -8,12 +8,13 @@ namespace Sales
 {
     public class SalesModule : Module
     {
-        public SalesModule(Dispatcher<ICommand, Task> dispatcher, Func<IEvent[], Task> publish, QueryDispatcher queryDispatcher)
-       : base(dispatcher, publish, queryDispatcher)
+        public SalesModule(Dispatcher<ICommand, Task> dispatcher, Func<IEvent[], Task> publish, QueryDispatcher queryDispatcher,
+            Func<IEvent[], Task> onStart)
+       : base(dispatcher, publish, queryDispatcher, onStart)
         { }
 
         public static SalesModule Initialize(IAdvancedEventStore store, Func<IEvent[], Task> pub)
-            => new ModuleConfiguration<SalesModule>((c, p, q) => new SalesModule(c, p, q))
+            => new ModuleConfiguration<SalesModule>((c, p, q, s) => new SalesModule(c, p, q, s))
             .Command<PlaceOrder>(
                 Commands.GuaranteeCorrelation<PlaceOrder>(),
                 cmd => ApplicationService.ExecuteAsync(cmd, () => new[] { new OrderPlaced() }, pub))

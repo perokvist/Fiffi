@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Fiffi;
@@ -43,13 +44,23 @@ namespace Fiffi.Projections
                 .ToArray();
         }
 
-        public static async Task Publish<T>(this Projector<T> projector, string streamName, Func<IEvent[], Task> pub)
-            where T : class, IEvent, new()
-            => await pub(new IEvent[] { await projector.ProjectAsync(streamName) });
+        public static async Task Publish<T>(this Projector<T> projector, IEvent trigger, string streamName, Func<IEvent[], Task> pub)
+            where T : class, IEvent, IIntegrationEvent, new()
+            => await pub(new IEvent[] { (await projector.ProjectAsync(streamName))
+                .Tap(e => new[] { e }.AddMetaData(trigger, streamName)) 
+            });
 
         public static async Task Project<T>(this Projector<T> projector, string streamName, Func<T, Task> save)
             where T : class, new()
                 => await save(await projector.ProjectAsync(streamName));
+
+        public static async Task Project<T>(this Projector<T> projector, string streamName, ISnapshotStore snapshotManager)
+            where T : class, new()
+        {
+            var p = await projector.ProjectAsync(streamName);
+            await snapshotManager.Apply<T>(typeof(T).Name, snap => p);
+        }
+
 
     }
 }

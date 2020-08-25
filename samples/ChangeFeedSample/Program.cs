@@ -1,12 +1,12 @@
-﻿using System;
-using Fiffi;
-using Fiffi.CosmoStore.Configuration;
-using Fiffi.Testing;
-using Microsoft.AspNetCore;
+﻿using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
+using Fiffi.CosmosChangeFeed;
+using Newtonsoft.Json.Linq;
+using System.Text.Json;
 
 namespace ChangeFeedSample
 {
@@ -20,22 +20,22 @@ namespace ChangeFeedSample
                 .ConfigureLogging(lb => lb.AddConsole())
                 .ConfigureServices((ctx, sc) =>
                     sc
-                    .Tap(x => x.AddMvc())
-                    .AddModule<SampleModule, SampleOptions>(
-                        ctx.Configuration,
-                        (sp, es) => SampleModule.Initialize(es, sp.GetRequiredService<ILoggerFactory>()),
-                        opt =>
-                        {
-                            opt.HostName = nameof(ChangeFeedSample);
-                            opt.Key = "C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==";
-                            opt.ServiceUri = new Uri("https://localhost:8081");
-                            opt.TypeResolver = TypeResolver.FromMap(TypeResolver.GetEventsFromTypes(typeof(TestEvent)));
-                        })
-                    .AddChangeFeedSubscription<SampleModule, SampleOptions>((sp, module, logger) => events =>
-                    {
-                        logger.LogInformation($"Change feed hosted service got {events.Length} events");
-                        return module.WhenAsync(events);
-                    }))
+                    .AddChangeFeedSubscription<JToken>(
+                                ctx.Configuration,
+                                opt =>
+                                {
+                                    opt.InstanceName = "ProcessorSample";
+                                    opt.ServiceUri = new System.Uri("https://localhost:8081");
+                                    opt.Key = "C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==";
+                                    opt.DatabaseName = "dapr";
+                                    opt.ContainerId = "events";
+                                    opt.ProcessorName = "sample";
+                                },
+                                token => JsonDocument.Parse(token.ToString()),
+                                Fiffi.Dapr.Extensions.FeedFilter,
+                                (sp, events) => Task.CompletedTask,
+                                feedBuilder => { })
+                    .AddMvc())
                 .Configure(builder => builder.UseMvcWithDefaultRoute());
 
 

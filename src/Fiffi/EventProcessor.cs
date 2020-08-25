@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace Fiffi
 {
+    using static Fiffi.EventProcessor;
     using EventHandle = Func<IEvent[], Task>;
 
     public class EventProcessor
@@ -36,6 +37,9 @@ namespace Fiffi
         public Task PublishAsync(params IEvent[] events)
             => events.ExecuteHandlersAsync(_handlers, BuildExecutionContext, _locks);
 
+        public Task PublishAsync(DispatchMode mode, params IEvent[] events)
+            => events.ExecuteHandlersAsync(_handlers, BuildExecutionContext, _locks, mode);       
+
         static Func<(Type Type, EventHandle EventHandler), (Task EventHandler, IAggregateId AggregateId, Guid CorrelationId)> BuildExecutionContext(IEvent e)
         => f => (f.EventHandler(new[] { e }), new AggregateId(e.SourceId), e.GetCorrelation());
 
@@ -47,6 +51,13 @@ namespace Fiffi
                 await a(e);
             }
         };
+
+        public enum DispatchMode
+        {
+            Parallel = 10,
+            Blocking = 20,
+            BatchParallel = 30
+        }
     }
 
     public class EventProcessor<TAdditional>
@@ -67,8 +78,11 @@ namespace Fiffi
             => _handlers.Add((typeof(T), (@event, additional) => f((T)@event, additional)));
 
         public Task PublishAsync(TAdditional additional, params IEvent[] events)
-        => events.ExecuteHandlersAsync(_handlers, e => BuildExecutionContext(e, additional), _locks);
+            => events.ExecuteHandlersAsync(_handlers, e => BuildExecutionContext(e, additional), _locks);
         //TODO possible to not require correlation with locks.Any()
+
+        public Task PublishAsync(DispatchMode mode, TAdditional additional, params IEvent[] events)
+            => events.ExecuteHandlersAsync(_handlers, e => BuildExecutionContext(e, additional), _locks, mode);
 
         static Func<(Type Type, Func<IEvent, TAdditional, Task> EventHandler), (Task EventHandler, IAggregateId AggregateId, Guid CorrelationId)> BuildExecutionContext(IEvent e, TAdditional additional)
             => f => (f.EventHandler(e, additional), new AggregateId(e.SourceId), e.GetCorrelation());

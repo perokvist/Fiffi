@@ -38,10 +38,12 @@ namespace RPS.Web
             using (var r = new StreamReader(Request.Body))
             {
                 var json = await r.ReadToEndAsync();
-                var e = typeResolver.Deserialize(json);
-                logger.LogInformation("Inbox got event. {eventName}", e.GetEventName());
-                await module.WhenAsync(e);
-                logger.LogInformation("Inbox dispatched event. {eventName}", e.GetEventName());
+                logger.LogInformation("Inbox got event. Payload : {json}", json);
+
+                //var e = typeResolver.Deserialize(json);
+                //logger.LogInformation("Inbox got event. {eventName}", e.GetEventName());
+                //await module.WhenAsync(e);
+                //logger.LogInformation("Inbox dispatched event. {eventName}", e.GetEventName());
             }
             @lock.Release();
             return Ok();
