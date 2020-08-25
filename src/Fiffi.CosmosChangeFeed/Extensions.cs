@@ -22,7 +22,8 @@ namespace Fiffi.CosmosChangeFeed
             string containerId,
             string processorName,
             string instanceName,
-            Func<IReadOnlyCollection<T>, CancellationToken, Task> f)
+            Func<IReadOnlyCollection<T>, CancellationToken, Task> f,
+            Action<ChangeFeedProcessorBuilder> config)
         {
             var db = client.GetDatabase(databaseId);
             _ = await db.CreateContainerIfNotExistsAsync(leasesContainerId, "/id");
@@ -32,7 +33,7 @@ namespace Fiffi.CosmosChangeFeed
                 .GetChangeFeedProcessorBuilder<T>(processorName, (x, ct) => f(x, ct))
                 .WithInstanceName(instanceName)
                 .WithLeaseContainer(leasesContainer)
-                .WithPollInterval(TimeSpan.FromSeconds(1))
+                .Tap(b => config(b))
                 .Build();
         }
 
@@ -41,10 +42,11 @@ namespace Fiffi.CosmosChangeFeed
             IConfiguration configuration,
             Action<SubscriptionOptions> options,
             Func<T, JsonDocument> converter,
-            Func<IEnumerable<JsonDocument>, Func<string, Type>, ILogger, IEnumerable<IEvent>> filter)
+            Func<IEnumerable<JsonDocument>, Func<string, Type>, ILogger, IEnumerable<IEvent>> filter,
+            Action<ChangeFeedProcessorBuilder> config)
             where TModule : Module
             => AddChangeFeedSubscription(sc, configuration, options, converter, filter,
-                (sp, events) => sp.GetService<TModule>().WhenAsync(events.ToArray()));
+                (sp, events) => sp.GetService<TModule>().WhenAsync(events.ToArray()), config);
 
         public static IServiceCollection AddChangeFeedSubscription<T>(
             this IServiceCollection sc,
@@ -52,7 +54,8 @@ namespace Fiffi.CosmosChangeFeed
             Action<SubscriptionOptions> options,
             Func<T, JsonDocument> converter,
             Func<IEnumerable<JsonDocument>, Func<string, Type>, ILogger, IEnumerable<IEvent>> filter,
-            Func<IServiceProvider, IEnumerable<IEvent>, Task> handler)
+            Func<IServiceProvider, IEnumerable<IEvent>, Task> handler,
+            Action<ChangeFeedProcessorBuilder> config)
             => AddChangeFeedSubscription<T>(
                 sc, configuration, options, sp => async (docs, ct) =>
                 {
@@ -69,15 +72,15 @@ namespace Fiffi.CosmosChangeFeed
                         logger.LogError(ex, $"Fail to proccess events. {ex.Message}");
                         throw;
                     }
-
-                });
+                }, config);
 
 
         public static IServiceCollection AddChangeFeedSubscription<T>(
             this IServiceCollection sc,
             IConfiguration configuration,
             Action<SubscriptionOptions> options,
-            Func<IServiceProvider, Func<IReadOnlyCollection<T>, CancellationToken, Task>> f)
+            Func<IServiceProvider, Func<IReadOnlyCollection<T>, CancellationToken, Task>> f,
+            Action<ChangeFeedProcessorBuilder> config)
             => sc
             .Tap(x =>
                 x.AddOptions<SubscriptionOptions>()
@@ -98,7 +101,8 @@ namespace Fiffi.CosmosChangeFeed
                     opt.ContainerId,
                     opt.ProcessorName,
                     opt.InstanceName,
-                    f(sp)
+                    f(sp),
+                    config
                  );
             })
             .AddHostedService<ChangeFeedHostedService>();

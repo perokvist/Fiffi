@@ -46,7 +46,8 @@ namespace RPS.Web
                                     opt.ProcessorName = "eventsubscription";
                                 },
                                 token => JsonDocument.Parse(token.ToString()),
-                                Fiffi.Dapr.Extensions.FeedFilter)
+                                Fiffi.Dapr.Extensions.FeedFilter,
+                                feedBuilder => { })
                             .AddLogging()
                             .AddMvc()
                             .AddDapr()
