@@ -44,6 +44,7 @@ namespace Fiffi.Testing
                 return new TestContext(async (events, a) => {
                     await a(store);
                     await module.OnStart(events);
+                    await Task.WhenAll(additionalModules.Select(x => x.OnStart(events)));
                     }, module.DispatchAsync, q, module.QueryAsync, allWhens);
             });
     }

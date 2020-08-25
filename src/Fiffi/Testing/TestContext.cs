@@ -14,7 +14,12 @@ namespace Fiffi.Testing
         readonly Func<IEvent, Task>[] whens;
         readonly Func<IEvent[], Func<IEventStore, Task>, Task> init;
 
-        public TestContext(Func<IEvent[], Func<IEventStore, Task>, Task> init, Func<ICommand, Task> dispatch, Queue<IEvent> q, Func<IQuery<object>, Task<object>> queryAsync, params Func<IEvent, Task>[] whens)
+        public TestContext(
+            Func<IEvent[], Func<IEventStore, Task>, Task> init,
+            Func<ICommand, Task> dispatch, 
+            Queue<IEvent> q, 
+            Func<IQuery<object>, Task<object>> queryAsync, 
+            params Func<IEvent, Task>[] whens)
         {
             this.init = init;
             this.dispatch = dispatch;
