@@ -22,7 +22,7 @@ namespace RPS
             .Command<IGameCommand>(
                 Commands.Validate<IGameCommand>(),
                 Commands.GuaranteeCorrelation<IGameCommand>(),
-                cmd => store.ExecuteAsync(cmd, (GameState state) => Game.Handle(cmd, state), async events =>
+                cmd => store.ExecuteAsync<GameState>(cmd, state => Game.Handle(cmd, state), async events =>
                 {
                     await snapshotStore.Apply<GamesView>(events.Apply);
                     await pub(events);

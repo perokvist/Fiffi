@@ -11,6 +11,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\src\Fiffi.Dapr\Fiffi.Dapr.csproj" />
+    <ProjectReference Include="..\..\..\src\Fiffi.EventStoreDB\Fiffi.EventStoreDB.csproj" />
     <ProjectReference Include="..\TTD\TTD.csproj" />
   </ItemGroup>
 

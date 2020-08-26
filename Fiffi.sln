@@ -52,6 +52,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "TransportTycoon", "Transpor
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fiffi.CosmosChangeFeed", "src\Fiffi.CosmosChangeFeed\Fiffi.CosmosChangeFeed.csproj", "{3FC8EB25-BEC4-4CE5-9ECC-40A5283E7DCD}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fiffi.EventStoreDB", "src\Fiffi.EventStoreDB\Fiffi.EventStoreDB.csproj", "{A2D4C9A9-3915-4F83-BC14-5742DACC5CEF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -196,6 +198,14 @@ Global
 		{3FC8EB25-BEC4-4CE5-9ECC-40A5283E7DCD}.Release|Any CPU.Build.0 = Release|Any CPU
 		{3FC8EB25-BEC4-4CE5-9ECC-40A5283E7DCD}.Release|x64.ActiveCfg = Release|Any CPU
 		{3FC8EB25-BEC4-4CE5-9ECC-40A5283E7DCD}.Release|x64.Build.0 = Release|Any CPU
+		{A2D4C9A9-3915-4F83-BC14-5742DACC5CEF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A2D4C9A9-3915-4F83-BC14-5742DACC5CEF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A2D4C9A9-3915-4F83-BC14-5742DACC5CEF}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{A2D4C9A9-3915-4F83-BC14-5742DACC5CEF}.Debug|x64.Build.0 = Debug|Any CPU
+		{A2D4C9A9-3915-4F83-BC14-5742DACC5CEF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A2D4C9A9-3915-4F83-BC14-5742DACC5CEF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A2D4C9A9-3915-4F83-BC14-5742DACC5CEF}.Release|x64.ActiveCfg = Release|Any CPU
+		{A2D4C9A9-3915-4F83-BC14-5742DACC5CEF}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
