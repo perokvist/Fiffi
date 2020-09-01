@@ -1,17 +1,14 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
 using Fiffi;
-using System.Threading.Tasks;
-using System.Linq;
 using Fiffi.Dapr;
 using Newtonsoft.Json.Linq;
-using System;
 using System.Text.Json;
 using Fiffi.CosmosChangeFeed;
-using Dapr.Client;
+using System;
+using Microsoft.Extensions.Logging;
 
 namespace RPS.Web
 {
@@ -30,7 +27,7 @@ namespace RPS.Web
                             .AddSingleton<IAdvancedEventStore, DaprEventStore>()
                             .AddTransient<ISnapshotStore, Fiffi.Dapr.SnapshotStore>()
                             .AddSingleton(sp => GameModule.Initialize(
-                                sp.GetRequiredService<IAdvancedEventStore>(), 
+                                sp.GetRequiredService<IAdvancedEventStore>(),
                                 sp.GetRequiredService<ISnapshotStore>(),
                                 Fiffi.Dapr.Extensions.IntegrationPublisher(sp, "in")
                                 ))
@@ -48,6 +45,12 @@ namespace RPS.Web
                                 token => JsonDocument.Parse(token.ToString()),
                                 Fiffi.Dapr.Extensions.FeedFilter,
                                 feedBuilder => { })
+                            .AddHostedService(sp =>
+                            {
+                                var m = sp.GetService<EmailModule>();
+                                return new TimerService(() => m.WhenAsync(TimePassed.Raise(nameof(TimerService))), 
+                                    TimeSpan.FromMinutes(5), sp.GetService<ILogger<TimerService>>());
+                            })
                             .AddLogging()
                             .AddMvc()
                             .AddDapr()

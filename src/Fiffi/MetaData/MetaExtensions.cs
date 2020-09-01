@@ -105,6 +105,16 @@ namespace Fiffi
             TriggeredBy = trigger.GetType().Name,
         });
 
+        public static void AddMetaData(this IDictionary<string, string> meta,
+           long occuredAt = default(long))
+       => meta.AddMetaData(new EventMetaData
+       {
+           CorrelationId = Guid.NewGuid(),
+           CausationId = Guid.NewGuid(),
+           EventId = Guid.NewGuid(),
+           OccuredAt = occuredAt == default(long) ? DateTime.UtcNow.Ticks : occuredAt,
+       });
+
         public static void AddMetaData(this IDictionary<string, string> meta, EventMetaData metaData)
         {
             meta[nameof(EventMetaData.BasedOnStreamVersion).ToLower()] = metaData.BasedOnStreamVersion.ToString();

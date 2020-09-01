@@ -27,6 +27,7 @@ namespace RPS
                     await snapshotStore.Apply<GamesView>(events.Apply);
                     await pub(events);
                 }))
+            .Command<RequestEmail>(cmd => ApplicationService.ExecuteAsync(cmd, () => new[] { new EmailRequested() }, pub))
             .Projection<IEvent>(async events =>
             {
                 await store.AppendToStreamAsync(Streams.Games, events.Filter(typeof(GameCreated), typeof(GameStarted), typeof(GameEnded)));

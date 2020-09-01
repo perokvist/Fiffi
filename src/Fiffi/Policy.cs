@@ -37,6 +37,11 @@ namespace Fiffi
             where TProjection : class, new()
                 => (e, ctx) => ctx.ExecuteAsync<TProjection>(streamName, p => Issue(e, () => policy(e, p)));
 
+        public static Func<TEvent, PolicyContext, Task> On<TEvent, TProjection>(string streamName, Func<TEvent, TProjection, IEnumerable<ICommand>> policy)
+            where TEvent : IEvent
+            where TProjection : class, new()
+            => (e, ctx) => ctx.ExecuteAsync<TProjection>(streamName, p => policy(e, p).ToArray());
+
         public static Func<TEvent, PolicyContext, Task> On<TEvent, TProjection, TEventFilter>(string streamName, Func<TEvent, TProjection[], IEnumerable<ICommand>> policy)
           where TEvent : IEvent
           where TProjection : class, new()
@@ -53,7 +58,7 @@ namespace Fiffi
             where TEvent : IEvent
             => (e, ctx) => ctx.ExecuteAsync(Issue(e, () => policy(e)));
 
-        public static Func<TEvent, PolicyContext, Task> On<TEvent>(Func<TEvent, ICommand[]> policy)
+        public static Func<TEvent, PolicyContext, Task> On<TEvent>(Func<TEvent, IEnumerable<ICommand>> policy)
             where TEvent : IEvent
             => (e, ctx) => ctx
             .ExecuteAsync(
@@ -96,6 +101,13 @@ namespace Fiffi
             where TEventFilter : IEvent
         {
             var p = await this.Store.Projector<T>().ProjectAsync<TEventFilter>(streamName);
+            await ExecuteAsync(policy(p));
+        }
+
+        public async Task ExecuteAsync<T>(string streamName, Func<T, ICommand[]> policy)
+            where T : class, new()
+        { 
+            var p = await this.Store.Projector<T>().ProjectAsync(streamName);
             await ExecuteAsync(policy(p));
         }
 
