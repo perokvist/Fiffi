@@ -1,4 +1,5 @@
-﻿using Fiffi.Testing;
+﻿using Fiffi.InMemory;
+using Fiffi.Testing;
 using System.Data;
 using System.Linq;
 using System.Threading.Tasks;

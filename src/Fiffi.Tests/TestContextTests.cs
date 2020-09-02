@@ -1,4 +1,5 @@
-﻿using Fiffi.Modularization;
+﻿using Fiffi.InMemory;
+using Fiffi.Modularization;
 using Fiffi.Testing;
 using System;
 using System.Collections.Generic;

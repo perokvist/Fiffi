@@ -1,4 +1,5 @@
 using Fiffi;
+using Fiffi.InMemory;
 using Fiffi.Testing;
 using Fiffi.Visualization;
 using Payment;
