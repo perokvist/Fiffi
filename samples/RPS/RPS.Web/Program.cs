@@ -1,17 +1,12 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
 using Fiffi;
-using System.Threading.Tasks;
-using System.Linq;
 using Fiffi.Dapr;
 using Newtonsoft.Json.Linq;
-using System;
 using System.Text.Json;
 using Fiffi.CosmosChangeFeed;
-using Dapr.Client;
 
 namespace RPS.Web
 {

@@ -1,4 +1,5 @@
-﻿using Fiffi.Testing;
+﻿using Fiffi.InMemory;
+using Fiffi.Testing;
 using System;
 using System.Collections.Generic;
 using System.Text;

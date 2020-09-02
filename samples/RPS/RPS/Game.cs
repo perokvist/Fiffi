@@ -233,6 +233,8 @@ namespace RPS
         public int Round { get; set; }
         public int Rounds { get; set; }
         public GameStatus Status { get; set; }
+        public long Version { get; set; }
+
         public GameState When(IEvent @event) => this;
 
         public GameState When(GameCreated @event)

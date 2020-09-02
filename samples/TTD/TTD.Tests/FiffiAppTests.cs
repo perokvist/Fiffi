@@ -1,4 +1,5 @@
 ﻿using Fiffi;
+using Fiffi.InMemory;
 using System.Threading.Tasks;
 using Xunit;
 
