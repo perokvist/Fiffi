@@ -161,7 +161,7 @@ namespace Fiffi
          => events =>
          {
              if (events.Any(e => e.GetCausationId() == command.CausationId))
-                 throw new Exception($"Duplicate Execution of command based on causation - ({command.CausationId}) - {command.GetType()}. This events with the same causation already exsist.");
+                 throw new Exception($"Duplicate Execution of command based on causation - ({command.CausationId}) - {command.GetType()}. Events with the same causation already exsist.");
          };
     }
 }
