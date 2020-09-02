@@ -40,7 +40,7 @@ namespace Fiffi.Dapr
             var newItem = f(item);
             var success = await client.TrySaveStateAsync(StoreName, key, newItem, tag);
             if (!success)
-            { 
+            {
                 var ex = new DBConcurrencyException($"item with {key} have been updated");
                 logger.LogError(ex, ex.Message);
                 throw ex;
