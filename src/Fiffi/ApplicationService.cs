@@ -54,38 +54,46 @@ namespace Fiffi
                 .Rehydrate<TState>()),
                 None(command), pub);
 
-        public static async Task ExecuteAsync(this IEventStore store, ICommand command,
-          (string aggregateName, string streamName) naming,
-          Func<IEnumerable<IEvent>, Task<IEvent[]>> action,
-          Action<IEnumerable<IEvent>> guard,
-          Func<IEvent[], Task> pub)
-        {
-            if (command.CorrelationId == default)
-                throw new ArgumentException("CorrelationId required");
-
-            var happend = await store.LoadEventStreamAsync(naming.streamName, 0);
-
-            guard(happend.Events);
-
-            var events = await action(happend.Events);
-
-            events.AddMetaData(command, naming.aggregateName, naming.streamName, happend.Version);
-
-            if (events.Any())
-                await store.AppendToStreamAsync(naming.streamName, happend.Version, events);
-
-            await pub(events); //need to always execute due to locks        
-        }
-
         public static async Task ExecuteAsync<TState>(this IEventStore store, ICommand command, Func<TState, Task<IEvent[]>> action, Func<IEvent[], Task> pub, AggregateLocks aggregateLocks)
             where TState : class, new()
             => await aggregateLocks.UseLockAsync(command.AggregateId, command.CorrelationId, pub, async (publisher) =>
-                 await ExecuteAsync(store, command, typeof(TState).Name.AsStreamName(command.AggregateId), action, publisher)
+            await ExecuteAsync(store, command, typeof(TState).Name.AsStreamName(command.AggregateId), action, publisher)
             );
 
         public static Task ExecuteAsync<TState>(this IEventStore store, ICommand command, Func<TState, IEvent[]> action, Func<IEvent[], Task> pub, AggregateLocks aggregateLocks)
             where TState : class, new()
             => ExecuteAsync<TState>(store, command, state => Task.FromResult(action(state)), pub, aggregateLocks);
+
+        public static async Task ExecuteAsync(this IEventStore store, ICommand command,
+          (string aggregateName, string streamName) naming,
+          Func<IEnumerable<IEvent>, Task<IEvent[]>> action,
+          Action<IEnumerable<IEvent>> guard,
+          Func<IEvent[], Task> pub)
+         => await store.ExecuteAsync(naming.streamName, async x =>
+         {
+             if (command.CorrelationId == default)
+                 throw new ArgumentException("CorrelationId required");
+
+             guard(x.events);
+             var newEvents = await action(x.events);
+             newEvents.AddMetaData(command, naming.aggregateName, naming.streamName, x.version);
+             return newEvents;
+         }, pub);
+
+        public static async Task ExecuteAsync(this IEventStore store,
+            string streamName,
+            Func<(IEnumerable<IEvent> events, long version), Task<IEvent[]>> action,
+            Func<IEvent[], Task> pub)
+        {
+            var happend = await store.LoadEventStreamAsync(streamName, 0);
+
+            var events = await action(happend);
+
+            if (events.Any())
+                await store.AppendToStreamAsync(streamName, happend.Version, events);
+
+            await pub(events); //need to always execute due to locks        
+        }
 
 
         public static Task ExecuteAsync<TState>(IStateStore stateManager, ICommand command, Func<TState, IEnumerable<IEvent>> f, Func<IEvent[], Task> pub)
