@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <!--<RuntimeIdentifier>win7-x64</RuntimeIdentifier>-->
-    <VersionPrefix>0.8.1</VersionPrefix>
+    <VersionPrefix>0.8.2</VersionPrefix>
     <VersionSuffix>alpha</VersionSuffix>
     <PackageId>Fiffi</PackageId>
     <Title>Fiffi</Title>
