@@ -1,8 +1,8 @@
 using System;
 using Xunit;
-using Fiffi.Testing;
 using System.Threading.Tasks;
 using System.Linq;
+using Fiffi.Testing;
 
 namespace Fiffi.CosmoStore.Tests
 {

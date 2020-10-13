@@ -16,4 +16,9 @@
     </PackageReference>
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Fiffi.CosmoStore\Fiffi.CosmoStore.csproj" />
+    <ProjectReference Include="..\Fiffi\Fiffi.csproj" />
+  </ItemGroup>
+
 </Project>
