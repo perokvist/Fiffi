@@ -20,11 +20,11 @@ namespace Fiffi.EventStoreDB
 
         public async Task<long> AppendToStreamAsync(string streamName, long version, params IEvent[] events)
          => (await client.AppendToStreamAsync(streamName, StreamRevision.FromInt64(version), events.Select(x => x.ToEventData())))
-            .NextExpectedVersion - 1;
+            .NextExpectedStreamRevision.ToInt64() - 1;
 
         public async Task<long> AppendToStreamAsync(string streamName, params IEvent[] events)
          => (await client.AppendToStreamAsync(streamName, StreamRevision.None, events.Select(x => x.ToEventData())))
-            .NextExpectedVersion - 1;
+            .NextExpectedStreamRevision.ToInt64() - 1;
 
         public async Task<(IEnumerable<IEvent> Events, long Version)> LoadEventStreamAsync(string streamName, long version)
         {
