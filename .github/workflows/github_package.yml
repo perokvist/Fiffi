@@ -16,7 +16,7 @@ jobs:
       with:
         dotnet-version: 3.1.101
     - name: Pack
-      run: dotnet pack src/Fiffi/Fiffi.csproj --configuration Release -o artifacts
+      run: dotnet pack Fiffi.sln src/Fiffi/Fiffi.csproj --configuration Release -o artifacts
     - name: Publish artifact
       uses: actions/upload-artifact@master
       with:
