@@ -21,8 +21,8 @@ jobs:
       env:
         NUGET_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
     - name: Install dependencies
-      run: dotnet restore
+      run: dotnet restore Fiffi.sln
     - name: Build
-      run: dotnet build --configuration Release --no-restore
+      run: dotnet build Fiffi.sln --configuration Release --no-restore
     - name: Test
-      run: dotnet test --filter Category!=Integration --no-restore --verbosity normal
+      run: dotnet test Fiffi.sln --filter Category!=Integration --no-restore --verbosity normal
