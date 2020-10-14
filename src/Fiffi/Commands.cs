@@ -24,10 +24,10 @@ namespace Fiffi
 
         public static void GuaranteeCorrelation(this ICommand cmd)
         {
-            if (cmd.CorrelationId == default || cmd.CorrelationId == null)
+            if (cmd.CorrelationId == default)
                 cmd.CorrelationId = Guid.NewGuid();
 
-            if (cmd.CausationId == default || cmd.CausationId == null)
+            if (cmd.CausationId == default)
                 cmd.CausationId = Guid.NewGuid();
         }
     }

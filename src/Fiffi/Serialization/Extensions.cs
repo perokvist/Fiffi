@@ -29,13 +29,9 @@ namespace Fiffi.Serialization
             //if (e.Meta == null || !e.Meta.Any())
             //    e.Meta = meta.Meta;
 
-            return e;
+            //return e;
         }
     }
 
-    public class MetaEvent : IEvent
-    {
-        public string SourceId { get; set; }
-        public IDictionary<string, string> Meta { get; } //set; } = new Dictionary<string, string>();
-    }
+    public record MetaEvent(string SourceId, IDictionary<string, string> Meta) : IEvent;
 }
