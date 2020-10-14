@@ -6,7 +6,7 @@ namespace Fiffi
 	public interface IEvent
 	{
 		string SourceId { get; }
-		IDictionary<string, string> Meta { get; set; }
+		IDictionary<string, string> Meta { get; }
 	}
 
 }

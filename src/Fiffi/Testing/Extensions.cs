@@ -41,7 +41,7 @@ namespace Fiffi.Testing
         public static IEvent AddTestMetaData<TState>(this IEvent @event, IAggregateId id, int version = 0)
         {
             var (aggregateName, streamName) = typeof(TState).Name.AsStreamName(id);
-            if (@event.Meta == null) @event.Meta = new Dictionary<string, string>();
+            //if (@event.Meta == null) @event.Meta = new Dictionary<string, string>();
             @event.Tap(e => e.Meta.AddTypeInfo(e));
             @event.Meta.AddMetaData(version, streamName, aggregateName, new TestCommand(id));
             @event.Meta["test.statetype"] = typeof(TState).AssemblyQualifiedName;

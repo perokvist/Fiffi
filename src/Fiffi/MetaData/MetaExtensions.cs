@@ -135,9 +135,9 @@ namespace Fiffi
             if (!events.All(x => x.SourceId == command.AggregateId.Id))
                 throw new InvalidOperationException($"Event SourceId not set or not matching the triggering command - {command.GetType()}");
 
-            events
-                .Where(x => x.Meta == null)
-                .ForEach(x => x.Meta = new Dictionary<string, string>());
+            //events
+            //    .Where(x => x.Meta == null)
+            //    .ForEach(x => x.Meta = new Dictionary<string, string>());
 
             events
                 .ForEach(x => x
@@ -151,9 +151,9 @@ namespace Fiffi
             if (!events.All(x => !string.IsNullOrWhiteSpace(x.SourceId)))
                 throw new InvalidOperationException($"Event SourceId not set.");// or not matching the triggering event - {trigger.EventId()}");
 
-            events
-                .Where(x => x.Meta == null)
-                .ForEach(x => x.Meta = new Dictionary<string, string>());
+            //events
+            //    .Where(x => x.Meta == null)
+            //    .ForEach(x => x.Meta = new Dictionary<string, string>());
 
             events
                 .ForEach(x => x
