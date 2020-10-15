@@ -9,7 +9,7 @@ namespace Warehouse
 {
     public class WarehouseModule : Module
     {
-        public WarehouseModule(Dispatcher<ICommand, Task> dispatcher, Func<IEvent[], Task> publish, QueryDispatcher queryDispatcher,
+        public WarehouseModule(Func<ICommand, Task> dispatcher, Func<IEvent[], Task> publish, QueryDispatcher queryDispatcher,
             Func<IEvent[], Task> onStart)
        : base(dispatcher, publish, queryDispatcher, onStart)
         { }

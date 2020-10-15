@@ -10,7 +10,7 @@ namespace TTD.Fiffied
 {
     public class TTDModule : Module
     {
-        public TTDModule(Dispatcher<ICommand, Task> dispatcher, Func<IEvent[], Task> publish, QueryDispatcher queryDispatcher,
+        public TTDModule(Func<ICommand, Task> dispatcher, Func<IEvent[], Task> publish, QueryDispatcher queryDispatcher,
             Func<IEvent[], Task> onStart)
             : base(dispatcher, publish, queryDispatcher, onStart)
         { }

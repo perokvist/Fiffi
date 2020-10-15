@@ -9,7 +9,7 @@ namespace Payment
 {
     public class PaymentModule : Module
     {
-        public PaymentModule(Dispatcher<ICommand, Task> dispatcher, Func<IEvent[], Task> publish, QueryDispatcher queryDispatcher,
+        public PaymentModule(Func<ICommand, Task> dispatcher, Func<IEvent[], Task> publish, QueryDispatcher queryDispatcher,
             Func<IEvent[], Task> onStart)
        : base(dispatcher, publish, queryDispatcher, onStart)
         { }

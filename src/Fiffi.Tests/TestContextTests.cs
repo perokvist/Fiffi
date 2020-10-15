@@ -34,7 +34,7 @@ namespace Fiffi.Tests
 
         public class TestModule : Module
         {
-            public TestModule(Dispatcher<ICommand, Task> dispatcher, Func<IEvent[], Task> publish, QueryDispatcher queryDispatcher,
+            public TestModule(Func<ICommand, Task> dispatcher, Func<IEvent[], Task> publish, QueryDispatcher queryDispatcher,
                 Func<IEvent[], Task> onStart) : base(dispatcher, publish, queryDispatcher, onStart)
             { }
 
@@ -46,7 +46,7 @@ namespace Fiffi.Tests
 
         public class OtherModule : Module
         {
-            public OtherModule(Dispatcher<ICommand, Task> dispatcher, Func<IEvent[], Task> publish, QueryDispatcher queryDispatcher,
+            public OtherModule(Func<ICommand, Task> dispatcher, Func<IEvent[], Task> publish, QueryDispatcher queryDispatcher,
                 Func<IEvent[], Task> onStart) : base(dispatcher, publish, queryDispatcher, onStart)
             { }
 
