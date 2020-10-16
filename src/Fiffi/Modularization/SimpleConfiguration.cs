@@ -17,9 +17,9 @@ namespace Fiffi.Modularization
         }
 
         Func<ICommand, Task> dispatch;
-        Func<IEvent[], Task> update;
-        Func<IEvent[], Func<ICommand, Task>, Task> trigger;
-        QueryDispatcher Queries { get; }
+        List<Func<IEvent[], Task>> updates = new List<Func<IEvent[], Task>>();
+        List<Func<IEvent[], Func<ICommand, Task>, Task>> triggers = new List<Func<IEvent[], Func<ICommand, Task>, Task>>();
+        QueryDispatcher queries = new QueryDispatcher();
 
         public SimpleConfiguration<T> Commands(params Func<ICommand, Task>[] f)
         {
@@ -33,27 +33,27 @@ namespace Fiffi.Modularization
 
         public SimpleConfiguration<T> Updates(Func<IEvent[], Task> f)
         {
-            update = f;
+            updates.Add(f);
             return this;
         }
 
         public SimpleConfiguration<T> Triggers(Func<IEvent[], Func<ICommand, Task>, Task> f)
         {
-            trigger = f;
+            triggers.Add(f);
             return this;
         }
 
 
         public SimpleConfiguration<T> Query<TQuery, TResult>(Func<TQuery, Task<TResult>> f)
         {
-            Queries.Register(f);
+            queries.Register(f);
             return this;
         }
 
         public virtual T Create(IEventStore store) => f(dispatch, async events =>
         {
-            await update(events);
-            await trigger(events, dispatch);
-        }, Queries, update);
+            await Task.WhenAll(updates.Select(x => x(events)));
+            await Task.WhenAll(triggers.Select(t => t(events, dispatch)));
+        }, queries, x => Task.WhenAll(updates.Select(u => u(x))));
     }
 }

@@ -62,11 +62,18 @@ namespace RPS
                 await store.Projector<GamesView>().Project(Streams.Games, snapshotStore);
                 _ = await store.AppendToStreamAsync(Streams.All, events);
             })
-            .Triggers((events, dispatch) => Task.WhenAll(events.Select(e => e switch //TODO await for each
-             {
-                 GameEnded evt => store.Projector<GamePlayed>().Publish(evt, Streams.All, pub),
-                 _ => Task.CompletedTask
-             })))
+            .Triggers(async (events, dispatch) =>
+            {
+                await foreach (var t in events.Select(e => e switch
+                {
+                    GameEnded evt => store.Projector<GamePlayed>().Publish(evt, Streams.All, pub),
+                    _ => Task.CompletedTask
+                })
+                .ToAsyncEnumerable()) ;
+            })
+            .Query<GamesQuery, GamesView>(q => snapshotStore.Get<GamesView>())
+            .Query<GameQuery, GameView>(async q => (await store.Projector<GamesView>().ProjectAsync(Streams.Games)).Games.First(x => x.Key == q.GameId.ToString()).Value) //TODO ext with stream name only
+            .Query<ScoreQuery, ScoresView>(q => store.Projector<ScoresView>().ProjectAsync(Streams.All))
             .Create(store);
 
     }

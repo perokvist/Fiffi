@@ -28,7 +28,7 @@ namespace RPS.Web.Tests
             this.context = TestContextBuilder.Create<InMemoryEventStore, GameModule>((store, pub) =>
             {
                 this.helper = outputHelper;
-                var module = GameModule.Initialize(store, new InMemorySnapshotStore(), pub);
+                var module = GameModule.Init(store, new InMemorySnapshotStore(), pub);
                 hostBuilder = RPS.Web.Program.CreateHostBuilder(Array.Empty<string>())
                 .ConfigureWebHost(webHost => webHost
                 .UseTestServer()
