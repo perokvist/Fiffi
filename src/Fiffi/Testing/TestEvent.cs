@@ -2,29 +2,21 @@
 
 namespace Fiffi.Testing
 {
-    public record TestEvent(string SourceId, IDictionary<string,string> Meta, IAggregateId id) : IEvent;
+    public record TestEvent : IEvent
+    {
+        public TestEvent(AggregateId id)
+         => (Meta, SourceId) = (new Dictionary<string, string>(), id.Id);
 
+        public TestEvent(IAggregateId id)
+         => (Meta, SourceId) = (new Dictionary<string, string>(), id.Id);
 
-    //public class TestEvent : IEvent
-    //{
-    //    public TestEvent()
-    //    { 
-    //    }
+        public TestEvent(string sourceId)
+         => (Meta, SourceId) = (new Dictionary<string, string>(), sourceId);
 
-    //    public TestEvent(AggregateId id) : this(id.Id)
-    //    { }
+        public IDictionary<string, string> Meta { get; set; }
 
-    //    public TestEvent(IAggregateId id) : this(id.Id)
-    //    { }
-
-    //    public TestEvent(string sourceId)
-    //    {
-    //        SourceId = sourceId;
-    //    }
-    //    public string SourceId { get; set; }
-
-    //    public IDictionary<string, string> Meta { get; set; } = new Dictionary<string, string>();
-
-    //    public string Message { get; set; }
-    //}
+        public string SourceId { get; init; }
+        
+        public string Message { get; init; }
+    };
 }

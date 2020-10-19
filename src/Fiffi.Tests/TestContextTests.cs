@@ -40,7 +40,7 @@ namespace Fiffi.Tests
 
             public static TestModule Initialize(IEventStore store, Func<IEvent[], Task> pub)
                 => new ModuleConfiguration<TestModule>((d, p, q, s) => new TestModule(d, p, q, s))
-                .Command<TestCommand>(cmd => pub(new[] { new TestEvent().AddTestMetaData<string>(cmd.AggregateId) }))
+                .Command<TestCommand>(cmd => pub(new[] { new TestEvent(cmd.AggregateId).AddTestMetaData<string>(cmd.AggregateId) }))
                 .Create(store);
         }
 
@@ -52,11 +52,11 @@ namespace Fiffi.Tests
 
             public static OtherModule Initialize(IEventStore store, Func<IEvent[], Task> pub)
                 => new ModuleConfiguration<OtherModule>((d, p, q, s) => new OtherModule(d, p, q, s))
-                .Projection<TestEvent>(e => pub(new[] { new OtherEvent().AddTestMetaData<string>(new AggregateId(e.SourceId)) }))
+                .Projection<TestEvent>(e => pub(new[] { new OtherEvent(e.SourceId).AddTestMetaData<string>(new AggregateId(e.SourceId)) }))
                 .Create(store);
         }
 
-        public class OtherEvent : TestEvent
+        public record OtherEvent(string sourceId) : TestEvent(sourceId)
         { }
     }
 }

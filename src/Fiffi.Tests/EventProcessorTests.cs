@@ -36,7 +36,7 @@ namespace Fiffi.Tests
 
 			ep.RegisterAll(multi);
 
-			await ep.PublishAsync(new TestEvent().AddTestMetaData<string>(id), new TestEvent().AddTestMetaData<string>(id));
+			await ep.PublishAsync(new TestEvent(id).AddTestMetaData<string>(id), new TestEvent(id).AddTestMetaData<string>(id));
 
 			Assert.True(multiCalled);
 		

@@ -62,16 +62,16 @@ namespace Fiffi
 
         public static EventMetaData GetEventMetaData(this IDictionary<string, string> meta)
         => new EventMetaData
-        {
-            AggregateName = meta.GetMetaOrDefault<string>(nameof(EventMetaData.AggregateName)),
-            CorrelationId = Guid.Parse(meta.GetMetaOrDefault<Guid>(nameof(EventMetaData.CorrelationId))),
-            CausationId = Guid.Parse(meta.GetMetaOrDefault<string>(nameof(EventMetaData.CausationId))),
-            EventId = Guid.Parse(meta.GetMetaOrDefault<Guid>(nameof(EventMetaData.EventId))),
-            OccuredAt = long.Parse(meta.GetMetaOrDefault<long>(nameof(EventMetaData.OccuredAt))),
-            StreamName = meta.GetMetaOrDefault<string>(nameof(EventMetaData.StreamName)),
-            TriggeredBy = meta.GetMetaOrDefault<string>(nameof(EventMetaData.TriggeredBy)),
-            BasedOnStreamVersion = long.Parse(meta.GetMetaOrDefault<long>(nameof(EventMetaData.BasedOnStreamVersion))),
-        };
+        (
+            AggregateName : meta.GetMetaOrDefault<string>(nameof(EventMetaData.AggregateName)),
+            CorrelationId : Guid.Parse(meta.GetMetaOrDefault<Guid>(nameof(EventMetaData.CorrelationId))),
+            CausationId : Guid.Parse(meta.GetMetaOrDefault<string>(nameof(EventMetaData.CausationId))),
+            EventId : Guid.Parse(meta.GetMetaOrDefault<Guid>(nameof(EventMetaData.EventId))),
+            OccuredAt : long.Parse(meta.GetMetaOrDefault<long>(nameof(EventMetaData.OccuredAt))),
+            StreamName : meta.GetMetaOrDefault<string>(nameof(EventMetaData.StreamName)),
+            TriggeredBy : meta.GetMetaOrDefault<string>(nameof(EventMetaData.TriggeredBy)),
+            BasedOnStreamVersion : long.Parse(meta.GetMetaOrDefault<long>(nameof(EventMetaData.BasedOnStreamVersion)))
+        );
 
         public static void AddMetaData(this IDictionary<string, string> meta,
             long version,
@@ -80,30 +80,33 @@ namespace Fiffi
             ICommand command,
             long occuredAt = default(long))
         => meta.AddMetaData(new EventMetaData
-        {
-            AggregateName = aggregateName,
-            CorrelationId = command.CorrelationId,
-            CausationId = command.CausationId,
-            EventId = Guid.NewGuid(),
-            OccuredAt = occuredAt == default(long) ? DateTime.UtcNow.Ticks : occuredAt,
-            StreamName = streamName,
-            TriggeredBy = command.GetType().Name,
-            BasedOnStreamVersion = version
-        });
+        (
+            AggregateName : aggregateName,
+            CorrelationId : command.CorrelationId,
+            CausationId : command.CausationId,
+            EventId : Guid.NewGuid(),
+            OccuredAt : occuredAt == default(long) ? DateTime.UtcNow.Ticks : occuredAt,
+            StreamName : streamName,
+            TriggeredBy : command.GetType().Name,
+            BasedOnStreamVersion : version
+        ));
 
         public static void AddMetaData(this IDictionary<string, string> meta,
             string streamName,
             IEvent trigger,
             long occuredAt = default(long))
         => meta.AddMetaData(new EventMetaData
-        {
-            CorrelationId = trigger.GetCorrelation(),
-            CausationId = trigger.EventId(),
-            EventId = Guid.NewGuid(),
-            OccuredAt = occuredAt == default(long) ? DateTime.UtcNow.Ticks : occuredAt,
-            StreamName = streamName,
-            TriggeredBy = trigger.GetType().Name,
-        });
+        (
+            AggregateName : "unknown",
+            CorrelationId : trigger.GetCorrelation(),
+            CausationId : trigger.EventId(),
+            EventId : Guid.NewGuid(),
+            OccuredAt : occuredAt == default(long) ? DateTime.UtcNow.Ticks : occuredAt,
+            StreamName : streamName,
+            TriggeredBy : trigger.GetType().Name,
+            BasedOnStreamVersion: 0
+
+        ));
 
         public static void AddMetaData(this IDictionary<string, string> meta, EventMetaData metaData)
         {

@@ -26,12 +26,20 @@ namespace Fiffi.Serialization
             var meta = await JsonSerializer.DeserializeAsync<MetaEvent>(json);
             var e = (IEvent)(await JsonSerializer.DeserializeAsync(json, resolver(meta.GetEventName())));
             throw new NotImplementedException("TODO");
-            //if (e.Meta == null || !e.Meta.Any())
-            //    e.Meta = meta.Meta;
+            if (e.Meta == null || !e.Meta.Any())
+                e.Meta = meta.Meta;
 
-            //return e;
+            return e;
         }
     }
 
-    public record MetaEvent(string SourceId, IDictionary<string, string> Meta) : IEvent;
+    public record MetaEvent : IEvent
+    {
+        public MetaEvent(string sourceId) => (SourceId, Meta) = (sourceId, new Dictionary<string, string>());
+
+        public string SourceId { get; init; }
+
+        public IDictionary<string, string> Meta { get; set; }
+
+    }
 }
