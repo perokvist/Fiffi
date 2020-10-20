@@ -27,14 +27,14 @@ namespace RPS
         public GamesView When(GameStarted @event)
         {
             var gameId = @event.GameId.ToString();
-            Games[gameId].Status = GameState.GameStatus.Started.ToString();
+            Games[gameId].Status = GameStatus.Started.ToString();
             return this;
         }
 
         public GamesView When(GameEnded @event)
         {
             var gameId = @event.GameId.ToString();
-            Games[@event.GameId.ToString()].Status = GameState.GameStatus.Ended.ToString();
+            Games[@event.GameId.ToString()].Status = GameStatus.Ended.ToString();
             //Games.Remove(@event.GameId);
             return this;
         }

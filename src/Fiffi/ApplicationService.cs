@@ -42,6 +42,7 @@ namespace Fiffi
                 events => action(events.Rehydrate<TState>()),
                 ThrowOnCausation(command), pub);
 
+
         public static Task ExecuteAsync<TState, TEventInterface>(this IEventStore store, ICommand command,
             (string aggregateName, string streamName) naming, Func<TState, Task<IEvent[]>> action, Func<IEvent[], Task> pub)
             where TState : class, new()

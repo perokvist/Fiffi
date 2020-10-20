@@ -27,7 +27,7 @@
                 <a href="/games/@game.Id" })>@game.Title</a>
             </td>
             <td>
-                @if (game.Status.ToLower() == RPS.GameState.GameStatus.Started.ToString().ToLower())
+                @if (game.Status.ToLower() == RPS.GameStatus.Started.ToString().ToLower())
                 {
                     <a href="/games/@game.Id/play?playerId=@game.StartedBy">@game.StartedBy</a>
                 }
@@ -40,7 +40,7 @@
                 @game.Status
             </td>
             <td>
-                @if (game.Status.ToLower() == RPS.GameState.GameStatus.ReadyToStart.ToString().ToLower())
+                @if (game.Status.ToLower() == RPS.GameStatus.ReadyToStart.ToString().ToLower())
                 {
                     <a href="/games/@game.Id/join" })>Join</a>
                 }

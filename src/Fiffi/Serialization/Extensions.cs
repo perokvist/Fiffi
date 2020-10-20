@@ -14,8 +14,8 @@ namespace Fiffi.Serialization
         {
             var meta = JsonSerializer.Deserialize<MetaEvent>(json);
             var e = (IEvent)JsonSerializer.Deserialize(json, resolver(meta.GetEventName()));
-            //if (e.Meta == null || !e.Meta.Any())
-                //e.Meta = meta.Meta;
+            if (e.Meta == null || !e.Meta.Any())
+                e.Meta = meta.Meta;
 
             return e;
         }
@@ -25,7 +25,6 @@ namespace Fiffi.Serialization
         {
             var meta = await JsonSerializer.DeserializeAsync<MetaEvent>(json);
             var e = (IEvent)(await JsonSerializer.DeserializeAsync(json, resolver(meta.GetEventName())));
-            throw new NotImplementedException("TODO");
             if (e.Meta == null || !e.Meta.Any())
                 e.Meta = meta.Meta;
 
