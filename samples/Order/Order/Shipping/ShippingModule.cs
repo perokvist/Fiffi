@@ -19,10 +19,10 @@ namespace Shipping
               .Command<Ship>(
                 Commands.GuaranteeCorrelation<Ship>(),
                 cmd => ApplicationService.ExecuteAsync(cmd, () => (new[] { new GoodsShipped() }), pub))
-            .Projection<Payment.PaymentRecieved>((Payment.PaymentRecieved e) => store.AppendToStreamAsync("order", e))
-            .Projection<Warehouse.GoodsPicked>((Warehouse.GoodsPicked e) => store.AppendToStreamAsync("order", e))
-            .Policy<Payment.PaymentRecieved>((e, ctx) => ctx.ExecuteAsync<Order>("order", p => Policy.Issue(e, () => ShippingPolicy.When(e, p))))
-            .Policy<Warehouse.GoodsPicked>((e, ctx) => ctx.ExecuteAsync<Order>("order", p => Policy.Issue(e, () => ShippingPolicy.When(e, p))))
+            .Projection((EventEnvelope<Payment.PaymentRecieved> e) => store.AppendToStreamAsync("order", e))
+            .Projection((EventEnvelope<Warehouse.GoodsPicked> e) => store.AppendToStreamAsync("order", e))
+            .Policy<Payment.PaymentRecieved>((e, ctx) => ctx.ExecuteAsync<Order>("order", p => Policy.Issue(e, () => ShippingPolicy.When(e.Event, p))))
+            .Policy<Warehouse.GoodsPicked>((e, ctx) => ctx.ExecuteAsync<Order>("order", p => Policy.Issue(e, () => ShippingPolicy.When(e.Event, p))))
             .Create(store);
     }
 
@@ -60,10 +60,5 @@ namespace Shipping
         public Guid CausationId { get; set; }
     }
 
-    public class GoodsShipped : IEvent
-    {
-        public string SourceId => "shipping.order";
-
-        public IDictionary<string, string> Meta { get; set; }
-    }
+    public record GoodsShipped : EventRecord;
 }

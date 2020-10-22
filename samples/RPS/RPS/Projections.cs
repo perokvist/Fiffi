@@ -10,43 +10,43 @@ namespace RPS
     {
         public Dictionary<string, GameView> Games { get; set; } = new Dictionary<string, GameView>();
 
-        public GamesView When(IEvent @event) => this;
+        public GamesView When(EventRecord @event) => @event switch
+        {
+            GameCreated e => When(e),
+            GameStarted e => When(e),
+            GameEnded e => When(e),
+            _ => this
+        };
 
         public GamesView When(GameCreated @event)
         {
             Games.Add(@event.GameId.ToString(), new GameView
-            {
-                Id = @event.GameId,
-                Title = @event.Title,
-                StartedBy = @event.PlayerId,
-                Status = @event.Status.ToString()
-            });
+            (
+                Id : @event.GameId,
+                Title : @event.Title,
+                StartedBy : @event.PlayerId,
+                Status : @event.Status.ToString()
+            ));
             return this;
         }
 
         public GamesView When(GameStarted @event)
         {
             var gameId = @event.GameId.ToString();
-            Games[gameId].Status = GameStatus.Started.ToString();
+            Games[gameId] = Games[gameId] with { Status = GameStatus.Started.ToString() };
             return this;
         }
 
         public GamesView When(GameEnded @event)
         {
             var gameId = @event.GameId.ToString();
-            Games[@event.GameId.ToString()].Status = GameStatus.Ended.ToString();
+            Games[@event.GameId.ToString()] = Games[@event.GameId.ToString()] with { Status = GameStatus.Ended.ToString() };
             //Games.Remove(@event.GameId);
             return this;
         }
     }
 
-    public class GameView
-    {
-        public Guid Id { get; set; }
-        public string Title { get; set; }
-        public string Status { get; set; }
-        public string StartedBy { get; set; }
-    }
+    public record GameView(Guid Id, string Title, string Status, string StartedBy);
 
     public class ScoresView
     {

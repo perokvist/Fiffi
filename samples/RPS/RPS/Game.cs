@@ -10,7 +10,7 @@ namespace RPS
     public static class Game
     {
         public static EventRecord[] Handle<T>(T command, GameState state)
-             where T : IGameCommand
+             where T : ICommand
             => command switch {
                 CreateGame c => Handle(c, state).ToArray(),
                 JoinGame c => Handle(c, state).ToArray(),
@@ -33,7 +33,7 @@ namespace RPS
             if (state.Players.PlayerOne.Id == command.PlayerId)
                 yield break;
 
-            if (state.Players.PlayerTwo == default)
+            if (state.Players.PlayerTwo.Hand == Hand.None)
             {
                 yield return new GameStarted(GameId: command.GameId, PlayerId: command.PlayerId);
                 yield return new RoundStarted(GameId: command.GameId, Round: 1);
@@ -179,7 +179,7 @@ namespace RPS
      GameStatus Status,
      long Version) 
     {
-        public GameState() : this(Guid.NewGuid(), (null, null), 0, 0, GameStatus.None, 0) 
+        public GameState() : this(Guid.NewGuid(), (default, default), 0, 0, GameStatus.None, 0) 
         { }
 
         public GameState When(EventRecord @event) =>
@@ -190,7 +190,7 @@ namespace RPS
                        Status = GameStatus.ReadyToStart,
                        Id = e.GameId,
                        Players = (new(e.PlayerId, default), new(string.Empty, default)),
-                       Round = e.Rounds
+                       Rounds = e.Rounds
                    },
                    GameStarted e => this with
                    {

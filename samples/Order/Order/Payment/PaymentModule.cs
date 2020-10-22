@@ -9,7 +9,7 @@ namespace Payment
 {
     public class PaymentModule : Module
     {
-        public PaymentModule(Dispatcher<ICommand, Task> dispatcher, Func<IEvent[], Task> publish, QueryDispatcher queryDispatcher,
+        public PaymentModule(Func<ICommand, Task> dispatcher, Func<IEvent[], Task> publish, QueryDispatcher queryDispatcher,
             Func<IEvent[], Task> onStart)
        : base(dispatcher, publish, queryDispatcher, onStart)
         { }
@@ -30,10 +30,6 @@ namespace Payment
         Guid ICommand.CausationId { get; set; }
     }
 
-    public class PaymentRecieved : IEvent
-    {
-        public string SourceId => "payment.order";
-        public IDictionary<string, string> Meta { get; set; }
-    }
+    public record PaymentRecieved : EventRecord;
 
 }

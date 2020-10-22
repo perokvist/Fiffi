@@ -32,30 +32,7 @@ namespace Fiffi.Tests
 
             var state = await stateStore.GetAsync<TestState>(id);
 
-            Assert.True(state.State.Called);
-        }
-        public class TestState
-        {
-            public TestState()
-            {
-
-            }
-            public bool Called { get; set; }
-
-            public TestState When(IEvent e) => this.Tap(x => x.Called = true);
-        }
-
-        public class TestEvent : IEvent
-        {
-            public TestEvent(IAggregateId id)
-            {
-                this.SourceId = id.ToString();
-                this.Meta["eventid"] = Guid.NewGuid().ToString();
-            }
-
-            public string SourceId { get; set; }
-
-            public IDictionary<string, string> Meta { get; set; } = new Dictionary<string, string>();
+            Assert.True(state.State.Applied.Any());
         }
     }
 }

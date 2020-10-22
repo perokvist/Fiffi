@@ -21,7 +21,7 @@ namespace Sales
             .Command<CompleteOrder>(
                 Commands.GuaranteeCorrelation<CompleteOrder>(),
                 cmd => ApplicationService.ExecuteAsync(cmd, () => new[] { new OrderCompleted() }, pub))
-            .Policy<Shipping.GoodsShipped>(Policy.On<Shipping.GoodsShipped>(e => new CompleteOrder() ))
+            .Policy(Policy.On<Shipping.GoodsShipped>(e => new CompleteOrder() ))
             .Create(store);
     }
 
@@ -39,17 +39,7 @@ namespace Sales
         Guid ICommand.CausationId { get; set; }
     }
 
-    public class OrderPlaced : IEvent
-    {
-        public string SourceId => "sales.order";
+    public record OrderPlaced : EventRecord;
 
-        public IDictionary<string, string> Meta { get; set; }
-    }
-
-    public class OrderCompleted : IEvent
-    {
-        public string SourceId => "sales.order";
-
-        public IDictionary<string, string> Meta { get; set; }
-    }
+    public record OrderCompleted : EventRecord;
 }

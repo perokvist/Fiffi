@@ -30,10 +30,6 @@ namespace Warehouse
         Guid ICommand.CausationId { get; set; }
     }
 
-    public class GoodsPicked : IEvent
-    {
-        public string SourceId => "warehouse.order";
-
-        public IDictionary<string, string> Meta { get; set; }
-    }
+    public record GoodsPicked : EventRecord;
+        //public string SourceId => "warehouse.order";
 }

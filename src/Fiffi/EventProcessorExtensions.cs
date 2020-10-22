@@ -18,26 +18,47 @@ namespace Fiffi
             if (!events.All(e => e.HasCorrelation()))
                 throw new ArgumentException("CorrelationId required");
 
-           var arrayContexts = events.SelectMany(e => handlers
-                .Where(h => h.Item1.IsArray)
-                .Where(h => typeof(IEvent[]).IsAssignableFrom(h.Item1))
-                .Select(f(e)))
-                .ToArray();
+            var arrayContexts = events.SelectMany(e => handlers
+                 .Where(h => h.Item1.IsArray)
+                 .Where(h => typeof(IEvent[]).IsAssignableFrom(h.Item1))
+                 .Select(f(e)))
+                 .ToArray();
+
+            var generic = typeof(IEvent<>);
+            var gtd = events.OfType<IEvent<EventRecord>>()
+                .Select(e => (Event: e, Type: generic.MakeGenericType(e.Event.GetType())))
+                .SelectMany(e => handlers
+                .Where(h => h.Item1.IsGenericType)
+                .Where(h => e.Type == h.Item1)
+                .Select(x => f((dynamic)e.Event)(x)))
+                .Cast<(Task, IAggregateId, Guid)>();
+
+            //var gt = gtd as IEnumerable<(Task, IAggregateId, Guid)>;
+
+            if (!gtd.Any())
+            {
+                var s = "";
+                var u = events;
+            }
 
             var executionContext = events.SelectMany(e => handlers
                 .Where(e.DelegatefForTypeOrInterface<T>())
                 .Select(f(e)))
+                //.Concat(gtd)
                 .ToArray();
 
-            var exec = mode switch {
-                EventProcessor.DispatchMode.Parallel => Task.WhenAll(arrayContexts.Concat(executionContext).Select(x => x.EventHandler)),
-                EventProcessor.DispatchMode.Blocking => arrayContexts.Concat(executionContext).Select(x => x.EventHandler).ForEachAsync(async x => await x),
-                EventProcessor.DispatchMode.BatchParallel => Task.WhenAll(Task.WhenAll(arrayContexts.Select(x => x.EventHandler)), executionContext.Select(x => x.EventHandler).ForEachAsync(async x => await x)),
+
+
+            var exec = mode switch
+            {
+                EventProcessor.DispatchMode.Parallel => Task.WhenAll(arrayContexts.Concat(executionContext).Select(x => x.Item1)),
+                EventProcessor.DispatchMode.Blocking => arrayContexts.Concat(executionContext).Select(x => x.Item1).ForEachAsync(async x => await x),
+                EventProcessor.DispatchMode.BatchParallel => Task.WhenAll(Task.WhenAll(arrayContexts.Select(x => x.Item1)), executionContext.Select(x => x.Item1).ForEachAsync(async x => await x)),
                 _ => Task.CompletedTask
             };
             await exec;
 
-            locks.ReleaseIfPresent(executionContext.Select(x => (x.AggregateId, x.CorrelationId)).ToArray());
+            locks.ReleaseIfPresent(executionContext.Select(x => (x.Item2, x.Item3)).ToArray());
         }
         public static Func<(Type Type, THandle EventHandler), bool> DelegatefForTypeOrInterface<THandle>(this IEvent e)
         => kv => e.GetType().IsOrImplements(kv.Type);

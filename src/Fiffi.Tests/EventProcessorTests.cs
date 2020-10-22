@@ -41,5 +41,33 @@ namespace Fiffi.Tests
 			Assert.True(multiCalled);
 		
 		}
+
+		[Fact]
+		public void Foo()
+		{
+			var registered = typeof(EventEnvelope<TestEventRecord>);
+			var e = new EventEnvelope<EventRecord>("test", new TestEventRecord("testing")).AddTestMetaData("test").GetType();
+
+			var published = typeof(EventEnvelope<EventRecord>);
+
+			Assert.True(published.IsOrImplements(registered));
+		}
+
+		[Fact]
+		public async Task FooAsync()
+		{ 
+			var ep = new EventProcessor();
+			var called = false;
+			ep.Register<IEvent<TestEventRecord>>(e =>
+			{
+				called = true;
+				return Task.CompletedTask;
+			});
+
+			var e = EventEnvelope.Create("test", new TestEventRecord("testing")).AddTestMetaData("test") as IEvent;
+			await ep.PublishAsync(e);
+
+			Assert.True(called);
+		}
 	}
 }

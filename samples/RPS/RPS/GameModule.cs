@@ -10,7 +10,7 @@ namespace RPS
 {
     public class GameModule : Module
     {
-        public GameModule(Dispatcher<ICommand, Task> dispatcher, Func<IEvent[], Task> publish, QueryDispatcher queryDispatcher, Func<IEvent[], Task> onStart)
+        public GameModule(Func<ICommand, Task> dispatcher, Func<IEvent[], Task> publish, QueryDispatcher queryDispatcher, Func<IEvent[], Task> onStart)
             : base(dispatcher, publish, queryDispatcher, onStart)
         { }
 
@@ -18,25 +18,24 @@ namespace RPS
             IAdvancedEventStore store,
             ISnapshotStore snapshotStore,
             Func<IEvent[], Task> pub)
-            => new ModuleConfiguration<GameModule>((c, p, q, s) => new GameModule(c, p, q, s))
-            .Command<IGameCommand>(
-                Commands.Validate<IGameCommand>(),
-                Commands.GuaranteeCorrelation<IGameCommand>(),
+                => new Configuration<GameModule>((c, p, q, s) => new GameModule(c, p, q, s))
+            .Commands(
+                Commands.Validate<ICommand>(),
+                Commands.GuaranteeCorrelation<ICommand>(),
                 cmd => store.ExecuteAsync<GameState>(cmd, state =>
                     Game.Handle(cmd, state).ToEnvelopes(cmd.AggregateId.Id),
-                    events =>
+                    async events =>
                     {
-                        //await snapshotStore.Apply<GamesView>(events.Apply);
-                        //await pub(events);
-                        return Task.CompletedTask;
+                        await snapshotStore.Apply<GamesView>(events.Apply);
+                        await pub(events);
                     }, snapshotStore, state => state.Version, (newVersion, state) => state.Pipe(x => x with { Version = newVersion })))
-            .Projection<IEvent>(async events =>
+            .Updates(async events =>
             {
                 await store.AppendToStreamAsync(Streams.Games, events.Filter(typeof(GameCreated), typeof(GameStarted), typeof(GameEnded)));
                 await store.Projector<GamesView>().Project(Streams.Games, snapshotStore);
             })
-            .Projection<IEvent>(events => store.AppendToStreamAsync(Streams.All, events.ToArray()))
-            //.Policy<GameEnded>((e, ctx) => ctx.Store.Projector<GamePlayed>().Publish(e, Streams.All, pub))
+            .Updates(events => store.AppendToStreamAsync(Streams.All, events.ToArray()))
+            //.Triggers(events => store.Projector<GamePlayed>().Publish(e, Streams.All, pub))
             .Query<GamesQuery, GamesView>(q => snapshotStore.Get<GamesView>())
             .Query<GameQuery, GameView>(async q => (await store.Projector<GamesView>().ProjectAsync(Streams.Games)).Games.First(x => x.Key == q.GameId.ToString()).Value) //TODO ext with stream name only
             .Query<ScoreQuery, ScoresView>(q => store.Projector<ScoresView>().ProjectAsync(Streams.All))
@@ -51,6 +50,9 @@ namespace RPS
     public class GamePlayed : IEvent, IIntegrationEvent
     {
         public Guid GameId { get; set; }
+
+        public EventRecord Event => throw new NotImplementedException();
+
         string IEvent.SourceId => GameId.ToString();
         IDictionary<string, string> IEvent.Meta { get; set; } = new Dictionary<string, string>();
 

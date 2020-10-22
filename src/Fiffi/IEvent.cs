@@ -1,13 +1,20 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Fiffi
 {
     public interface IEvent
-	{
-		string SourceId { get; }
-		IDictionary<string, string> Meta { get; set; }
-	}
+    {
+        EventRecord Event { get; }
+        string SourceId { get; }
+        IDictionary<string, string> Meta { get; set; }
+    }
+
+    public interface IEvent<T> : IEvent
+    { 
+         new T Event { get; set; }
+    }
 
     public abstract record Record;
 
@@ -20,8 +27,8 @@ namespace Fiffi
             => new EventEnvelope<T>(sourceId, @event);
     }
 
-    public class EventEnvelope<T> : IEvent
-    where T : EventRecord
+    public class EventEnvelope<T> : IEvent<T>
+        where T : EventRecord
     {
         public EventEnvelope(string sourceId, T @event)
         {
@@ -29,25 +36,24 @@ namespace Fiffi
             Event = @event;
         }
 
-
         public T Event { get; set; }
-
         public string SourceId { get; }
-
         public IDictionary<string, string> Meta { get; set; } = new Dictionary<string, string>();
+        EventRecord IEvent.Event => Event;
 
+        public static implicit operator T (EventEnvelope<T> envelope) => envelope.Event;
 
     }
 
     public static class EventExtensions
     {
         public static IEvent[] ToEnvelopes(this EventRecord[] eventRecords, string sourceId)
-            => eventRecords.Select(r => new EventEnvelope<EventRecord>(sourceId, r)).ToArray();
+            => eventRecords.Select(r => EventEnvelope.Create(sourceId, r)).ToArray();
 
         public static EventEnvelope<EventRecord>[] AsEnvelopes(this IEvent[] events)
             => events
             .Cast<EventEnvelope<EventRecord>>()
             .ToArray();
-      
+
     }
 }

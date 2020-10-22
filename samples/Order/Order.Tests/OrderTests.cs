@@ -27,7 +27,7 @@ namespace Order.Tests
             await context.WhenAsync(new Sales.PlaceOrder());
 
             context.Then((events, table) => {
-                Assert.True(events.OfType<OrderCompleted>().Happened());
+                Assert.True(events.AsEnvelopes().Happened<OrderCompleted>());
             });
         }
     }

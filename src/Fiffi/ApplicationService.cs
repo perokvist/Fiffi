@@ -9,9 +9,9 @@ namespace Fiffi
 {
     public static class ApplicationService
     {
-        public static Task ExecuteAsync(ICommand command, Func<IEvent[]> action, Func<IEvent[], Task> pub)
+        public static Task ExecuteAsync(ICommand command, Func<EventRecord[]> action, Func<IEvent[], Task> pub)
         {
-            var events = action();
+            var events = action().ToEnvelopes(command.AggregateId.Id);
 
             events.AddMetaData(command, string.Empty, string.Empty, 0);
 

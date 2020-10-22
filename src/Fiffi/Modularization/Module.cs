@@ -7,19 +7,19 @@ namespace Fiffi.Modularization
     {
         readonly Func<IEvent[], Task> onStart;
 
-        Dispatcher<ICommand, Task> Dispatcher { get; }
+        Func<ICommand, Task> Dispatcher { get; }
         QueryDispatcher QueryDispatcher { get; }
         Func<IEvent[], Task> Publish { get; }
 
         public Module(
-            Dispatcher<ICommand, Task> dispatcher,
+            Func<ICommand, Task> dispatcher,
             Func<IEvent[], Task> publish,
-            QueryDispatcher queryDispatcher) 
+            QueryDispatcher queryDispatcher)
             : this(dispatcher, publish, queryDispatcher, events => Task.CompletedTask)
         { }
 
         public Module(
-            Dispatcher<ICommand, Task> dispatcher,
+            Func<ICommand, Task> dispatcher,
             Func<IEvent[], Task> publish,
             QueryDispatcher queryDispatcher,
             Func<IEvent[], Task> onStart)
@@ -30,7 +30,7 @@ namespace Fiffi.Modularization
             this.onStart = onStart;
         }
 
-        public Task DispatchAsync(ICommand command) => this.Dispatcher.Dispatch(command);
+        public Task DispatchAsync(ICommand command) => this.Dispatcher(command);
 
         public async Task<T> QueryAsync<T>(IQuery<T> q)
             => (T)await QueryDispatcher.HandleAsync(q);

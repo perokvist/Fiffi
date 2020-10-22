@@ -42,8 +42,8 @@ namespace Fiffi.Modularization
             return this;
         }
 
-        public ModuleConfiguration<T> Policy<TEvent>(Func<TEvent, PolicyContext, Task> f)
-            where TEvent : IEvent
+        public ModuleConfiguration<T> Policy<TEvent>(Func<IEvent<TEvent>, PolicyContext, Task> f)
+            where TEvent : EventRecord
         {
             Policies.Register(f);
             return this;

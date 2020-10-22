@@ -40,5 +40,6 @@ namespace Fiffi.Serialization
 
         public IDictionary<string, string> Meta { get; set; }
 
+        public EventRecord Event => throw new NotImplementedException();
     }
 }
