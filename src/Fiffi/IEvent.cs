@@ -50,6 +50,10 @@ namespace Fiffi
         public static IEvent[] ToEnvelopes(this EventRecord[] eventRecords, string sourceId)
             => eventRecords.Select(r => EventEnvelope.Create(sourceId, r)).ToArray();
 
+        public static IEvent[] ToEnvelopes<T>(this T[] eventRecords, Func<T, string> sourceId)
+            where T : EventRecord
+           => eventRecords.Select(r => EventEnvelope.Create(sourceId(r), r)).ToArray();
+
         public static EventEnvelope<EventRecord>[] AsEnvelopes(this IEvent[] events)
             => events
             .Cast<EventEnvelope<EventRecord>>()

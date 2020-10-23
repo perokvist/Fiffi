@@ -8,7 +8,7 @@ namespace TTD.Fiffied
 {
     public static class CommandHandlerExtensions
     {
-        public static IEvent[] Handle(this Transport t, PickUp command, Route[] routes)
+        public static EventRecord[] Handle(this Transport t, PickUp command, Route[] routes)
         {
             var route = routes.GetCargoRoute(t.Kind, t.Location, command.Cargo.First().Destination);
 
@@ -27,7 +27,7 @@ namespace TTD.Fiffied
             };
         }
 
-        public static IEvent[] Handle(this Transport t, Unload command)
+        public static EventRecord[] Handle(this Transport t, Unload command)
          => new[] {
              new Arrived {
              Cargo = t.Cargo,
@@ -38,7 +38,7 @@ namespace TTD.Fiffied
              }
          };
 
-        public static IEvent[] Handle(this Transport t, Return command, Route[] routes)
+        public static EventRecord[] Handle(this Transport t, Return command, Route[] routes)
         {
             if (t.Location == Location.Factory)
             {

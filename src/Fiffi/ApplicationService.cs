@@ -18,13 +18,28 @@ namespace Fiffi
             return pub(events);
         }
 
+        public static Task ExecuteAsync(this IEventStore store, ICommand command, string streamName, Func<EventRecord[]> action, Func<IEvent[], Task> pub)
+            => ExecuteAsync<TestState>(store, command, ("none", streamName),
+                state => Task.FromResult(action().ToEnvelopes(command.AggregateId.Id)),
+                pub);
+
         public static Task ExecuteAsync(this IEventStore store, ICommand command, string streamName, Func<IEvent[]> action, Func<IEvent[], Task> pub)
             => ExecuteAsync<TestState>(store, command, ("none", streamName), state => Task.FromResult(action()), pub);
 
-        public static Task ExecuteAsync<TState, TEventInterface>(this IEventStore store, ICommand command, string streamName, Func<TState, IEvent[]> action, Func<IEvent[], Task> pub)
+        public static Task ExecuteAsync<TState, TEvent>(this IEventStore store, ICommand command, string streamName, Func<TState, EventRecord[]> action, Func<IEvent[], Task> pub)
             where TState : class, new()
-            where TEventInterface : IEvent
-            => ExecuteAsync<TState, TEventInterface>(store, command, (typeof(TState).Name.AsStreamName(command.AggregateId).AggregateName, streamName), state => Task.FromResult(action(state)), pub);
+            where TEvent : EventRecord
+            => ExecuteAsync<TState, TEvent>(store,
+                command,
+                (typeof(TState).Name.AsStreamName(command.AggregateId).AggregateName, streamName),
+                state => Task.FromResult(action(state).ToEnvelopes(command.AggregateId.Id)),
+                pub);
+
+
+        public static Task ExecuteAsync<TState, TEvent>(this IEventStore store, ICommand command, string streamName, Func<TState, IEvent[]> action, Func<IEvent[], Task> pub)
+            where TState : class, new()
+            where TEvent : EventRecord
+            => ExecuteAsync<TState, TEvent>(store, command, (typeof(TState).Name.AsStreamName(command.AggregateId).AggregateName, streamName), state => Task.FromResult(action(state)), pub);
 
         public static Task ExecuteAsync<TState>(this IEventStore store, ICommand command, Func<TState, IEvent[]> action, Func<IEvent[], Task> pub)
             where TState : class, new()
@@ -43,13 +58,13 @@ namespace Fiffi
                 ThrowOnCausation(command), pub);
 
 
-        public static Task ExecuteAsync<TState, TEventInterface>(this IEventStore store, ICommand command,
+        public static Task ExecuteAsync<TState, TEvent>(this IEventStore store, ICommand command,
             (string aggregateName, string streamName) naming, Func<TState, Task<IEvent[]>> action, Func<IEvent[], Task> pub)
             where TState : class, new()
-            where TEventInterface : IEvent
+            where TEvent : EventRecord
             => ExecuteAsync(store, command, naming,
                 events => action(events
-                .OfType<TEventInterface>()
+                .Where(e => e.Event.GetType().BaseType == typeof(TEvent)) //TODO fix!
                 .Where(x => x.SourceId == command.AggregateId.Id)
                 .Cast<IEvent>()
                 .Rehydrate<TState>()),

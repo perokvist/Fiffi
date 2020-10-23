@@ -27,17 +27,18 @@ namespace Fiffi
             return cmd;
         }
 
+        public static async Task<T[]> Issue<T>(IEvent @event, Func<Task<T[]>> f)
+        where T : ICommand
+        {
+            var cmds = await f();
+            return Issue(@event, () => cmds);
+        }
+
         public static async Task<T> Issue<T>(IEvent @event, Func<Task<T>> f)
            where T : ICommand
         {
             var cmd = await f();
-            if (cmd != null)
-            {
-                //cmd.CommandId = $"{@event.EventId()}-{cmd.GetType()}-{commandIndex}";
-                cmd.CorrelationId = @event.GetCorrelation();
-                cmd.CausationId = @event.EventId();
-            }
-            return cmd;
+            return Issue(@event, () => cmd);
         }
 
         public static Func<TEvent, PolicyContext, Task> On<TEvent, TProjection>(Func<TEvent, string> streamNameProvider, Func<TEvent, TProjection, ICommand> policy)
@@ -59,7 +60,7 @@ namespace Fiffi
         public static Func<TEvent, PolicyContext, Task> On<TEvent, TProjection, TEventFilter>(string streamName, Func<TEvent, TProjection[], ICommand[]> policy)
             where TEvent : IEvent
             where TProjection : class, new()
-            where TEventFilter : IEvent
+            where TEventFilter : EventRecord
                => (e, ctx) => ctx.ExecuteAsync<TProjection, TEventFilter>(streamName, p => Issue(e, () => policy(e, p)));
 
         public static Func<IEvent<TEvent>, PolicyContext, Task> On<TEvent>(Func<IEvent<TEvent>, ICommand> policy)
@@ -106,7 +107,7 @@ namespace Fiffi
 
         public async Task ExecuteAsync<T, TEventFilter>(string streamName, Func<T[], ICommand> policy)
             where T : class, new()
-            where TEventFilter : IEvent
+            where TEventFilter : EventRecord
         {
             var p = await this.Store.Projector<T>().ProjectAsync<TEventFilter>(streamName);
             await ExecuteAsync(policy(p));
@@ -114,7 +115,7 @@ namespace Fiffi
 
         public async Task ExecuteAsync<T, TEventFilter>(string streamName, Func<T[], ICommand[]> policy)
             where T : class, new()
-            where TEventFilter : IEvent
+            where TEventFilter : EventRecord
         {
             var p = await this.Store.Projector<T>().ProjectAsync<TEventFilter>(streamName);
             await ExecuteAsync(policy(p));

@@ -21,7 +21,9 @@ namespace TTD
         public Location Location { get; }
         public Cargo[] Cargo { get; }
 
-        public CargoLocation When(IEvent @event) => this;
+        public CargoLocation When(EventRecord @event) => this;
+
+        //public CargoLocation When(IEvent @event) => this;
 
         public CargoLocation When(Depareted @event)
             => @event.Location == Location ?

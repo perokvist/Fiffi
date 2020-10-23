@@ -4,9 +4,9 @@ using System.Collections.Generic;
 
 namespace TTD
 {
-    public interface ITransportEvent : IEvent { }
+    public record ITransportEvent : EventRecord;
 
-    public class Depareted : ITransportEvent
+    public record Depareted : ITransportEvent
     {
         public int Time { get; set; }
         public int TransportId { get; set; }
@@ -15,22 +15,18 @@ namespace TTD
         public Location Destination { get; set; }
         public Cargo[] Cargo { get; set; }
         public int ETA { get; set; }
-        public string SourceId => TransportId.ToString();
-        public IDictionary<string, string> Meta { get; set; } = new Dictionary<string, string>();
     }
 
-    public class Arrived : ITransportEvent
+    public record Arrived : ITransportEvent
     {
         public int Time { get; set; }
         public int TransportId { get; set; }
         public Kind Kind { get; set; }
         public Location Location { get; set; }
         public Cargo[] Cargo { get; set; }
-        public string SourceId => TransportId.ToString();
-        public IDictionary<string, string> Meta { get; set; } = new Dictionary<string, string>();
     }
 
-    public class TransportReady : ITransportEvent
+    public record TransportReady : ITransportEvent
     {
         public TransportReady(int transportId, Kind kind, Location location, int time)
         {
@@ -47,7 +43,7 @@ namespace TTD
         public IDictionary<string, string> Meta { get; set; }
     }
 
-    public class CargoPlanned : IEvent
+    public record CargoPlanned : EventRecord
     {
         public CargoPlanned(int CargoId, Location Destination, Location origin)
         {

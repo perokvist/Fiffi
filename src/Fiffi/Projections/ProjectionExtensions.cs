@@ -31,13 +31,14 @@ namespace Fiffi.Projections
             return projection;
         }
 
-        public static async Task<T[]> GetAsync<T, TEventFilter>(this IEventStore store, string streamName)
+        public static async Task<T[]> GetAsync<T, TEvent>(this IEventStore store, string streamName)
             where T : class, new()
-            where TEventFilter : IEvent
+            where TEvent : EventRecord
         {
             var r = await store.LoadEventStreamAsync(streamName, 0);
             return r.Events
-                .OfType<TEventFilter>()
+                .Where(e => e.Event.GetType().BaseType == typeof(TEvent)) //TODO fix!
+                //.OfType<IEvent<TEvent>>()
                 .Cast<IEvent>()
                 .GroupBy(x => x.SourceId)
                 .Select(x => x.Rehydrate<T>())

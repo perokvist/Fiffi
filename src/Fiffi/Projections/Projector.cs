@@ -14,7 +14,7 @@ namespace Fiffi.Projections
             => this.store.GetAsync<T>(streamName);
 
         public Task<T[]> ProjectAsync<TEventFilter>(string streamName)
-            where TEventFilter : IEvent
+            where TEventFilter : EventRecord
            => this.store.GetAsync<T, TEventFilter>(streamName);
 
         public Task<T> ProjectAsync<TStream>(AggregateId id)
