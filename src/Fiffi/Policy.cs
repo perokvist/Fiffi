@@ -27,6 +27,19 @@ namespace Fiffi
             return cmd;
         }
 
+        public static async Task<T> Issue<T>(IEvent @event, Func<Task<T>> f)
+           where T : ICommand
+        {
+            var cmd = await f();
+            if (cmd != null)
+            {
+                //cmd.CommandId = $"{@event.EventId()}-{cmd.GetType()}-{commandIndex}";
+                cmd.CorrelationId = @event.GetCorrelation();
+                cmd.CausationId = @event.EventId();
+            }
+            return cmd;
+        }
+
         public static Func<TEvent, PolicyContext, Task> On<TEvent, TProjection>(Func<TEvent, string> streamNameProvider, Func<TEvent, TProjection, ICommand> policy)
             where TEvent : IEvent
             where TProjection : class, new()

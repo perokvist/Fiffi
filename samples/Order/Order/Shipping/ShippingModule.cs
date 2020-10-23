@@ -9,20 +9,30 @@ namespace Shipping
 {
     public class ShippingModule : Module
     {
-        public ShippingModule(Dispatcher<ICommand, Task> dispatcher, Func<IEvent[], Task> publish, QueryDispatcher queryDispatcher,
+        public ShippingModule(Func<ICommand, Task> dispatcher, Func<IEvent[], Task> publish, QueryDispatcher queryDispatcher,
             Func<IEvent[], Task> onStart)
        : base(dispatcher, publish, queryDispatcher, onStart)
         { }
 
         public static ShippingModule Initialize(IAdvancedEventStore store, Func<IEvent[], Task> pub)
-            => new ModuleConfiguration<ShippingModule>((c, p, q, s) => new ShippingModule(c, p, q, s))
-              .Command<Ship>(
-                Commands.GuaranteeCorrelation<Ship>(),
+            => new Configuration<ShippingModule>((c, p, q, s) => new ShippingModule(c, p, q, s))
+              .Commands(
+                Commands.GuaranteeCorrelation<ICommand>(),
                 cmd => ApplicationService.ExecuteAsync(cmd, () => (new[] { new GoodsShipped() }), pub))
-            .Projection((EventEnvelope<Payment.PaymentRecieved> e) => store.AppendToStreamAsync("order", e))
-            .Projection((EventEnvelope<Warehouse.GoodsPicked> e) => store.AppendToStreamAsync("order", e))
-            .Policy<Payment.PaymentRecieved>((e, ctx) => ctx.ExecuteAsync<Order>("order", p => Policy.Issue(e, () => ShippingPolicy.When(e.Event, p))))
-            .Policy<Warehouse.GoodsPicked>((e, ctx) => ctx.ExecuteAsync<Order>("order", p => Policy.Issue(e, () => ShippingPolicy.When(e.Event, p))))
+              .Updates(events => store.AppendToStreamAsync("order", events.Filter(typeof(Payment.PaymentRecieved), typeof(Warehouse.GoodsPicked))))
+              .Triggers(async (events, d) =>
+              {
+                  foreach (var e in events)
+                  {
+                      var t = e.Event switch
+                      {
+                          Payment.PaymentRecieved evt => d(await Policy.Issue(e, async () => ShippingPolicy.When(evt, await store.GetAsync<Order>("order")))),
+                          Warehouse.GoodsPicked evt => d(await Policy.Issue(e, async () => ShippingPolicy.When(evt, await store.GetAsync<Order>("order")))),
+                          _ => Task.CompletedTask
+                      };
+                      await t;
+                  }
+              })
             .Create(store);
     }
 

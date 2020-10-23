@@ -39,7 +39,11 @@ namespace Fiffi.Modularization
         public virtual T Create(IEventStore store) => f(dispatch, async events =>
         {
             await Task.WhenAll(updates.Select(x => x(events)));
-            await Task.WhenAll(triggers.Select(t => t(events, dispatch)));
+            await Task.WhenAll(triggers.Select(t => t(events, cmd =>
+            {
+                if (cmd != null) return dispatch(cmd);
+                return Task.CompletedTask;
+            })));
         }, queries, x => Task.WhenAll(updates.Select(u => u(x))));
     }
 }

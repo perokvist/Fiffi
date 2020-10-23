@@ -3,6 +3,7 @@ using Fiffi.Modularization;
 using Sales;
 using System;
 using System.Collections.Generic;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 
 namespace Payment
@@ -15,11 +16,22 @@ namespace Payment
         { }
 
         public static PaymentModule Initialize(IAdvancedEventStore store, Func<IEvent[], Task> pub)
-            => new ModuleConfiguration<PaymentModule>((c, p, q, s) => new PaymentModule(c, p, q, s))
-            .Command<Pay>(
-                Commands.GuaranteeCorrelation<Pay>(),
-                cmd => ApplicationService.ExecuteAsync(cmd, () => new[] { new PaymentRecieved() } , pub))
-            .Policy<OrderPlaced>((e, ctx) => ctx.ExecuteAsync(Policy.Issue(e, () => new Pay())))
+            => new Configuration<PaymentModule>((c, p, q, s) => new PaymentModule(c, p, q, s))
+            .Commands(
+                Commands.GuaranteeCorrelation<ICommand>(),
+                cmd => ApplicationService.ExecuteAsync(cmd, () => new[] { new PaymentRecieved() }, pub))
+            .Triggers(async (events, d) =>
+            {
+                foreach (var e in events)
+                {
+                    var t = e.Event switch
+                    {
+                        OrderPlaced => d(Policy.Issue(e, () => new Pay())),
+                        _ => Task.CompletedTask
+                    };
+                    await t;
+                }
+            })
             .Create(store);
     }
 
