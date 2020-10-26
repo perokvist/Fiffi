@@ -26,7 +26,7 @@ namespace Payment
                 {
                     var t = e.Event switch
                     {
-                        OrderPlaced => d(Policy.Issue(e, () => new Pay())),
+                        OrderPlaced => d(e, new Pay()),
                         _ => Task.CompletedTask
                     };
                     await t;

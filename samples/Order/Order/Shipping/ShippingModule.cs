@@ -26,8 +26,8 @@ namespace Shipping
                   {
                       var t = e.Event switch
                       {
-                          Payment.PaymentRecieved evt => d(await Policy.Issue(e, async () => ShippingPolicy.When(evt, await store.GetAsync<Order>("order")))),
-                          Warehouse.GoodsPicked evt => d(await Policy.Issue(e, async () => ShippingPolicy.When(evt, await store.GetAsync<Order>("order")))),
+                          Payment.PaymentRecieved evt => d(e, ShippingPolicy.When(evt, await store.GetAsync<Order>("order"))),
+                          Warehouse.GoodsPicked evt => d(e, ShippingPolicy.When(evt, await store.GetAsync<Order>("order"))),
                           _ => Task.CompletedTask
                       };
                       await t;

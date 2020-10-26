@@ -29,7 +29,7 @@ namespace Sales
                 {
                     var t = e.Event switch
                     {
-                        Shipping.GoodsShipped evt => d(new CompleteOrder()),
+                        Shipping.GoodsShipped evt => d(e, new CompleteOrder()),
                         _ => Task.CompletedTask
                     };
                     await t;

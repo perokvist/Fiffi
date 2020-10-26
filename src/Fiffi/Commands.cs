@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Fiffi
@@ -30,5 +33,8 @@ namespace Fiffi
             if (cmd.CausationId == default)
                 cmd.CausationId = Guid.NewGuid();
         }
+
+        public static Task Dispatch(this IEnumerable<ICommand> commands, IEvent trigger, Func<IEvent, ICommand, Task> dispatcher)
+            => Task.WhenAll(commands.Select(c => dispatcher(trigger, c)));
     }
 }

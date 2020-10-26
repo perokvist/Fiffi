@@ -27,7 +27,7 @@ namespace Warehouse
                 foreach (var e in events)
                 {
                     var t = e.Event switch {
-                        OrderPlaced evt => d(Policy.Issue(e, () => new PickGoods())),
+                        OrderPlaced evt => d(e, new PickGoods()),
                         _ => Task.CompletedTask
                     };
                     await t;

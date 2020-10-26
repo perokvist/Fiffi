@@ -29,19 +29,17 @@ namespace TTD.Fiffied
                     Return c => ApplicationService.ExecuteAsync<Transport, ITransportEvent>(store, cmd, Streams.All, state => state.Handle(c, Route.GetRoutes()), pub),
                     _ => Task.CompletedTask
                 })
-            .Triggers(async (events, d) => //TODO dispatcher that take trigger event + cmd
+            .Triggers(async (events, d) => 
             {
                 foreach (var e in events)
                 {
                     var t = e.Event switch
                     {
-                        TimePassed evt => Task.WhenAll((await Policy.Issue(e, async () =>
-                            GameEngine.When(evt, await store.Projector<Transport>().ProjectAsync<ITransportEvent>(Streams.All))))
-                                .Select(c => d(c))),
-                        TransportReady evt => d(await Policy.Issue(e, async () => GameEngine.When(evt, (await store.GetAsync<CargoLocations>((Streams.All))).Locations))),
-                        Arrived evt => Task.WhenAll((await Policy.Issue(e, async () =>
-                           GameEngine.When(evt, await store.Projector<Transport>().ProjectAsync<ITransportEvent>(Streams.All)).ToArray()))
-                                .Select(c => d(c))),
+                        TimePassed evt => GameEngine.When(evt, await store.Projector<Transport>().ProjectAsync<ITransportEvent>(Streams.All))
+                                          .Dispatch(e, d),
+                        TransportReady evt => d(e, GameEngine.When(evt, (await store.GetAsync<CargoLocations>((Streams.All))).Locations)),
+                        Arrived evt => GameEngine.When(evt, await store.Projector<Transport>().ProjectAsync<ITransportEvent>(Streams.All))
+                                      .Dispatch(e, d),
                         _ => Task.CompletedTask
                     };
                     await t;
