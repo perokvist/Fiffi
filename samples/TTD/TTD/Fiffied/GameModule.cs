@@ -31,19 +31,14 @@ namespace TTD.Fiffied
                 })
             .Triggers(async (events, d) => 
             {
-                foreach (var e in events)
-                {
-                    var t = e.Event switch
+                await foreach (var t in events.Select(async e =>
+                    e.Event switch
                     {
-                        TimePassed evt => GameEngine.When(evt, await store.Projector<Transport>().ProjectAsync<ITransportEvent>(Streams.All))
-                                          .Dispatch(e, d),
+                        TimePassed evt => GameEngine.When(evt, await store.Projector<Transport>().ProjectAsync<ITransportEvent>(Streams.All)).Dispatch(e, d),
                         TransportReady evt => d(e, GameEngine.When(evt, (await store.GetAsync<CargoLocations>((Streams.All))).Locations)),
-                        Arrived evt => GameEngine.When(evt, await store.Projector<Transport>().ProjectAsync<ITransportEvent>(Streams.All))
-                                      .Dispatch(e, d),
+                        Arrived evt => GameEngine.When(evt, await store.Projector<Transport>().ProjectAsync<ITransportEvent>(Streams.All)).Dispatch(e, d),
                         _ => Task.CompletedTask
-                    };
-                    await t;
-                }
+                    }).ToAsyncEnumerable());
             })
             .Query<CargoLocationQuery, CargoLocations>(q => store.Projector<CargoLocations>().ProjectAsync(Streams.All))
             .Create(store);
