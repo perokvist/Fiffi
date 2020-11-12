@@ -23,6 +23,6 @@ jobs:
         name: artifacts
         path: artifacts/**/*
     - name: AddGithubSource
-      run: dotnet nuget add source --username perokvist --password ${{secrets.GITHUB_TOKEN}} --name github https://nuget.pkg.github.com/MintPlayer/index.json
+      run: dotnet nuget add source --username perokvist --password ${{secrets.GITHUB_TOKEN}} --name github https://nuget.pkg.github.com/perokvist/index.json
     - name: PushGithub
       run: dotnet nuget push ./artifacts/**.nupkg --source github --skip-duplicate
