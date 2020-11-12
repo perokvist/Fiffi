@@ -26,6 +26,6 @@ jobs:
         name: artifacts
         path: artifacts/**/*
     - name: PushGithub
-      run: dotnet nuget push ./artifacts/**.nupkg --source github --skip-duplicate
+      run: dotnet nuget push ./artifacts/**.nupkg --skip-duplicate
       env:
         NUGET_AUTH_TOKEN: ${{ github.token }}
