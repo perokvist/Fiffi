@@ -34,29 +34,46 @@ namespace Fiffi.Tests
 
         public class TestModule : Module
         {
-            public TestModule(Dispatcher<ICommand, Task> dispatcher, Func<IEvent[], Task> publish, QueryDispatcher queryDispatcher,
+            public TestModule(Func<ICommand, Task> dispatcher, Func<IEvent[], Task> publish, QueryDispatcher queryDispatcher,
                 Func<IEvent[], Task> onStart) : base(dispatcher, publish, queryDispatcher, onStart)
             { }
 
             public static TestModule Initialize(IEventStore store, Func<IEvent[], Task> pub)
-                => new ModuleConfiguration<TestModule>((d, p, q, s) => new TestModule(d, p, q, s))
-                .Command<TestCommand>(cmd => pub(new[] { new TestEvent().AddTestMetaData<string>(cmd.AggregateId) }))
+                => new Configuration<TestModule>((d, p, q, s) => new TestModule(d, p, q, s))
+                .Commands(cmd => pub(new[] { new TestEvent(cmd.AggregateId).AddTestMetaData<string>(cmd.AggregateId) }))
                 .Create(store);
         }
 
         public class OtherModule : Module
         {
-            public OtherModule(Dispatcher<ICommand, Task> dispatcher, Func<IEvent[], Task> publish, QueryDispatcher queryDispatcher,
+            public OtherModule(Func<ICommand, Task> dispatcher, Func<IEvent[], Task> publish, QueryDispatcher queryDispatcher,
                 Func<IEvent[], Task> onStart) : base(dispatcher, publish, queryDispatcher, onStart)
             { }
 
             public static OtherModule Initialize(IEventStore store, Func<IEvent[], Task> pub)
-                => new ModuleConfiguration<OtherModule>((d, p, q, s) => new OtherModule(d, p, q, s))
-                .Projection<TestEvent>(e => pub(new[] { new OtherEvent().AddTestMetaData<string>(new AggregateId(e.SourceId)) }))
+                => new Configuration<OtherModule>((d, p, q, s) => new OtherModule(d, p, q, s))
+                .Updates(async events =>
+                {
+                    foreach (var evt in events)
+                    {
+                        var t = evt.Event switch
+                        {
+                            TestEventRecord e => pub(new[] { new OtherEvent(evt.SourceId).AddTestMetaData<string>(new AggregateId(evt.SourceId)) }),
+                            _ => Task.CompletedTask
+                        };
+                        await t;
+                    }
+                })
                 .Create(store);
         }
 
-        public class OtherEvent : TestEvent
-        { }
+        public class OtherEvent : EventEnvelope<OtherTestEventRecord>
+        {
+            public OtherEvent(string sourceId) : base(sourceId, new OtherTestEventRecord("Other Test Message"))
+            { }
+        }
+
+        public record OtherTestEventRecord(string Message) : EventRecord;
+
     }
 }

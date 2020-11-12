@@ -2,25 +2,22 @@
 
 namespace Fiffi.Testing
 {
-    public class TestEvent : IEvent
+    public class TestEvent : EventEnvelope<TestEventRecord>
     {
-        public TestEvent()
-        {}
-
         public TestEvent(AggregateId id) : this(id.Id)
         { }
 
         public TestEvent(IAggregateId id) : this(id.Id)
-        { }
+        {}
 
-        public TestEvent(string sourceId)
+        public TestEvent(string sourceId) : base(sourceId, new TestEventRecord("Test Message"))
         {
-            SourceId = sourceId;
+            Message = "Test Message";
         }
-        public string SourceId { get; set; }
-
-        public IDictionary<string, string> Meta { get; set; } = new Dictionary<string, string>();
-
+        
         public string Message { get; set; }
-    }
+
+    };
+
+    public record TestEventRecord(string Message) : EventRecord;
 }

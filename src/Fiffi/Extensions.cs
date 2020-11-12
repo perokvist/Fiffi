@@ -42,15 +42,23 @@ namespace Fiffi
             }
         }
 
-        public static TState Rehydrate<TState>(this IEnumerable<IEvent> events) where TState : new()
+        public static TState Rehydrate<TState>(this IEnumerable<EventRecord> events) where TState : new()
             => events.Aggregate(new TState(), (s, @event) => ((dynamic)s).When((dynamic)@event));
 
+        public static TState Rehydrate<TState>(this IEnumerable<IEvent> events) where TState : new()
+            => events.Apply(new TState());
+
         public static TState Apply<TState>(this IEnumerable<IEvent> events, TState currentState) where TState : new()
-            => events.Aggregate(currentState, (s, @event) => ((dynamic)s).When((dynamic)@event));
+        {
+            //if (events.Any(e => e.GetType().IsGenericType))
+                return events.Aggregate(currentState, (s, @event) => ((dynamic)s).When(((dynamic)@event).Event));
+            //else
+                //return events.Aggregate(currentState, (s, @event) => ((dynamic)s).When((dynamic)@event));
+        }
 
         public static IEvent[] Filter(this IEnumerable<IEvent> events, params Type[] include)
             => events
-            .Where(x => include.Any(t => t.Equals(x.GetType())))
+            .Where(x => include.Any(t => t.Equals(x.Event.GetType())))
             .ToArray();
 
         public static void Guard<T>(this Action<Func<T, bool>> f, Func<T, bool> guard)
@@ -84,33 +92,6 @@ namespace Fiffi
             => typeName.AsStreamName((IAggregateId)aggregateId);
 
         public static (string AggregateName, string StreamName) AsStreamName(this string typeName, IAggregateId aggregateId) => (typeName.AsAggregateName(), $"{typeName.AsAggregateName()}-{aggregateId.Id}");
-
-        public static Func<T, Task> Then<T>(this Func<T, Task> f1, Func<T, Task> f2)
-            => async e =>
-            {
-                await f1(e);
-                await f2(e);
-            };
-
-        public static Func<T, T2, Task> Then<T, T2>(this Func<T, T2, Task> f1, Func<T, T2, Task> f2)
-            => async (e, c) =>
-            {
-                await f1(e, c);
-                await f2(e, c);
-            };
-
-        public static Func<T, Task> When<T>(this Func<T, Task> f, Func<T, bool> p)
-            => async e =>
-            {
-                if (p(e)) await f(e);
-            };
-
-        public static Func<T, T2, Task> When<T, T2>(this Func<T, T2, Task> f, Func<T, T2, bool> p)
-           => async (e, c) =>
-           {
-               if (p(e, c)) await f(e, c);
-           };
-
         public static Func<T, T> Combine<T>(params Func<Func<T, T>, Func<T, T>>[] funcs)
             => input => funcs.Aggregate((l, r) => f => l(r(f)))(c => c)(input);
 

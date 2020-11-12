@@ -13,7 +13,7 @@ namespace TTD.Vanilla
             .Select(t => events.Aggregate(t, (s, e) => s.When((dynamic)e)))
             .ToArray();
 
-        public static IEnumerable<IEvent> Return(this Transport[] transports, int time, Route[] routes)
+        public static IEnumerable<Depareted> Return(this Transport[] transports, int time, Route[] routes)
         => transports
         .Where(x => !x.EnRoute)
         .Where(x => !x.HasCargo)
@@ -33,7 +33,7 @@ namespace TTD.Vanilla
             };
         });
 
-        public static IEnumerable<IEvent> Unload(this Transport[] transports, int time)
+        public static IEnumerable<Arrived> Unload(this Transport[] transports, int time)
             => transports
                 .Where(x => x.EnRoute)
                 .Where(x => x.ETA == time)

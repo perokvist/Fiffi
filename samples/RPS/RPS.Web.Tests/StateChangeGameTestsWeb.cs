@@ -49,7 +49,10 @@ namespace RPS.Web.Tests
 
             //Given
             var gameId = Guid.NewGuid();
-            context.Given(new GameCreated { GameId = gameId, PlayerId = "test@tester.com", Rounds = 1, Title = "test game" }
+            context.Given(
+                EventEnvelope.Create(
+                    gameId.ToString(),
+                    new GameCreated(GameId : gameId, PlayerId : "test@tester.com", Rounds : 1, Title : "test game", Created : DateTime.UtcNow ))
                                 .AddTestMetaData<GameState>(new AggregateId(gameId)));
 
             //When
@@ -70,8 +73,8 @@ namespace RPS.Web.Tests
             context.Then((events, visual) =>
             {
                 this.helper.WriteLine(visual);
-                Assert.True(events.OfType<GameStarted>().Happened());
-                Assert.True(events.OfType<RoundStarted>().Happened());
+                Assert.True(events.AsEnvelopes().Happened<GameStarted>());
+                Assert.True(events.AsEnvelopes().Happened<RoundStarted>());
             });
         }
     }

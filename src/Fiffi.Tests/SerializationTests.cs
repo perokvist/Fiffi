@@ -14,7 +14,7 @@ namespace Fiffi.Tests
         [Fact]
         public void AsType()
         {
-            var e = new TestEvent { Message = "test", SourceId = Guid.NewGuid().ToString() }.AddTestMetaData<TestState>(new AggregateId("test"));
+            var e = new TestEvent(Guid.NewGuid().ToString()) { Message = "test" }.AddTestMetaData<TestState>(new AggregateId("test"));
             var jsonNetEvent = JsonConvert.SerializeObject(e);
             var corejsonEvent = System.Text.Json.JsonSerializer.Serialize(e, e.GetType());
 
@@ -24,7 +24,7 @@ namespace Fiffi.Tests
         [Fact]
         public void InterfaceAsObject()
         {
-            var e = new TestEvent { Message = "test", SourceId = Guid.NewGuid().ToString() }.AddTestMetaData<TestState>(new AggregateId("test")) as IEvent;
+            var e = new TestEvent(Guid.NewGuid().ToString()) { Message = "test" }.AddTestMetaData<TestState>(new AggregateId("test")) as IEvent;
             var jsonNetEvent = JsonConvert.SerializeObject(e, typeof(IEvent), new JsonSerializerSettings());
             var corejsonEvent = System.Text.Json.JsonSerializer.Serialize<object>(e);
 
@@ -34,7 +34,7 @@ namespace Fiffi.Tests
         [Fact]
         public void ExplicitInterfaceAsObject()
         {
-            var e = new ExplicitTestEvent { Message = "test" }.AddTestMetaData<TestState>(new AggregateId("test")) as IEvent;
+            var e = new ExplicitTestEvent { Message = "test", TestEventRecord = new TestEventRecord("testing") }.AddTestMetaData<TestState>(new AggregateId("test")) as IEvent;
             var jsonNetEvent = JsonConvert.SerializeObject(e, typeof(IEvent), new JsonSerializerSettings());
             var corejsonEvent = System.Text.Json.JsonSerializer.Serialize<object>(e, new JsonSerializerOptions {   });
 
@@ -44,6 +44,10 @@ namespace Fiffi.Tests
         public class ExplicitTestEvent : IEvent
         {
             public string Message { get; set; }
+
+            public TestEventRecord TestEventRecord { get; set; }
+
+            EventRecord IEvent.Event => this.TestEventRecord;
 
             string IEvent.SourceId => "hej";
 

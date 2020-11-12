@@ -9,17 +9,30 @@ namespace Warehouse
 {
     public class WarehouseModule : Module
     {
-        public WarehouseModule(Dispatcher<ICommand, Task> dispatcher, Func<IEvent[], Task> publish, QueryDispatcher queryDispatcher,
+        public WarehouseModule(Func<ICommand, Task> dispatcher, Func<IEvent[], Task> publish, QueryDispatcher queryDispatcher,
             Func<IEvent[], Task> onStart)
        : base(dispatcher, publish, queryDispatcher, onStart)
         { }
 
         public static WarehouseModule Initialize(IAdvancedEventStore store, Func<IEvent[], Task> pub)
-            => new ModuleConfiguration<WarehouseModule>((c, p, q, s) => new WarehouseModule(c, p, q, s))
-            .Command<PickGoods>(
-                Commands.GuaranteeCorrelation<PickGoods>(),
-                cmd => ApplicationService.ExecuteAsync(cmd, () => new[] { new GoodsPicked() }, pub))
-            .Policy<OrderPlaced>((e, ctx) => ctx.ExecuteAsync(Policy.Issue(e, () => new PickGoods())))
+            => new Configuration<WarehouseModule>((c, p, q, s) => new WarehouseModule(c, p, q, s))
+            .Commands(
+                Commands.GuaranteeCorrelation<ICommand>(),
+                cmd => cmd switch
+                { 
+                   PickGoods => ApplicationService.ExecuteAsync(cmd, () => new[] { new GoodsPicked() }, pub),
+                    _ => Task.CompletedTask
+                })
+            .Triggers(async(events, d) => {
+                foreach (var e in events)
+                {
+                    var t = e.Event switch {
+                        OrderPlaced evt => d(e, new PickGoods()),
+                        _ => Task.CompletedTask
+                    };
+                    await t;
+                }
+            })
             .Create(store);
     }
 
@@ -30,10 +43,6 @@ namespace Warehouse
         Guid ICommand.CausationId { get; set; }
     }
 
-    public class GoodsPicked : IEvent
-    {
-        public string SourceId => "warehouse.order";
-
-        public IDictionary<string, string> Meta { get; set; }
-    }
+    public record GoodsPicked : EventRecord;
+        //public string SourceId => "warehouse.order";
 }

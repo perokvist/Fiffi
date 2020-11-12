@@ -9,39 +9,38 @@ namespace RPS
 {
     public static class Game
     {
-        public static IEvent[] Handle<T>(T command, GameState state)
-             where T : IGameCommand
-            => ((IEnumerable<IEvent>)Handle((dynamic)command, state)).ToArray();
+        public static EventRecord[] Handle<T>(T command, GameState state)
+             where T : ICommand
+            => command switch {
+                CreateGame c => Handle(c, state).ToArray(),
+                JoinGame c => Handle(c, state).ToArray(),
+                PlayGame c => Handle(c, state).ToArray(),
+                _ => throw new InvalidOperationException($"No handler for {command.GetType()} found.")
+            };
 
-        public static IEvent[] Handle(object command, GameState state) => throw new InvalidOperationException($"No handler for {command.GetType()} found.");
-
-
-        public static IEnumerable<IEvent> Handle(CreateGame command, GameState state)
+        public static IEnumerable<EventRecord> Handle(CreateGame command, GameState state)
          => new[] {
-                    new GameCreated
-                    {
-                               GameId = command.GameId,
-                               PlayerId = command.PlayerId,
-                               Title = command.Title,
-                               Rounds = command.Rounds,
-                               Created = DateTime.UtcNow,
-                               Status = GameStatus.ReadyToStart
-                    }
-                  };
+             new GameCreated(GameId : command.GameId,
+                             PlayerId : command.PlayerId,
+                             Title : command.Title,
+                             Rounds : command.Rounds,
+                             Created : DateTime.UtcNow,
+                             Status : GameStatus.ReadyToStart)
+         };
 
-        public static IEnumerable<IEvent> Handle(JoinGame command, GameState state)
+        public static IEnumerable<EventRecord> Handle(JoinGame command, GameState state)
         {
             if (state.Players.PlayerOne.Id == command.PlayerId)
                 yield break;
 
-            if (state.Players.PlayerTwo == default)
+            if (state.Players.PlayerTwo.Hand == Hand.None)
             {
-                yield return new GameStarted { GameId = command.GameId, PlayerId = command.PlayerId };
-                yield return new RoundStarted { GameId = command.GameId, Round = 1 };
+                yield return new GameStarted(GameId: command.GameId, PlayerId: command.PlayerId);
+                yield return new RoundStarted(GameId: command.GameId, Round: 1);
             }
         }
 
-        public static IEnumerable<IEvent> Handle(PlayGame command, GameState state)
+        public static IEnumerable<EventRecord> Handle(PlayGame command, GameState state)
         {
             if (state.Status != GameStatus.Started)
                 yield break;
@@ -58,7 +57,7 @@ namespace RPS
 
             yield return players.Active.Hand switch
             {
-                Hand.None => new HandShown { GameId = command.GameId, PlayerId = players.Active.Id, Hand = command.Hand },
+                Hand.None => new HandShown(GameId: command.GameId, PlayerId: players.Active.Id, Hand: command.Hand),
                 _ => throw new ArgumentException("Changing hand not allowed")
             };
 
@@ -84,88 +83,34 @@ namespace RPS
 
             yield return activePlayerResult switch
             {
-                RoundResult.Won => new RoundEnded { GameId = command.GameId, Winner = players.Active.Id, Looser = players.Passive.Id, Round = state.Round },
-                RoundResult.Lost => new RoundEnded { GameId = command.GameId, Winner = players.Passive.Id, Looser = players.Active.Id, Round = state.Round },
-                _ => new RoundTied { GameId = command.GameId, Round = state.Round },
+                RoundResult.Won => new RoundEnded(GameId: command.GameId, Winner: players.Active.Id, Looser: players.Passive.Id, Round: state.Round),
+                RoundResult.Lost => new RoundEnded(GameId: command.GameId, Winner: players.Passive.Id, Looser: players.Active.Id, Round: state.Round),
+                _ => new RoundTied(GameId: command.GameId, Round: state.Round),
             };
 
             yield return (state.Rounds == state.Round) switch
             {
-                true => new GameEnded { GameId = command.GameId },
-                _ => new RoundStarted { GameId = command.GameId, Round = state.Round + 1 }
+                true => new GameEnded(GameId: command.GameId),
+                _ => new RoundStarted(GameId: command.GameId, Round: state.Round + 1)
             };
         }
-
     }
 
-    public class GameCreated : IEvent
-    {
-        public Guid GameId { get; set; }
-        public string PlayerId { get; set; }
-        public string Title { get; set; }
-        public int Rounds { get; set; }
-        public DateTime Created { get; set; }
-        public GameStatus Status { get; set; } = GameStatus.Started;
-        public string SourceId => GameId.ToString();
-        public IDictionary<string, string> Meta { get; set; }
-    }
+    public record GameCreated(
+             Guid GameId,
+            string PlayerId,
+            string Title,
+            int Rounds,
+            DateTime Created,
+            GameStatus Status = GameStatus.Started
+        ) : EventRecord;
 
-    public class RoundStarted : IEvent
-    {
-        public Guid GameId { get; set; }
-
-        public int Round { get; set; }
-
-        public string SourceId => GameId.ToString();
-        public IDictionary<string, string> Meta { get; set; }
-    }
-
-    public class GameStarted : IEvent
-    {
-        public Guid GameId { get; set; }
-
-        public string PlayerId { get; set; }
-
-        public string SourceId => GameId.ToString();
-        public IDictionary<string, string> Meta { get; set; }
-    }
-
-    public class GameEnded : IEvent
-    {
-        public Guid GameId { get; set; }
-
-        public string SourceId => GameId.ToString();
-
-        public IDictionary<string, string> Meta { get; set; }
-    }
-
-    public class RoundTied : IEvent
-    {
-        public Guid GameId { get; set; }
-        public int Round { get; set; }
-        public string SourceId => GameId.ToString();
-        public IDictionary<string, string> Meta { get; set; }
-    }
-
-    public class RoundEnded : IEvent
-    {
-        public Guid GameId { get; set; }
-        public string Winner { get; set; }
-        public string Looser { get; set; }
-        public int Round { get; set; }
-        public string SourceId => GameId.ToString();
-        public IDictionary<string, string> Meta { get; set; }
-    }
-
-    public class HandShown : IEvent
-    {
-        public Guid GameId { get; set; }
-        public string PlayerId { get; set; }
-        public Hand Hand { get; set; }
-
-        public string SourceId => GameId.ToString();
-        public IDictionary<string, string> Meta { get; set; }
-    }
+    public record RoundStarted(Guid GameId, int Round) : EventRecord;
+    public record GameStarted(Guid GameId, string PlayerId) : EventRecord;
+    public record GameEnded(Guid GameId) : EventRecord;
+    public record RoundTied(Guid GameId, int Round) : EventRecord;
+    public record RoundEnded(Guid GameId, string Winner, string Looser, int Round) : EventRecord;
+    public record HandShown(Guid GameId, string PlayerId, Hand Hand) : EventRecord;
 
     public enum Hand
     {
@@ -226,80 +171,67 @@ namespace RPS
         Guid ICommand.CausationId { get; set; }
     }
 
-    public class GameState
+    public record GameState(
+     Guid Id,
+     (Player PlayerOne, Player PlayerTwo) Players,
+     int Round,
+     int Rounds,
+     GameStatus Status,
+     long Version) 
     {
-        public Guid Id { get; set; }
-        public (Player PlayerOne, Player PlayerTwo) Players { get; set; }
-        public int Round { get; set; }
-        public int Rounds { get; set; }
-        public GameStatus Status { get; set; }
-        public long Version { get; set; }
+        public GameState() : this(Guid.NewGuid(), (default, default), 0, 0, GameStatus.None, 0) 
+        { }
 
-        public GameState When(IEvent @event) => this;
-
-        public GameState When(GameCreated @event)
-        {
-            Status = GameStatus.ReadyToStart;
-            Id = @event.GameId;
-            Players = (new Player { Id = @event.PlayerId }, default);
-            Rounds = @event.Rounds;
-            return this;
-        }
-
-        public GameState When(GameStarted @event)
-        {
-            Status = GameStatus.Started;
-            Players = (Players.PlayerOne, new Player { Id = @event.PlayerId });
-            return this;
-        }
-
-        public GameState When(RoundStarted @event)
-        {
-            Status = GameStatus.Started;
-            Round = @event.Round;
-            return this;
-        }
-
-        public GameState When(HandShown @event)
-        {
-            var p = @event.PlayerId switch
-            {
-                string id when id == Players.PlayerOne.Id => Players.PlayerOne,
-                _ => Players.PlayerTwo
-            };
-            p.Hand = @event.Hand;
-
-            return this;
-        }
-
-        public GameState When(RoundTied @event)
-        {
-            Players.PlayerOne.Hand = Hand.None; //TODO set all hand and status trough events
-            Players.PlayerTwo.Hand = Hand.None;
-            return this;
-        }
-
-        public GameState When(GameEnded @event)
-        {
-            Status = GameStatus.Ended;
-            return this;
-        }
-
-        public class Player
-        {
-            public string Id { get; set; }
-            public Hand Hand { get; set; }
-        }
-
-        public enum GameStatus
-        {
-            None = 0,
-            ReadyToStart = 10,
-            Started = 20,
-            Ended = 50
-        }
+        public GameState When(EventRecord @event) =>
+               @event switch
+               {
+                   GameCreated e => this with
+                   {
+                       Status = GameStatus.ReadyToStart,
+                       Id = e.GameId,
+                       Players = (new(e.PlayerId, default), new(string.Empty, default)),
+                       Rounds = e.Rounds
+                   },
+                   GameStarted e => this with
+                   {
+                       Status = GameStatus.Started,
+                       Players = (Players.PlayerOne, new(e.PlayerId, default))
+                   },
+                   RoundStarted e => this with
+                   {
+                       Status = GameStatus.Started,
+                       Round = e.Round
+                   },
+                   HandShown e => this with
+                   {
+                       Players = e.PlayerId switch
+                       {
+                           string id when id == Players.PlayerOne.Id => new(Players.PlayerOne with { Hand = e.Hand }, Players.PlayerTwo),
+                           _ => new(Players.PlayerOne, Players.PlayerTwo with { Hand = e.Hand })
+                       }
+                   },
+                   RoundTied => this with
+                   {
+                       Players = (Players.PlayerOne with { Hand = Hand.None }, Players.PlayerTwo with { Hand = Hand.None })
+                       //TODO set all hand and status trough events
+                   },
+                   GameEnded => this with
+                   {
+                       Status = GameStatus.Ended
+                   },
+                   _ => this
+               };
     }
 
+    public record Player(string Id, Hand Hand);
+
+    public enum GameStatus
+    {
+        None = 0,
+        ReadyToStart = 10,
+        Started = 20,
+        Ended = 50
+    }
     public interface IGameCommand : ICommand
     { }
 }

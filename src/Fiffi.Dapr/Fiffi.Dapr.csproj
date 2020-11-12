@@ -1,15 +1,15 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net5.0</TargetFramework>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Dapr.EventStore" Version="0.9.1-alpha" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Dapr.EventStore" Version="0.9.1-alpha" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Fiffi\Fiffi.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\Fiffi\Fiffi.csproj" />
+	</ItemGroup>
 
 </Project>

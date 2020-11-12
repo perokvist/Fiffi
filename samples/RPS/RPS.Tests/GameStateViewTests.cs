@@ -12,12 +12,12 @@ namespace RPS.Tests
             var gameId = Guid.NewGuid();
 
             //Given
-            var state = new IEvent[] {
-                new GameCreated { GameId = gameId, PlayerId = "test@tester.com", Rounds = 1, Title = "test game" },
+            var state = new EventRecord[] {
+                new GameCreated( GameId : gameId, PlayerId : "test@tester.com", Rounds : 1, Title : "test game", Created : DateTime.UtcNow),
             }.Rehydrate<GameState>();
 
             //Then  
-            Assert.Equal(GameState.GameStatus.ReadyToStart, state.Status);
+            Assert.Equal(GameStatus.ReadyToStart, state.Status);
         }
 
         [Fact]
@@ -26,14 +26,14 @@ namespace RPS.Tests
             var gameId = Guid.NewGuid();
 
             //Given
-            var state = new IEvent[] {
-                new GameCreated { GameId = gameId, PlayerId = "test@tester.com", Rounds = 1, Title = "test game" },
-                new GameStarted { GameId = gameId, PlayerId = "foo@tester.com" },
-                new RoundStarted { GameId = gameId, Round = 1 }
+            var state = new EventRecord[] {
+                new GameCreated(GameId : gameId, PlayerId : "test@tester.com", Rounds : 1, Title : "test game", Created : DateTime.UtcNow),
+                new GameStarted(GameId : gameId, PlayerId : "foo@tester.com"),
+                new RoundStarted(GameId : gameId, Round : 1)
             }.Rehydrate<GameState>();
 
             //Then  
-            Assert.Equal(GameState.GameStatus.Started, state.Status);
+            Assert.Equal(GameStatus.Started, state.Status);
         }
 
         [Fact]
@@ -42,18 +42,18 @@ namespace RPS.Tests
             var gameId = Guid.NewGuid();
 
             //Given
-            var state = new IEvent[] {
-                new GameCreated { GameId = gameId, PlayerId = "lisa@tester.com", Rounds = 1, Title = "test game" },
-                new GameStarted { GameId = gameId, PlayerId = "alex@tester.com" },
-                new RoundStarted { GameId = gameId, Round = 1 },
-                new HandShown { GameId = gameId, Hand = Hand.Paper, PlayerId = "lisa@tester.com" },
-                new HandShown { GameId = gameId, Hand = Hand.Rock, PlayerId = "alex@tester.com" },
-                new RoundEnded { GameId = gameId, Round = 1, Looser = "lisa@tester.com", Winner = "alex@tester.com" },
-                new GameEnded { GameId = gameId }
+            var state = new EventRecord[] {
+                new GameCreated(GameId : gameId, PlayerId : "lisa@tester.com", Rounds : 1, Title : "test game", Created : DateTime.UtcNow),
+                new GameStarted(GameId : gameId, PlayerId : "alex@tester.com"),
+                new RoundStarted(GameId : gameId, Round : 1),
+                new HandShown(GameId : gameId, Hand : Hand.Paper, PlayerId : "lisa@tester.com"),
+                new HandShown(GameId : gameId, Hand : Hand.Rock, PlayerId : "alex@tester.com"),
+                new RoundEnded(GameId : gameId, Round : 1, Looser : "lisa@tester.com", Winner : "alex@tester.com"),
+                new GameEnded(GameId : gameId)
             }.Rehydrate<GameState>();
 
             //Then  
-            Assert.Equal(GameState.GameStatus.Ended, state.Status);
+            Assert.Equal(GameStatus.Ended, state.Status);
         }
     }
 }

@@ -46,7 +46,7 @@ namespace Fiffi.Dapr
                     if (attempt > 2)
                     {
                         logger(ex, $"{ex.Message}. Attempt {0}", new object[] { attempt });
-                        throw ex;
+                        throw;
                     }
 
                     attempt++;

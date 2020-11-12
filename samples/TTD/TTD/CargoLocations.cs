@@ -14,7 +14,9 @@ namespace TTD
 
         private readonly IDictionary<Location, CargoLocation> inner;
 
-        public CargoLocations When(IEvent @event) => this;
+        public CargoLocations When(EventRecord @event) => this;
+
+        //public CargoLocations When(IEvent @event) => this;
         public CargoLocations When(Depareted @event)
         {
             if (!inner.ContainsKey(@event.Location))

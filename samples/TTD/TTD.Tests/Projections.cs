@@ -11,7 +11,7 @@ namespace TTD.Tests
         [Fact]
         public async Task AB_Projections()
         {
-            var events = new List<IEvent>
+            var events = new List<EventRecord>
             {
                 new Depareted {
                     Time = 0,
@@ -94,7 +94,7 @@ namespace TTD.Tests
                 },
             };
 
-            var eventsWithMeta = events.Select(e => e.Tap(x => e.Meta.AddTypeInfo(e))).ToArray();
+            var eventsWithMeta = events.ToArray().ToEnvelopes("").Select(e => e.Tap(x => e.Meta.AddTypeInfo(e))).ToArray();
             var store = new Fiffi.FileSystem.FileSystemEventStore("teststore", TypeResolver.FromMap(TypeResolver.GetEventsFromTypes(typeof(Depareted), typeof(Arrived))));
             _ = await store.AppendToStreamAsync("all", eventsWithMeta);
 

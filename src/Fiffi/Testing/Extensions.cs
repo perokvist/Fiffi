@@ -8,10 +8,17 @@ namespace Fiffi.Testing
 {
     public static class Extensions
     {
+        public static void Given<TState>(this ITestContext context, IAggregateId id, params EventRecord[] events)
+            => context.Given(events.Select(e => EventEnvelope.Create(id.Id, e).AddTestMetaData<TState>(id)).ToArray());
+
         public static void Given<TState>(this ITestContext context, IAggregateId id, params IEvent[] events)
             => context.Given(events.Select(e => e.AddTestMetaData<TState>(id)).ToArray());
 
         public static bool Happened(this IEnumerable<IEvent> events) => events.Count() >= 1;
+
+        public static bool Happened<T>(this IEnumerable<EventEnvelope<EventRecord>> events) 
+            => events.Select(x => x.Event).OfType<T>().Count() >= 1;
+
 
         public static async Task<(object Value, long Version)> GetAsync(this IStateStore stateManager, Type type, IAggregateId aggregateId)
         {

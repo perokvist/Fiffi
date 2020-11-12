@@ -38,9 +38,9 @@ namespace TTD.Vanilla
             var time = 0;
             while (!events.GetCargoLocations(locations).AllDelivered(cargo.Length))
             {
-                events = events.Append(events.GetTransports(transports).Unload(time).ToArray());
-                events = events.Append(Load(time, events.GetCargoLocations(locations), events.GetTransports(transports), routes).ToArray());
-                events = events.Append(events.GetTransports(transports).Return(time, routes).ToArray());
+                events = events.Append(events.GetTransports(transports).Unload(time).ToArray().ToEnvelopes(x => x.TransportId.ToString()));
+                events = events.Append(Load(time, events.GetCargoLocations(locations), events.GetTransports(transports), routes).ToArray().ToEnvelopes(x => x.TransportId.ToString()));
+                events = events.Append(events.GetTransports(transports).Return(time, routes).ToArray().ToEnvelopes(x => x.TransportId.ToString()));
 
                 time++;
             }
@@ -56,7 +56,7 @@ namespace TTD.Vanilla
         }
 
 
-        public static IEnumerable<IEvent> Load(
+        public static IEnumerable<Depareted> Load(
             int time,
             CargoLocation[] cargoLocations,
             Transport[] transports,

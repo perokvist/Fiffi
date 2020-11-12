@@ -32,9 +32,14 @@ namespace Fiffi.Serialization
         }
     }
 
-    public class MetaEvent : IEvent
+    public record MetaEvent : IEvent
     {
-        public string SourceId { get; set; }
-        public IDictionary<string, string> Meta { get; set; } = new Dictionary<string, string>();
+        public MetaEvent(string sourceId) => (SourceId, Meta) = (sourceId, new Dictionary<string, string>());
+
+        public string SourceId { get; init; }
+
+        public IDictionary<string, string> Meta { get; set; }
+
+        public EventRecord Event => throw new NotImplementedException();
     }
 }
