@@ -52,12 +52,13 @@ namespace Fiffi.Tests
 
             public static OtherModule Initialize(IEventStore store, Func<IEvent[], Task> pub)
                 => new Configuration<OtherModule>((d, p, q, s) => new OtherModule(d, p, q, s))
-                .Updates(async events => {
-                    foreach (var e in events)
+                .Updates(async events =>
+                {
+                    foreach (var evt in events)
                     {
-                        var t = e switch
+                        var t = evt.Event switch
                         {
-                            TestEvent evt => pub(new[] { new OtherEvent(evt.SourceId).AddTestMetaData<string>(new AggregateId(e.SourceId)) }),
+                            TestEventRecord e => pub(new[] { new OtherEvent(evt.SourceId).AddTestMetaData<string>(new AggregateId(evt.SourceId)) }),
                             _ => Task.CompletedTask
                         };
                         await t;
@@ -66,7 +67,13 @@ namespace Fiffi.Tests
                 .Create(store);
         }
 
-        public record OtherEvent(string sourceId) : TestEvent(sourceId)
-        { }
+        public class OtherEvent : EventEnvelope<OtherTestEventRecord>
+        {
+            public OtherEvent(string sourceId) : base(sourceId, new OtherTestEventRecord("Other Test Message"))
+            { }
+        }
+
+        public record OtherTestEventRecord(string Message) : EventRecord;
+
     }
 }

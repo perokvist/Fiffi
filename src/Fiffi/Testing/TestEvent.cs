@@ -2,7 +2,7 @@
 
 namespace Fiffi.Testing
 {
-    public record TestEvent : IEvent
+    public class TestEvent : EventEnvelope<TestEventRecord>
     {
         public TestEvent(AggregateId id) : this(id.Id)
         { }
@@ -10,16 +10,13 @@ namespace Fiffi.Testing
         public TestEvent(IAggregateId id) : this(id.Id)
         {}
 
-        public TestEvent(string sourceId)
-         => (Meta, SourceId, Message) = (new Dictionary<string, string>(), sourceId, "Test Message");
-
-        public IDictionary<string, string> Meta { get; set; }
-
-        public string SourceId { get; init; }
+        public TestEvent(string sourceId) : base(sourceId, new TestEventRecord("Test Message"))
+        {
+            Message = "Test Message";
+        }
         
-        public string Message { get; init; }
+        public string Message { get; set; }
 
-        public EventRecord Event { get; init; }
     };
 
     public record TestEventRecord(string Message) : EventRecord;

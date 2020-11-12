@@ -50,10 +50,10 @@ namespace Fiffi
 
         public static TState Apply<TState>(this IEnumerable<IEvent> events, TState currentState) where TState : new()
         {
-            if (events.Any(e => e.GetType().IsGenericType))
+            //if (events.Any(e => e.GetType().IsGenericType))
                 return events.Aggregate(currentState, (s, @event) => ((dynamic)s).When(((dynamic)@event).Event));
-            else
-                return events.Aggregate(currentState, (s, @event) => ((dynamic)s).When((dynamic)@event));
+            //else
+                //return events.Aggregate(currentState, (s, @event) => ((dynamic)s).When((dynamic)@event));
         }
 
         public static IEvent[] Filter(this IEnumerable<IEvent> events, params Type[] include)
