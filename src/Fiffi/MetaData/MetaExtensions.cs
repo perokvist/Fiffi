@@ -8,18 +8,21 @@ namespace Fiffi
     {
         public static void AddTypeInfo(this IDictionary<string, string> meta, IEvent e)
         {
-            var t = e.GetType();
-            var typeProperties = new Dictionary<string, string>
-            {
-                { "name", t.Name },
-                { "eventname", t.Name },
-                { "type.name", t.Name },
-                { "type.assemblyqualifiedname", t.AssemblyQualifiedName },
-                { "type.fullname", t.FullName },
-                { "type.version", e.GetType().Assembly.GetName().Version.ToString() }
-            };
+            var envelopeType = e.GetType();
+            var eventType = e.Event.GetType();
+
             if (meta == null)
                 throw new ArgumentException("Meta dictionary cannot be null. When adding type info");
+
+            var typeProperties = new Dictionary<string, string>
+            {
+                { "name", eventType.Name },
+                { "eventname", eventType.Name },
+                { "type.name", eventType.Name },
+                { "type.assemblyqualifiedname", eventType.AssemblyQualifiedName },
+                { "type.fullname", eventType.FullName },
+                { "type.version", eventType.Assembly.GetName().Version.ToString() }
+            };
 
             typeProperties.ForEach(x => meta.TryAdd(x.Key, x.Value));
         }
