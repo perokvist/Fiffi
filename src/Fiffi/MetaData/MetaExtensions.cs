@@ -58,7 +58,7 @@ namespace Fiffi
         //TODO switch case for handling meta == null (when testing)
 
         public static string GetMetaOrDefault<T>(this IDictionary<string, string> meta, string keyName, T @default = default)
-            => meta.ContainsKey(keyName.ToLower()) ? meta[keyName.ToLower()] : @default.ToString();
+            => meta.ContainsKey(keyName.ToLower()) ? meta[keyName.ToLower()] : @default?.ToString();
 
         public static bool HasMeta(this IEvent @event, string keyName)
             => @event.Meta.ContainsKey(keyName.ToLower());
@@ -108,14 +108,17 @@ namespace Fiffi
             StreamName : streamName,
             TriggeredBy : trigger.GetType().Name,
             BasedOnStreamVersion: 0
-
         ));
 
         public static void AddMetaData(this IDictionary<string, string> meta, EventMetaData metaData)
         {
-            meta[nameof(EventMetaData.BasedOnStreamVersion).ToLower()] = metaData.BasedOnStreamVersion.ToString();
+            if(metaData.AggregateName != default)
+                meta[nameof(EventMetaData.AggregateName).ToLower()] = metaData.AggregateName;
+
+            if (metaData.BasedOnStreamVersion != default)
+                meta[nameof(EventMetaData.BasedOnStreamVersion).ToLower()] = metaData.BasedOnStreamVersion.ToString();
+            
             meta[nameof(EventMetaData.StreamName).ToLower()] = metaData.StreamName;
-            meta[nameof(EventMetaData.AggregateName).ToLower()] = metaData.AggregateName;
             meta[nameof(EventMetaData.EventId).ToLower()] = metaData.EventId.ToString();
             meta[nameof(EventMetaData.CorrelationId).ToLower()] = metaData.CorrelationId.ToString();
             meta[nameof(EventMetaData.CausationId).ToLower()] = metaData.CausationId.ToString();

@@ -24,7 +24,7 @@ namespace Fiffi
                 pub);
 
         public static Task ExecuteAsync(this IEventStore store, ICommand command, string streamName, Func<IEvent[]> action, Func<IEvent[], Task> pub)
-            => ExecuteAsync<TestState>(store, command, ("none", streamName), state => Task.FromResult(action()), pub);
+            => ExecuteAsync<TestState>(store, command, (null, streamName), state => Task.FromResult(action()), pub);
 
         public static Task ExecuteAsync<TState, TEvent>(this IEventStore store, ICommand command, string streamName, Func<TState, EventRecord[]> action, Func<IEvent[], Task> pub)
             where TState : class, new()
