@@ -32,6 +32,7 @@ namespace RPS.Web
 
         [HttpPost("/in")]
         [Topic("in")]
+        [ApiExplorerSettings(IgnoreApi = true)]
         public async Task<IActionResult> InboxAsync()
         {
             await @lock.WaitAsync();

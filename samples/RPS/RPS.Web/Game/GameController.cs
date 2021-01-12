@@ -27,6 +27,7 @@ namespace RPS.Web
 
         [HttpPost("/games", Name = "create")]
         [Consumes("application/x-www-form-urlencoded")]
+        [ApiExplorerSettings(IgnoreApi = true)]
         public async Task<IActionResult> FormCreateAsync(
             [FromForm] string playerId,
             [FromForm] string title,
@@ -61,6 +62,7 @@ namespace RPS.Web
 
         [HttpPost("/games/{gameId}/join", Name = "join")]
         [Consumes("application/x-www-form-urlencoded")]
+        [ApiExplorerSettings(IgnoreApi = true)]
         public async Task<IActionResult> FormJoinAsync([FromRoute]Guid gameId, [FromForm]string playerId)
         {
             await module.DispatchAsync(new JoinGame { GameId = gameId, PlayerId = playerId });
@@ -87,6 +89,7 @@ namespace RPS.Web
 
         [HttpPost("/games/{gameId}/play", Name = "play")]
         [Consumes("application/x-www-form-urlencoded")]
+        [ApiExplorerSettings(IgnoreApi = true)]
         public async Task<IActionResult> PlayAsync([FromRoute]Guid gameId, [FromForm]string playerId, [FromForm]Hand hand)
         {
             await module.DispatchAsync(new PlayGame { GameId = gameId, PlayerId = playerId, Hand = hand });
@@ -103,7 +106,7 @@ namespace RPS.Web
 
             await module.DispatchAsync(command);
 
-            logger.LogInformation("Hand Played by - {hand}", command.Hand);
+            logger.LogInformation("Hand Played by {playerId} - {hand}", command.PlayerId, command.Hand);
             return StatusCode((int)HttpStatusCode.Accepted);
         }
 
