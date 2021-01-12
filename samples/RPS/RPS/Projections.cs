@@ -53,7 +53,13 @@ namespace RPS
         private Dictionary<Guid, RoundView> scores = new Dictionary<Guid, RoundView>();
         public List<RoundView> Scores => scores.Values.ToList();
 
-        public ScoresView When(IEvent @event) => this;
+        public ScoresView When(EventRecord @event) => @event switch
+        {
+            GameCreated e => When(e),
+            RoundTied e => When(e),
+            RoundEnded e => When(e),
+            _ => this
+        };
 
         public ScoresView When(GameCreated @event)
         {
