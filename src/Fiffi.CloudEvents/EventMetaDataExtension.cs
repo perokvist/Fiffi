@@ -21,6 +21,7 @@ namespace Fiffi.CloudEvents
         public void Attach(CloudEvent cloudEvent)
         {
             var eventAttributes = cloudEvent.GetAttributes();
+            
             if (attributes == eventAttributes)
                 return;
 
@@ -29,7 +30,7 @@ namespace Fiffi.CloudEvents
             attributes = eventAttributes.ToDictionary(kv => kv.Key, kv => kv.Value.ToString());
         }
 
-        public Type GetAttributeType(string name)
+        public Type? GetAttributeType(string name)
         {
             if (!names.Contains(name))
                 return null;
@@ -50,7 +51,7 @@ namespace Fiffi.CloudEvents
             if (canBeNull && value == null)
                 return true;
 
-            if ((value.GetType().Equals(type)))
+            if (value.GetType().Equals(type))
                 return true;
 
             throw new InvalidOperationException($"Ivalid type for {key}");

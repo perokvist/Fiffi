@@ -1,5 +1,6 @@
 ﻿using CloudNative.CloudEvents;
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Net.Mime;
 using System.Text.Json;
 
@@ -7,7 +8,7 @@ namespace Fiffi.CloudEvents
 {
     public static class Extensions
     {
-        public static CloudEvent ToCloudEvent(this IEvent @event, Uri source = null)
+        public static CloudEvent ToCloudEvent([DisallowNull] this IEvent @event, Uri? source = null)
             => new CloudEvent(CloudEventsSpecVersion.V1_0,
                 @event.GetEventName(),
                 source ?? new Uri($"urn:{@event.GetType().Namespace.Replace('.', ':').ToLower()}"),
