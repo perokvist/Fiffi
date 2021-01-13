@@ -8,6 +8,9 @@ using Newtonsoft.Json.Linq;
 using System.Text.Json;
 using Fiffi.CosmosChangeFeed;
 using Microsoft.OpenApi.Models;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.ApplicationInsights;
+using Microsoft.Extensions.Configuration;
 
 namespace RPS.Web
 {
@@ -21,15 +24,22 @@ namespace RPS.Web
                 .ConfigureWebHostDefaults(webBuilder =>
                     webBuilder.ConfigureServices((ctx, services) =>
                         services
+                            .Tap(s =>
+                            {
+                                if (ctx.Configuration.GetValue<bool>("fiffi-dapr"))
+                                    s.AddFiffiDapr();
+                                else
+                                    s.AddFiffiInMemory();
+                            })
+                            .AddApplicationInsightsTelemetry() 
                             .AddSingleton(TypeResolver.FromMap(TypeResolver.GetEventsInNamespace<GameCreated>()))
-                            .AddFiffiInMemory()
                             .AddSingleton(sp => GameModule.Initialize(
                                 sp.GetRequiredService<IAdvancedEventStore>(),
                                 sp.GetRequiredService<ISnapshotStore>(),
                                 events => sp.GetService<GameModule>().WhenAsync(events)
                                 ))
-                            .AddSwaggerGen(c => c.SwaggerDoc("v1", new OpenApiInfo { Title = "WebApp1", Version = "v1" }))
-                            .AddLogging()
+                            .AddSwaggerGen(c => c.SwaggerDoc("v1", new OpenApiInfo { Title = "RPS Game", Version = "v1" }))
+                            .AddLogging(b => b.AddFilter<ApplicationInsightsLoggerProvider>("", LogLevel.Information))
                             .AddMvc()
                             .AddDapr()
                     )
@@ -40,7 +50,7 @@ namespace RPS.Web
                         app.UseAuthorization();
                         app.UseSwagger();
                         app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json",
-                                         "WebApp1 v1"));
+                                         "RPS Game v1"));
                         app.UseEndpoints(endpoints =>
                         {
                             endpoints.MapSubscribeHandler();
