@@ -29,6 +29,10 @@ jobs:
       run: dotnet nuget push ./artifacts/**.nupkg --skip-duplicate
       env:
         NUGET_AUTH_TOKEN: ${{ github.token }}
+    - name: Install dependencies
+      run: dotnet restore Fiffi.sln
+    - name: Build
+      run: dotnet build Fiffi.sln --configuration Release --no-restore
     - name: Docker Push CI
       uses: jen20/action-docker-build@v1
       with:
