@@ -35,6 +35,6 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
         repository: docker.pkg.github.com/perokvist/fiffi
-        dockerfile: ./samples/RPS/RPS.Web/Dockerfile
+        dockerfile: samples/RPS/RPS.Web/Dockerfile
         tag-latest: true
         registry: https://docker.pkg.github.com
