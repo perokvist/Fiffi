@@ -16,7 +16,6 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\..\..\src\Fiffi.CosmosChangeFeed\Fiffi.CosmosChangeFeed.csproj" />
-		<ProjectReference Include="..\..\..\src\Fiffi.Dapr\Fiffi.Dapr.csproj" />
 		<ProjectReference Include="..\RPS\RPS.csproj" />
 	</ItemGroup>
 
