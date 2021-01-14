@@ -29,3 +29,12 @@ jobs:
       run: dotnet nuget push ./artifacts/**.nupkg --skip-duplicate
       env:
         NUGET_AUTH_TOKEN: ${{ github.token }}
+    - name: Docker Push CI
+      uses: jen20/action-docker-build@v1
+      with:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+        repository: docker.pkg.github.com/perokvist/fiffi
+        dockerfile: samples/RPS/RPS.Web/Dockerfile
+        tag-latest: true
+        registry: https://docker.pkg.github.com
