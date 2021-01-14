@@ -22,7 +22,7 @@ namespace Fiffi.Tests
 
             await ApplicationService.ExecuteAsync<TestState>
                 (store, new TestCommand(id),
-                state => new IEvent[] { new TestEvent(id) }, e => Task.CompletedTask);
+                state => new EventRecord[] { new TestEvent(id) }, e => Task.CompletedTask);
 
             var result = await store.LoadEventStreamAsync(streamName, 0);
 
@@ -41,7 +41,7 @@ namespace Fiffi.Tests
 
             await ApplicationService.ExecuteAsync<TestState>
                (store, new TestCommand(id),
-               state => new IEvent[] { new TestEvent(id) }, e => Task.CompletedTask, snapshotStore, s => s.Version, (v, s) => s.Tap(x => x.Version = v));
+               state => new EventRecord[] { new TestEventRecord("test") }, e => Task.CompletedTask, snapshotStore, s => s.Version, (v, s) => s.Tap(x => x.Version = v));
 
             var result = await store.LoadEventStreamAsync(streamName, 0);
             var state = await snapshotStore.Get<TestState>(streamName);

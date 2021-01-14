@@ -27,7 +27,7 @@ namespace Fiffi.Projections
             where T : class, new()
         {
             var r = await store.LoadEventStreamAsync(streamName, 0);
-            var projection = r.Item1.Rehydrate<T>();
+            var projection = r.Item1.Select(e => e.Event).Rehydrate<T>();
             return projection;
         }
 
@@ -38,10 +38,9 @@ namespace Fiffi.Projections
             var r = await store.LoadEventStreamAsync(streamName, 0);
             return r.Events
                 .Where(e => e.Event.GetType().BaseType == typeof(TEvent)) //TODO fix!
-                //.OfType<IEvent<TEvent>>()
                 .Cast<IEvent>()
                 .GroupBy(x => x.SourceId)
-                .Select(x => x.Rehydrate<T>())
+                .Select(x => x.Select(e => e.Event).Rehydrate<T>())
                 .ToArray();
         }
 

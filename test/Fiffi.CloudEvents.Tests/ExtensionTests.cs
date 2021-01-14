@@ -27,7 +27,7 @@ namespace Fiffi.CloudEvents.Tests
                 .ExecuteAsync(
                     new TestCommand("test"),
                     "testStream",
-                    () => new[] { new TestEvent("test") },
+                    () => new[] { new TestEventRecord("test") },
                     events =>
                     {
                         e.AddRange(events.Select(x => x.ToCloudEvent()));
