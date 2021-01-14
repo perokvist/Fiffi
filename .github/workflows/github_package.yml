@@ -29,3 +29,11 @@ jobs:
       run: dotnet nuget push ./artifacts/**.nupkg --skip-duplicate
       env:
         NUGET_AUTH_TOKEN: ${{ github.token }}
+    - name: Push to GitHub Packages
+      uses: docker/build-push-action@v1
+      with:
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: docker.pkg.github.com
+          repository: perokvist/fiffi/samples/rps/rps.web/
+          tag_with_ref: true
