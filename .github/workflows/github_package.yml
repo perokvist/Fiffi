@@ -2,7 +2,7 @@ name: Github package
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, rps_web_container ]
 
 jobs:
   build:
