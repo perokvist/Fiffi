@@ -43,7 +43,11 @@ namespace Fiffi
             (string aggregateName, string streamName) naming, Func<TState, Task<EventRecord[]>> action, Func<IEvent[], Task> pub)
             where TState : class, new()
             => ExecuteAsync(store, command, naming,
-                events => action(events.Select(e => e.Event).Rehydrate<TState>()).ContinueWith(r => r.Result.ToEnvelopes(command.AggregateId.Id)),
+                async events =>
+                {
+                    var r = await action(events.Select(e => e.Event).Rehydrate<TState>());
+                    return r.ToEnvelopes(command.AggregateId.Id);
+                },
                 ThrowOnCausation(command), pub);
 
 
@@ -52,12 +56,16 @@ namespace Fiffi
             where TState : class, new()
             where TEvent : EventRecord
             => ExecuteAsync(store, command, naming,
-                events => action(events
-                .Where(e => e.SourceId == command.AggregateId.Id)
-                .Where(e => e.Event.GetType().BaseType == typeof(TEvent)) // TODO fix
-                .Select(x => x.Event)
-                .Rehydrate<TState>())
-                .ContinueWith(r => r.Result.ToEnvelopes(command.AggregateId.Id)),
+                async events =>
+                {
+                    var r = await action(events
+                        .Where(e => e.SourceId == command.AggregateId.Id)
+                        .Where(e => e.Event.GetType().BaseType == typeof(TEvent)) // TODO fix
+                        .Select(x => x.Event)
+                        .Rehydrate<TState>());
+                    return r.ToEnvelopes(command.AggregateId.Id);
+                    //.ContinueWith(r => r.Result.ToEnvelopes(command.AggregateId.Id))
+                },
                 None(command), pub);
 
         public static async Task ExecuteAsync<TState>(this IEventStore store, ICommand command, Func<TState, Task<EventRecord[]>> action, Func<IEvent[], Task> pub, AggregateLocks aggregateLocks)
