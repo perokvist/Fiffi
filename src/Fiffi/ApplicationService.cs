@@ -53,10 +53,11 @@ namespace Fiffi
             where TEvent : EventRecord
             => ExecuteAsync(store, command, naming,
                 events => action(events
-                    .Where(e => e.SourceId == command.AggregateId.Id)
-                    .Select(e => e.Event)
-                .Where(e => e.GetType().BaseType == typeof(TEvent)) //TODO fix!
-                .Rehydrate<TState>()).ContinueWith(r => r.Result.ToEnvelopes(command.AggregateId.Id)),
+                .Where(e => e.SourceId == command.AggregateId.Id)
+                .Where(e => e.Event.GetType().BaseType == typeof(TEvent)) // TODO fix
+                .Select(x => x.Event)
+                .Rehydrate<TState>())
+                .ContinueWith(r => r.Result.ToEnvelopes(command.AggregateId.Id)),
                 None(command), pub);
 
         public static async Task ExecuteAsync<TState>(this IEventStore store, ICommand command, Func<TState, Task<EventRecord[]>> action, Func<IEvent[], Task> pub, AggregateLocks aggregateLocks)

@@ -48,7 +48,7 @@ namespace Fiffi.Visualization
                 commandPosition = lastCausation == causation ? commandPosition : blocks.GetMaxTime();
                 lastCausation = causation;
                 blocks.Add((x.Key.Split(':')[0].Trim(), commandPosition, x.First().SourceId.ToString()));
-                blocks.AddRange(x.Select(e => (e.GetType().Name, commandPosition + 1, e.SourceId.ToString())));
+                blocks.AddRange(x.Select(e => (e.Event.GetType().Name, commandPosition + 1, e.SourceId.ToString())));
             });
 
             return blocks;

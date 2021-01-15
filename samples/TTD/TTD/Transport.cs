@@ -23,9 +23,13 @@ namespace TTD
         public bool EnRoute => ETA != 0;
         public bool HasCargo => Cargo != null && Cargo.Any();
 
-        public Transport When(EventRecord @event) => this;
-
-        //public Transport When(IEvent @event) => this;
+        public Transport When(EventRecord @event) => @event switch
+        {
+            Depareted e => When(e),
+            Arrived e => When(e),
+            TransportReady e => When(e),
+            _ => this
+        };
 
         public Transport When(Depareted @event)
             => this.TransportId == @event.TransportId ?
