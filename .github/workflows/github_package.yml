@@ -44,7 +44,6 @@ jobs:
       with:
         context: .
         file: samples/RPS/RPS.Web/Dockerfile
-        platforms: linux/386
         tags: |
             latest     
 
