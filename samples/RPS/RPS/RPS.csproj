@@ -3,7 +3,9 @@
 	<PropertyGroup>
 		<TargetFramework>net5.0</TargetFramework>
 		<LangVersion>preview</LangVersion>
-	</PropertyGroup>
+    <Platform>x64</Platform>
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
 
 	<ItemGroup>
 	  <PackageReference Include="System.Linq.Async" Version="5.0.0" />

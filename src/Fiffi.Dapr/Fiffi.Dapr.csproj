@@ -2,7 +2,9 @@
 
 	<PropertyGroup>
 		<TargetFramework>net5.0</TargetFramework>
-	</PropertyGroup>
+    <Platform>x64</Platform>
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
 
 	<ItemGroup>
 		<PackageReference Include="Dapr.EventStore" Version="0.9.1-alpha" />

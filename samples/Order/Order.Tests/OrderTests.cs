@@ -9,11 +9,19 @@ using System.Linq;
 using System.Threading.Tasks;
 using Warehouse;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Order.Tests
 {
     public class OrderTests
     {
+        private readonly ITestOutputHelper testOutput;
+
+        public OrderTests(ITestOutputHelper testOutput)
+        {
+            this.testOutput = testOutput;
+        }
+
         [Fact]
         public async Task FlowAsync()
         {
@@ -27,6 +35,7 @@ namespace Order.Tests
             await context.WhenAsync(new Sales.PlaceOrder());
 
             context.Then((events, table) => {
+                testOutput.WriteLine(table);
                 Assert.True(events.AsEnvelopes().Happened<OrderCompleted>());
             });
         }
