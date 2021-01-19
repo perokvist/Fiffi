@@ -45,10 +45,15 @@ namespace Fiffi.Projections
         }
 
         public static async Task Publish<T>(this Projector<T> projector, IEvent trigger, string streamName, Func<IEvent[], Task> pub)
-            where T : class, IEvent, IIntegrationEvent, new()
-            => await pub(new IEvent[] { (await projector.ProjectAsync(streamName))
-                .Tap(e => new[] { e }.AddMetaData(trigger, streamName)) 
-            });
+            where T : EventRecord, IIntegrationEvent, new()
+        {
+            var p = await projector.ProjectAsync(streamName);
+            var e = new[] { p }
+            .ToEnvelopes(trigger.SourceId)
+            .ForEach(x => x.Meta.AddMetaData(streamName, trigger))
+            .ToArray();
+            await pub(e);
+        }
 
         public static async Task Project<T>(this Projector<T> projector, string streamName, Func<T, Task> save)
             where T : class, new()
