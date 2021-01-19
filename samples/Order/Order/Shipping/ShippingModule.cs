@@ -41,7 +41,11 @@ namespace Shipping
         public bool Payed;
         public bool Packed;
 
-        public Order When(IEvent @event) => this;
+        public Order When(EventRecord @event) => @event switch { 
+            Payment.PaymentRecieved e => When(e),
+            Warehouse.GoodsPicked e => When(e),
+            _ => this
+        };
 
         public Order When(Payment.PaymentRecieved @event) => this.Tap(x => x.Payed = true);
         public Order When(Warehouse.GoodsPicked @event) => this.Tap(x => x.Packed = true);

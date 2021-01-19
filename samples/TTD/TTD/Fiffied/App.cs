@@ -62,6 +62,9 @@ namespace TTD.Fiffied
             {
                 await module.DispatchAsync(new AdvanceTime { Time = time });
                 time++;
+                if (time >= 100)
+                    break;
+                    //throw new TimeoutException("Time over 100");
             }
 
             var l = (await module.QueryAsync(new CargoLocationQuery())).Locations;

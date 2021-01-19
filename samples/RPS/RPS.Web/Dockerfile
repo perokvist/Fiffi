@@ -1,0 +1,26 @@
+#See https://aka.ms/containerfastmode to understand how Visual Studio uses this Dockerfile to build your images for faster debugging.
+
+FROM mcr.microsoft.com/dotnet/aspnet:5.0-buster-slim AS base
+WORKDIR /app
+EXPOSE 80
+EXPOSE 443
+
+FROM mcr.microsoft.com/dotnet/sdk:5.0-buster-slim AS build
+WORKDIR /src
+COPY ["samples/RPS/RPS.Web/RPS.Web.csproj", "samples/RPS/RPS.Web/"]
+COPY ["samples/RPS/RPS/RPS.csproj", "samples/RPS/RPS/"]
+COPY ["src/Fiffi/Fiffi.csproj", "src/Fiffi/"]
+COPY ["src/Fiffi.CosmosChangeFeed/Fiffi.CosmosChangeFeed.csproj", "src/Fiffi.CosmosChangeFeed/"]
+COPY ["src/Fiffi.Dapr/Fiffi.Dapr.csproj", "src/Fiffi.Dapr/"]
+RUN dotnet restore "samples/RPS/RPS.Web/RPS.Web.csproj"
+COPY . .
+WORKDIR "/src/samples/RPS/RPS.Web"
+RUN dotnet build "RPS.Web.csproj" -c Release -o /app/build
+
+FROM build AS publish
+RUN dotnet publish "RPS.Web.csproj" -c Release -o /app/publish
+
+FROM base AS final
+WORKDIR /app
+COPY --from=publish /app/publish .
+ENTRYPOINT ["dotnet", "RPS.Web.dll"]

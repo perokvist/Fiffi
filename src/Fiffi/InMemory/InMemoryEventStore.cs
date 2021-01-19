@@ -36,7 +36,6 @@ namespace Fiffi.InMemory
             if (concurreny.check && lastVersion != concurreny.version)
                 throw new DBConcurrencyException($"wrong version - expected {concurreny.version} but was {lastVersion} - in stream {streamName}");
 
-
             //TODO check duplicates in passed events
             var duplicates = events.Where(x => currentValue.Any(e => e.EventId() == x.EventId()));
             if (duplicates.Any())

@@ -26,7 +26,7 @@ namespace ChangeFeedSample
             .Commands(cmd => ApplicationService.ExecuteAsync<TestState>(
                     eventStore,
                     cmd,
-                    state => new[] { new TestEvent(cmd.AggregateId) },
+                    state => new[] { new TestEventRecord("test") },
                     events =>
                     {
                         var logger = loggerFactory.CreateLogger<SampleModule>();

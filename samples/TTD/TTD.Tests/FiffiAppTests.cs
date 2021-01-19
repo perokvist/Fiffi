@@ -2,11 +2,20 @@
 using Fiffi.InMemory;
 using System.Threading.Tasks;
 using Xunit;
+using Xunit.Abstractions;
+using Fiffi.Visualization;
 
 namespace TTD.Tests
 {
     public class FiffiAppTests
     {
+        private readonly ITestOutputHelper outputHelper;
+
+        public FiffiAppTests(ITestOutputHelper outputHelper)
+        {
+            this.outputHelper = outputHelper;
+        }
+
         [Theory]
         [InlineData(5, "B")]
         [InlineData(5, "A")]
@@ -19,6 +28,7 @@ namespace TTD.Tests
         {
             var (time, events) = await Fiffied.App.RunAsync(new InMemoryEventStore(),cargo);
 
+            outputHelper.WriteLine(events.Draw());
             Assert.Equal(expectedTime, time);
         }
 

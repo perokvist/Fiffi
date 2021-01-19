@@ -15,7 +15,7 @@ namespace Fiffi.Tests
         => context = TestContextBuilder.Create<InMemoryStateStore>((store, q) =>
         {
             stateStore = store;
-            return new TestContextForStateStore(a => a(store), c => ApplicationService.ExecuteAsync<TestState>(store, c, s => Array.Empty<IEvent>(), e => Task.CompletedTask), q, e => Task.CompletedTask);
+            return new TestContextForStateStore(a => a(store), c => store.ExecuteAsync<TestState>(c, s => Array.Empty<EventRecord>(), e => Task.CompletedTask), q, e => Task.CompletedTask);
         });
 
         [Fact]
