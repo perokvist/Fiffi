@@ -45,8 +45,12 @@ namespace Fiffi
         public static TState Rehydrate<TState>(this IEnumerable<EventRecord> events) where TState : new()
             => events.Aggregate(new TState(), (s, @event) => ((dynamic)s).When(@event));
 
-        public static TState Apply<TState>(this IEnumerable<EventRecord> events, TState currentState) where TState : new()
+        public static TState Apply<TState>(this IEnumerable<EventRecord> events, TState currentState) where TState : class
          => events.Aggregate(currentState, (s, @event) => ((dynamic)s).When((@event)));
+
+        public static TState Apply<TState>(this IEnumerable<EventRecord> events, TState currentState, Func<TState, EventRecord, TState> apply) where TState : class
+         => events.Aggregate(currentState, apply);
+
 
         public static IEvent[] Filter(this IEnumerable<IEvent> events, params Type[] include)
             => events

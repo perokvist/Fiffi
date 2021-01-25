@@ -139,7 +139,7 @@ namespace Fiffi
                 EventVersion = long.Parse(meta.GetMetaOrDefault<long>(nameof(EventStoreMetaData.EventVersion))),
             };
 
-        public static void AddMetaData(this IEvent[] events, ICommand command, string aggregateName, string streamName, long version)
+        public static IEvent[] AddMetaData(this IEvent[] events, ICommand command, string aggregateName, string streamName, long version)
         {
             if (!events.All(x => x.SourceId == command.AggregateId.Id))
                 throw new InvalidOperationException($"Event SourceId not set or not matching the triggering command - {command.GetType()}");
@@ -153,6 +153,7 @@ namespace Fiffi
                         .Tap(e => e.Meta.AddMetaData(version, streamName, aggregateName, command))
                         .Tap(e => e.Meta.AddTypeInfo(e))
                     );
+            return events;
         }
 
         public static void AddMetaData(this IEvent[] events, IEvent trigger, string streamName)

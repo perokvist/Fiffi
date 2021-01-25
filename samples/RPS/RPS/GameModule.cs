@@ -3,7 +3,6 @@ using Fiffi.Modularization;
 using Fiffi.Projections;
 using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -55,33 +54,4 @@ namespace RPS
         public const string Games = "Games";
         public const string All = "All";
     }
-
-    public record GamePlayed(Guid GameId, int Rounds, string Winner, string Looser) : EventRecord, IIntegrationEvent
-    {
-        public ImmutableDictionary<string, int> g = ImmutableDictionary<string, int>.Empty;
-
-        public GamePlayed() : this(Guid.Empty, 0, string.Empty, string.Empty)
-        {}
-
-        public GamePlayed When(EventRecord @event) => Apply(this, @event);
-
-        public static GamePlayed Apply(GamePlayed current, EventRecord @event) => @event switch
-        {
-            GameCreated e => current with { GameId = e.GameId, Rounds = e.Rounds, g = current.g.Pipe(x => x.Add(e.PlayerId, 0)) },
-            GameStarted e => current with { g = current.g.Pipe(x => x.Add(e.PlayerId, 0)) },
-            RoundEnded e => current with { g = current.g.Pipe(x => x.SetItem(e.Winner, x[e.Winner] + 1)) },
-            GameEnded e => current.g.Pipe(g =>
-            {
-                var Winner = g
-                .OrderByDescending(x => x.Value)
-                .First()
-                .Key;
-                var Looser = g
-                    .First(x => x.Key != Winner)
-                    .Key;
-                return (Winner, Looser);
-            }).Pipe(x => current with { Looser = x.Looser, Winner = x.Winner }),
-            _ => current
-        };
-    };
 }

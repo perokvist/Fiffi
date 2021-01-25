@@ -10,13 +10,10 @@ namespace Fiffi
     public static class ApplicationService
     {
         public static Task ExecuteAsync(ICommand command, Func<EventRecord[]> action, Func<IEvent[], Task> pub)
-        {
-            var events = action().ToEnvelopes(command.AggregateId.Id);
-
-            events.AddMetaData(command, string.Empty, string.Empty, 0);
-
-            return pub(events);
-        }
+         => pub(action()
+                .ToEnvelopes(command.AggregateId.Id)
+                .AddMetaData(command, string.Empty, string.Empty, 0)
+             );
 
         public static Task ExecuteAsync(this IEventStore store, ICommand command, string streamName, Func<EventRecord[]> action, Func<IEvent[], Task> pub)
             => ExecuteAsync<TestState>(store, command, (null, streamName), state => Task.FromResult(action()), pub);
@@ -64,7 +61,6 @@ namespace Fiffi
                         .Select(x => x.Event)
                         .Rehydrate<TState>());
                     return r.ToEnvelopes(command.AggregateId.Id);
-                    //.ContinueWith(r => r.Result.ToEnvelopes(command.AggregateId.Id))
                 },
                 None(command), pub);
 
@@ -121,7 +117,7 @@ namespace Fiffi
             (string aggregateName, string streamName) naming,
             Func<TState, IEnumerable<EventRecord>> f,
             Func<IEvent[], Task> pub)
-            where TState : new()
+            where TState : class, new()
         {
             var (aggregateName, streamName) = naming;
             var (state, version) = await getState();

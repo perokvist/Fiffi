@@ -31,6 +31,14 @@ namespace Fiffi.Projections
             return projection;
         }
 
+        public static async Task<T> GetAsync<T>(this IEventStore store, string streamName, T current, Func<T, EventRecord, T> apply)
+            where T : class
+        {
+            var r = await store.LoadEventStreamAsync(streamName, 0);
+            var projection = r.Item1.Select(e => e.Event).Apply(current, apply);
+            return projection;
+        }
+
         public static async Task<T[]> GetAsync<T, TEvent>(this IEventStore store, string streamName)
             where T : class, new()
             where TEvent : EventRecord
