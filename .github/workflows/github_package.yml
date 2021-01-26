@@ -25,10 +25,22 @@ jobs:
       with:
         name: artifacts
         path: artifacts/**/*
-    - name: PushGithub
+    - name: Push to Github packages
       run: dotnet nuget push ./artifacts/**.nupkg --skip-duplicate
       env:
         NUGET_AUTH_TOKEN: ${{ github.token }}
+    
+    - uses: actions/setup-dotnet@v1
+      with:
+        source-url: https://api.nuget.org/v3/index.json
+      env:
+        NUGET_AUTH_TOKEN: ${{secrets.NUGET_API_KEY}}
+    - name: Push to nuget
+      run: dotnet nuget push ./artifacts/**.nupkg --skip-duplicate
+        
+        
+        
+        
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v1
     - name: Set up Docker Buildx
