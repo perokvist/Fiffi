@@ -46,5 +46,6 @@ jobs:
         file: samples/RPS/RPS.Web/Dockerfile
         push: true
         tags: |
+            ghcr.io/perokvist/fiffi/rps.web:v${{github.run_number}}  
             ghcr.io/perokvist/fiffi/rps.web:latest     
 
