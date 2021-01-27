@@ -8,20 +8,17 @@ namespace Fiffi.Testing
 {
     public static class Extensions
     {
-        //public static async Task<T> Then<T>(ITestContext context, IEventStore store, IAggregateId id)
-        //{
-        //    store.
-        //    var state = (await store.LoadEventStreamAsync(typeof(T).Name.AsStreamName(id).StreamName, 0)).Events.Rehydrate<T>();
-
-        //}
-
-        //var(aggregateName, streamName) = typeof(TState).Name.AsStreamName(command.AggregateId);
-
+        public static void Given<TState>(this ITestContext context, IAggregateId id, params EventRecord[] events)
+            => context.Given(events.Select(e => EventEnvelope.Create(id.Id, e).AddTestMetaData<TState>(id)).ToArray());
 
         public static void Given<TState>(this ITestContext context, IAggregateId id, params IEvent[] events)
             => context.Given(events.Select(e => e.AddTestMetaData<TState>(id)).ToArray());
 
         public static bool Happened(this IEnumerable<IEvent> events) => events.Count() >= 1;
+
+        public static bool Happened<T>(this IEnumerable<EventEnvelope<EventRecord>> events) 
+            => events.Select(x => x.Event).OfType<T>().Count() >= 1;
+
 
         public static async Task<(object Value, long Version)> GetAsync(this IStateStore stateManager, Type type, IAggregateId aggregateId)
         {
@@ -63,6 +60,13 @@ namespace Fiffi.Testing
             @event.Tap(e => e.Meta.AddTypeInfo(e));
             @event.Meta.AddMetaData(version, streamName, "test-projection", new TestCommand(new AggregateId(Guid.NewGuid())));
             @event.Meta["test.statetype"] = typeof(TProjection).AssemblyQualifiedName;
+            return @event;
+        }
+
+        public static IEvent AddTestMetaData(this IEvent @event, string streamName, int version = 0)
+        {
+            @event.Tap(e => e.Meta.AddTypeInfo(e));
+            @event.Meta.AddMetaData(version, streamName, "test-stream", new TestCommand(new AggregateId(Guid.NewGuid())));
             return @event;
         }
 

@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Fiffi
+namespace Fiffi.InMemory
 {
     public class InMemoryStateStore : IStateStore
     {
@@ -37,7 +37,7 @@ namespace Fiffi
         {
             var happend = await this.store.LoadEventStreamAsync(typeof(T).Name.AsStreamName(id).StreamName, 0);
             if (!happend.Events.Any()) return (null, 0);
-            return (happend.Events.Rehydrate<T>(), happend.Version);
+            return (happend.Events.Select(e => e.Event).Rehydrate<T>(), happend.Version);
         }
 
         async Task<IEvent[]> GetOutBoxAsync(string sourceId)

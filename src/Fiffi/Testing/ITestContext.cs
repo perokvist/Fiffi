@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using static Fiffi.Testing.TestContext;
 
 namespace Fiffi.Testing
 {

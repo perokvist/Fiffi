@@ -1,4 +1,5 @@
 ﻿[![NuGet Version and Downloads count](https://buildstats.info/nuget/Fiffi?includePreReleases=true)](https://www.nuget.org/packages/Fiffi/)
+![.NET Core](https://github.com/perokvist/Fiffi/workflows/.NET%20Core/badge.svg)
 
 # Fiffi
 Exploration kit for eventdriven services.

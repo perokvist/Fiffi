@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Fiffi
@@ -22,9 +25,16 @@ namespace Fiffi
                 return Task.CompletedTask;
             };
 
-        public static void GuaranteeCorrelation(this ICommand cmd) =>
-            Guid.NewGuid()
-                .Tap(x => cmd.CorrelationId = x)
-                .Tap(x => cmd.CausationId = x);
+        public static void GuaranteeCorrelation(this ICommand cmd)
+        {
+            if (cmd.CorrelationId == default)
+                cmd.CorrelationId = Guid.NewGuid();
+
+            if (cmd.CausationId == default)
+                cmd.CausationId = Guid.NewGuid();
+        }
+
+        public static Task Dispatch(this IEnumerable<ICommand> commands, IEvent trigger, Func<IEvent, ICommand, Task> dispatcher)
+            => Task.WhenAll(commands.Select(c => dispatcher(trigger, c)));
     }
 }

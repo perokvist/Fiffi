@@ -1,3 +1,9 @@
+
+
+#dapr
+**/*binding.yaml
+**/*state.yaml
+
 .vs
 [Oo]bj/
 [Bb]in/
@@ -29,4 +35,8 @@ project.lock.json
 pkg/
 nupkgs/
 release.bat
+statestore.yaml
 
+
+.fake
+.ionide

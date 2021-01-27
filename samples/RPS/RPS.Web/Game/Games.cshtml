@@ -1,0 +1,52 @@
+﻿@model RPS.GamesView
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@{
+    Layout = "/game/_Layout.cshtml";
+    ViewData["Title"] = "Games";
+}
+
+
+<h1>Games</h1>
+
+<a class="pure-button" href="/games/new">Create new game</a>
+
+<table class="pure-table">
+    <thead>
+        <tr>
+            <td>Title</td>
+            <td>Host</td>
+            <td>Status</td>
+            <td>Actions</td>
+        </tr>
+    </thead>
+
+    @foreach (var game in Model.Games.Values)
+    {
+        <tr>
+            <td>
+                <a href="/games/@game.Id" })>@game.Title</a>
+            </td>
+            <td>
+                @if (game.Status.ToLower() == RPS.GameStatus.Started.ToString().ToLower())
+                {
+                    <a href="/games/@game.Id/play?playerId=@game.StartedBy">@game.StartedBy</a>
+                }
+                else
+                {
+                    @game.StartedBy
+                }
+            </td>
+            <td>
+                @game.Status
+            </td>
+            <td>
+                @if (game.Status.ToLower() == RPS.GameStatus.ReadyToStart.ToString().ToLower())
+                {
+                    <a href="/games/@game.Id/join" })>Join</a>
+                }
+            </td>
+        </tr>
+
+    }
+</table>
+

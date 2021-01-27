@@ -1,62 +1,49 @@
 ﻿using System;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Fiffi;
-using Fiffi.CosmoStore.Configuration;
+using Fiffi.Modularization;
 using Fiffi.Testing;
 using Fiffi.Visualization;
 using Microsoft.Extensions.Logging;
 
 namespace ChangeFeedSample
 {
-    public class SampleModule
+    public class SampleModule : Module
     {
-        private readonly Dispatcher<ICommand, Task> dispatcher;
-        private readonly Func<IEvent[], Task> publish;
-
-        public SampleModule(Dispatcher<ICommand, Task> dispatcher, Func<IEvent[], Task> publish)
-        {
-            this.dispatcher = dispatcher;
-            this.publish = publish;
-        }
+        public SampleModule(Func<ICommand, Task> dispatcher, Func<IEvent[], Task> publish) : base(dispatcher, publish, new())
+        { }
 
         public static SampleModule Initialize(IEventStore eventStore, ILoggerFactory loggerFactory)
-        {
-            var logger = loggerFactory.CreateLogger<SampleModule>();
-            var dispatcher = new Dispatcher<ICommand, Task>();
-            var ep = new EventProcessor();
-
-            dispatcher.Register<TestCommand>(cmd =>
-                ApplicationService.ExecuteAsync<TestState>(
-                    eventStore,
-                    cmd,
-                    state => new[] { new TestEvent(cmd.AggregateId) },
-                    events =>
-                    {
-                        logger.LogInformation($"{nameof(ApplicationService)} published {events.Count()} events.");
-                        return Task.CompletedTask;
-                    }));
-
-            ep.Register<TestEvent>(e =>
+            => new Configuration<SampleModule>((d, pub, q, start) => new SampleModule(d, events =>
             {
-                e.Meta.ForEach(m => logger.LogInformation($"{m.Key} : {m.Value}"));
-                return Task.CompletedTask;
-            });
-
-            return new SampleModule(dispatcher, events =>
-            {
+                var logger = loggerFactory.CreateLogger<SampleModule>();
                 logger.LogInformation($"{nameof(SampleModule)} got {events.Length} events");
                 logger.LogInformation(events.Draw());
-                return ep.PublishAsync(events);
-            });
-        }
+                return pub(events);
+            }))
+            .Commands(cmd => ApplicationService.ExecuteAsync<TestState>(
+                    eventStore,
+                    cmd,
+                    state => new[] { new TestEventRecord("test") },
+                    events =>
+                    {
+                        var logger = loggerFactory.CreateLogger<SampleModule>();
+                        logger.LogInformation($"{nameof(ApplicationService)} published {events.Count()} events.");
+                        return Task.CompletedTask;
+                    }))
+            .Updates(events =>
+            {
+                var logger = loggerFactory.CreateLogger<SampleModule>();
+                foreach (var e in events)
+                {
+                    e.Meta.ForEach(m => logger.LogInformation($"{m.Key} : {m.Value}"));
+                }
+                return Task.CompletedTask;
 
-        public Task WhenAsync(params IEvent[] events) => this.publish(events);
-
-        public Task DispatchAsync(ICommand command) => this.dispatcher.Dispatch(command);
+            })
+            .Create(eventStore);
     }
-    public class SampleOptions : ModuleOptions
-    { }
-
 }
 

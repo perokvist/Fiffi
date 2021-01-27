@@ -1,11 +1,8 @@
 using System;
 using Xunit;
-using Fiffi.Testing;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Linq;
-using Fiffi.CosmoStore.Testing;
-using Fiffi.CosmoStore.Configuration;
+using Fiffi.Testing;
 
 namespace Fiffi.CosmoStore.Tests
 {
@@ -16,9 +13,9 @@ namespace Fiffi.CosmoStore.Tests
 
         public CosmoStoreEventStoreTests()
         {
-            Database.DeleteEventStoreAsync(serviceUri, key)
-                .GetAwaiter()
-                .GetResult();
+            //Database.DeleteEventStoreAsync(serviceUri, key)
+            //    .GetAwaiter()
+            //    .GetResult();
         }
 
         [Fact]
@@ -34,8 +31,8 @@ namespace Fiffi.CosmoStore.Tests
             var s = new CosmoStoreEventStore(settings.ConnectionString,
                  TypeResolver.FromMap(TypeResolver.GetEventsFromTypes(typeof(TestEvent))));
 
-            _ = await s.AppendToStreamAsync("test", 0, new IEvent[] { new TestEvent().AddTestMetaData<string>(new AggregateId("id")) });
-            _ = await s.AppendToStreamAsync("test", 1, new IEvent[] { new TestEvent().AddTestMetaData<string>(new AggregateId("id")) });
+            _ = await s.AppendToStreamAsync("test", 0, new IEvent[] { new TestEvent("id").AddTestMetaData<string>(new AggregateId("id")) });
+            _ = await s.AppendToStreamAsync("test", 1, new IEvent[] { new TestEvent("id").AddTestMetaData<string>(new AggregateId("id")) });
 
             var r = await s.LoadEventStreamAsync("test", 0);
             var e = r.Events.ToList();

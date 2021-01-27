@@ -1,0 +1,17 @@
+﻿@model RPS.CreateGame
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@{
+    Layout = "/game/_Layout.cshtml";
+    ViewData["Title"] = "Create game";
+}
+
+
+<h1>Create Game</h1>
+
+<form class="pure-form" asp-route="create" method="post">
+    @Html.EditorForModel()
+    <button class="pure-button" type="submit">Create</button>
+</form>
+
+
+

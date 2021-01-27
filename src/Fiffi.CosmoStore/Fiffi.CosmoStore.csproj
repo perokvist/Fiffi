@@ -1,33 +1,29 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
-    <!--<RuntimeIdentifier>win7-x64</RuntimeIdentifier>-->
-    <VersionPrefix>0.2.0</VersionPrefix>
-    <VersionSuffix>alpha</VersionSuffix>
-    <PackageId>Fiffi.CosmoStore</PackageId>
-    <Title>Fiffi.CosmoStore</Title>
-    <Authors>Per Ökvist</Authors>
-    <PackageLicenseExpression>MS-PL</PackageLicenseExpression>
-    <PackageProjectUrl>https://github.com/perokvist/Fiffi/</PackageProjectUrl>
-    <PackageIconUrl>https://github.com/perokvist/Fiffi/raw/master/fiffi.ico</PackageIconUrl>
-    <Description>Exploration kit for eventdriven services</Description>
-    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <PackageTags>event-driven microservices infrastructure</PackageTags>
-    <Platform>x64</Platform>
-    <PlatformTarget>x64</PlatformTarget>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net5.0</TargetFramework>
+		<!--<RuntimeIdentifier>win7-x64</RuntimeIdentifier>-->
+		<VersionPrefix>0.2.0</VersionPrefix>
+		<VersionSuffix>alpha</VersionSuffix>
+		<PackageId>Fiffi.CosmoStore</PackageId>
+		<Title>Fiffi.CosmoStore</Title>
+		<Authors>Per Ökvist</Authors>
+		<PackageLicenseExpression>MS-PL</PackageLicenseExpression>
+		<PackageProjectUrl>https://github.com/perokvist/Fiffi/</PackageProjectUrl>
+		<PackageIconUrl>https://github.com/perokvist/Fiffi/raw/master/fiffi.ico</PackageIconUrl>
+		<Description>Exploration kit for eventdriven services</Description>
+		<PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+		<PackageTags>event-driven infrastructure</PackageTags>
+		<Platform>x64</Platform>
+		<PlatformTarget>x64</PlatformTarget>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="CosmoStore.CosmosDb" Version="3.0.1" />
-    <PackageReference Include="Microsoft.Azure.DocumentDB.ChangeFeedProcessor" Version="2.2.8" />
-    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="3.1.2" />
-    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="3.1.2" />
-    <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="3.1.2" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="CosmoStore.CosmosDb" Version="3.0.1" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Fiffi\Fiffi.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\Fiffi\Fiffi.csproj" />
+	</ItemGroup>
 
 </Project>

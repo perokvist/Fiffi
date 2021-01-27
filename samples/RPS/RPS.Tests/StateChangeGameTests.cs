@@ -1,4 +1,5 @@
 using Fiffi;
+using Fiffi.InMemory;
 using Fiffi.Testing;
 using Fiffi.Visualization;
 using System;
@@ -18,7 +19,7 @@ namespace RPS.Tests
          => context = TestContextBuilder.Create<InMemoryEventStore, GameModule>((store, pub) =>
             {
                 this.helper = outputHelper;
-                return GameModule.Initialize(store, pub);
+                return GameModule.Initialize(store, new InMemorySnapshotStore(), pub);
             });
 
         [Fact]
@@ -31,9 +32,10 @@ namespace RPS.Tests
             await context.WhenAsync(new CreateGame { Rounds = 3, GameId = Guid.NewGuid(), PlayerId = "tester", Title = "Test Game" });
 
             //Then  
-            context.Then((events, visual) => {
+            context.Then((events, visual) =>
+            {
                 this.helper.WriteLine(visual);
-                Assert.True(events.OfType<GameCreated>().Happened());
+                Assert.True(events.AsEnvelopes().Happened<GameCreated>());
             });
         }
 
@@ -43,21 +45,46 @@ namespace RPS.Tests
             var gameId = Guid.NewGuid();
 
             //Given
-            context.Given(new GameCreated { GameId = gameId, PlayerId = "test@tester.com", Rounds = 1, Title = "test game"  }
-                                .AddTestMetaData<GameState>(new AggregateId(gameId))); 
+            context.Given(
+                EventEnvelope.Create(
+                    gameId.ToString(),
+                    new GameCreated(GameId: gameId, PlayerId: "test@tester.com", Rounds: 1, Title: "test game", Created: DateTime.UtcNow))
+                                .AddTestMetaData<GameState>(new AggregateId(gameId)));
 
             //When
             await context.WhenAsync(new JoinGame { GameId = gameId, PlayerId = "test2@tester.com" });
 
             //Then  
-            context.Then((events, visual) => {
+            context.Then((events, visual) =>
+            {
                 this.helper.WriteLine(visual);
-                Assert.True(events.OfType<GameStarted>().Happened());
-                Assert.True(events.OfType<RoundStarted>().Happened());
+                Assert.True(events.AsEnvelopes().Happened<GameStarted>());
+                Assert.True(events.AsEnvelopes().Happened<RoundStarted>());
             });
         }
 
-  
+        [Fact]
+        public async Task JoinGameAsCreator()
+        {
+            var gameId = Guid.NewGuid();
+
+            //Given
+            context.Given(
+                EventEnvelope.Create(
+                    gameId.ToString(),
+                    new GameCreated(GameId: gameId, PlayerId: "test@tester.com", Rounds: 1, Title: "test game", Created: DateTime.UtcNow))
+                    .AddTestMetaData<GameState>(new AggregateId(gameId)));
+
+            //When
+            await context.WhenAsync(new JoinGame { GameId = gameId, PlayerId = "test@tester.com" });
+
+            //Then  
+            context.Then((events, visual) =>
+            {
+                this.helper.WriteLine(visual);
+                Assert.False(events.Any());
+            });
+        }
 
         [Fact]
         public async Task Handshown()
@@ -65,18 +92,19 @@ namespace RPS.Tests
             var gameId = Guid.NewGuid();
 
             //Given
-            context.Given<GameState>(new AggregateId(gameId), 
-                new GameCreated { GameId = gameId, PlayerId = "test@tester.com", Rounds = 1, Title = "test game" },
-                new GameStarted { GameId = gameId, PlayerId = "foo@tester.com" },
-                new RoundStarted { GameId = gameId, Round = 1 });
+            context.Given<GameState>(new AggregateId(gameId),
+                new GameCreated(GameId: gameId, PlayerId: "test@tester.com", Rounds: 1, Title: "test game", Created: DateTime.UtcNow),
+                new GameStarted(GameId: gameId, PlayerId: "foo@tester.com"),
+                new RoundStarted(GameId: gameId, Round: 1));
 
             //When
             await context.WhenAsync(new PlayGame { GameId = gameId, PlayerId = "foo@tester.com", Hand = Hand.Paper });
 
             //Then  
-            context.Then((events, visual) => {
+            context.Then((events, visual) =>
+            {
                 this.helper.WriteLine(visual);
-                Assert.True(events.OfType<HandShown>().Happened());
+                Assert.True(events.AsEnvelopes().Happened<HandShown>());
             });
         }
 
@@ -87,19 +115,20 @@ namespace RPS.Tests
 
             //Given
             context.Given<GameState>(new AggregateId(gameId),
-                new GameCreated { GameId = gameId, PlayerId = "test@tester.com", Rounds = 1, Title = "test game" },
-                new GameStarted { GameId = gameId, PlayerId = "foo@tester.com" },
-                new RoundStarted { GameId = gameId, Round = 1 },
-                new HandShown { GameId = gameId, PlayerId = "test@tester.com", Hand = Hand.Paper }
+                new GameCreated(GameId: gameId, PlayerId: "test@tester.com", Rounds: 1, Title: "test game", Created: DateTime.UtcNow),
+                new GameStarted(GameId: gameId, PlayerId: "foo@tester.com"),
+                new RoundStarted(GameId: gameId, Round: 1),
+                new HandShown(GameId: gameId, PlayerId: "test@tester.com", Hand: Hand.Paper)
                 );
 
             //When
             await context.WhenAsync(new PlayGame { GameId = gameId, PlayerId = "foo@tester.com", Hand = Hand.Rock });
 
             //Then  
-            context.Then((events, visual) => {
+            context.Then((events, visual) =>
+            {
                 this.helper.WriteLine(visual);
-                Assert.True(events.OfType<GameEnded>().Happened());
+                Assert.True(events.AsEnvelopes().Happened<GameEnded>());
             });
         }
     }

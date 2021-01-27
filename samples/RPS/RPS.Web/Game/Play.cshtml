@@ -1,0 +1,21 @@
+﻿@model RPS.PlayGame
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@{
+    Layout = "/game/_Layout.cshtml";
+    ViewData["Title"] = "Play game";
+}
+
+<h1>Play Game</h1>
+
+<h3>hmm..</h3>
+
+<form class="pure-form" asp-route="play" method="post">
+    <input asp-for="PlayerId" type="hidden" />
+    <select asp-for="Hand" asp-items="Html.GetEnumSelectList<RPS.Hand>().Skip(1)">
+        <option selected="selected" value="">Please select</option>
+    </select>
+    <button class="pure-button" type="submit">Play</button>
+</form>
+
+
+

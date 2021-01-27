@@ -28,9 +28,8 @@ namespace Fiffi.Streamstone.Tests
             var es = new StreamStoneEventStore(table, TypeResolver.FromMap(TypeResolver.GetEventsFromTypes(typeof(TestEvent))));
 
             var id = Guid.NewGuid();
-            var e = new TestEvent()
+            var e = new TestEvent(id)
             {
-                SourceId = id.ToString(),
                 Meta = new Dictionary<string, string>() {
                 { "EventId", Guid.NewGuid().ToString() }
             }
@@ -49,9 +48,8 @@ namespace Fiffi.Streamstone.Tests
             var eventid = Guid.NewGuid().ToString();
 
             var id = Guid.NewGuid();
-            var e = new TestEvent()
+            var e = new TestEvent(id)
             {
-                SourceId = id.ToString(),
                 Meta = new Dictionary<string, string>() {
                 { "EventId", eventid }
             }
@@ -60,9 +58,8 @@ namespace Fiffi.Streamstone.Tests
 
             await es.AppendToStreamAsync("testing", 0, new[] { e });
 
-            var e2 = new TestEvent()
+            var e2 = new TestEvent(id)
             {
-                SourceId = id.ToString(),
                 Meta = new Dictionary<string, string>() {
                 { "EventId", eventid }
             }
