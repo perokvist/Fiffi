@@ -4,12 +4,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Fiffi;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Fiffi.CloudEvents
 {
     public class EventMetaDataExtension : ICloudEventExtension
     {
-        Dictionary<string, string> attributes = new();
+        Dictionary<string, string?> attributes = new();
         readonly string[] names = typeof(EventMetaData).GetProperties().Select(x => x.Name.ToLower()).ToArray();
 
         public EventMetaData MetaData
@@ -27,7 +28,7 @@ namespace Fiffi.CloudEvents
 
             attributes.ForEach(kv => eventAttributes[kv.Key] = kv.Value);
 
-            attributes = eventAttributes.ToDictionary(kv => kv.Key, kv => kv.Value.ToString());
+            attributes = eventAttributes.ToDictionary(kv => kv.Key, kv => kv.Value?.ToString());
         }
 
         public Type? GetAttributeType(string name)
@@ -44,12 +45,9 @@ namespace Fiffi.CloudEvents
                 return false;
 
             var type = typeof(string);
-            var typeInfo = IntrospectionExtensions.GetTypeInfo(type);
-
-            var canBeNull = !typeInfo.IsValueType || (Nullable.GetUnderlyingType(typeInfo) != null);
-
-            if (canBeNull && value == null)
-                return true;
+      
+            if (value == null)
+                return false;
 
             if (value.GetType().Equals(type))
                 return true;
