@@ -11,7 +11,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\Fiffi\Fiffi.csproj" />
+		<ProjectReference Include="..\Fiffi.CloudEvents\Fiffi.CloudEvents.csproj" />
 	</ItemGroup>
 
 </Project>

@@ -18,7 +18,7 @@ namespace Fiffi.Dapr
             global::Dapr.EventStore.DaprEventStore eventStore,
             Func<string, Type> typeResolver
             ) : this(eventStore, typeResolver, (ex, message, @params) => { })
-        {}
+        { }
 
         public DaprEventStore(
             global::Dapr.EventStore.DaprEventStore eventStore,
@@ -72,14 +72,14 @@ namespace Fiffi.Dapr
         }
 
         public static IEvent ToEvent(string data, Type type)
-            => (IEvent)JsonSerializer.Deserialize(data, type);
+       => (IEvent)JsonSerializer.Deserialize(data, type);
 
         public static EventData ToEventData(IEvent e)
-            => new EventData {
+            => new EventData
+            {
                 EventId = e.EventId(),
                 EventName = e.GetType().Name,
                 Data = JsonSerializer.Serialize<object>(e)
             };
-
     }
 }
