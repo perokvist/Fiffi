@@ -18,17 +18,15 @@ namespace Fiffi.CloudEvents
                 new EventMetaDataExtension { MetaData = @event.Meta.GetEventMetaData() })
             {
                 DataContentType = new ContentType(MediaTypeNames.Application.Json),
-                Data = JsonSerializer.Serialize<object>(@event.Event)
+                Data = @event.Event
             };
 
         public static IEvent ToEvent(this CloudEvent cloudEvent, Func<string, Type> typeResolver)
         {
-            var eventType = typeResolver(cloudEvent.Type);
-            var stringContent = cloudEvent.Data as string;
-            if (stringContent == null)
-                throw new ArgumentException("expected cloud event data to by of type string");
+            var @event = cloudEvent.Data as EventRecord; 
+            if (@event == null)
+                throw new ArgumentException("expected cloud event data to by of type EventRecord");
 
-            var @event = JsonSerializer.Deserialize(stringContent, eventType) as EventRecord;
             var envelope = EventEnvelope.Create(cloudEvent.Id, @event);
             envelope.Meta.AddMetaData(cloudEvent.Extension<EventMetaDataExtension>().MetaData);
             return envelope;

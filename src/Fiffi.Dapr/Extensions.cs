@@ -11,7 +11,7 @@ namespace Fiffi.Dapr
     public static class Extensions
     {
         public static Func<IEvent[], Task> IntegrationPublisher(
-            this IServiceProvider sp, string topicName, LogLevel logLevel = LogLevel.Information)
+            this IServiceProvider sp, string pubsubname, string topicName, LogLevel logLevel = LogLevel.Information)
         {
             var logger = (ILogger)sp.GetService(typeof(ILogger<DaprClient>));
             var dc = (DaprClient)sp.GetService(typeof(DaprClient));
@@ -21,7 +21,7 @@ namespace Fiffi.Dapr
                 foreach (var item in events.OfType<IIntegrationEvent>())
                 {
                     logger.Log(logLevel, "publishing event {eventType} to {topicName}", item.GetType().Name, topicName);
-                    await dc.PublishEventAsync<object>(topicName, item);
+                    await dc.PublishEventAsync<object>(pubsubname, topicName, item);
                 }
             };
         }
@@ -55,6 +55,6 @@ namespace Fiffi.Dapr
             .Where(x => !x.RootElement.GetProperty("id").GetString().EndsWith("|head"))
             .Where(x => x.RootElement.GetProperty("id").GetString().Contains(aggregateStreamIdentifier))
             .SelectMany(x => JsonSerializer.Deserialize<global::Dapr.EventStore.EventData[]>(x.RootElement.GetProperty("value").GetRawText()))
-            .Select(x => (IEvent)JsonSerializer.Deserialize(x.Data, typeProvider(x.EventName)));
+            .Select(x => (IEvent)JsonSerializer.Deserialize(x.Data as byte[], typeProvider(x.EventName))); //TODO fix!
     }
 }

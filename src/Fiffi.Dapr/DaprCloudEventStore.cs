@@ -1,5 +1,6 @@
 ﻿using CloudNative.CloudEvents;
 using Dapr.EventStore;
+using Fiffi.CloudEvents;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -12,23 +13,19 @@ namespace Fiffi.Dapr
     public class DaprCloudEventStore : IEventStore<CloudEvent>
     {
         private readonly global::Dapr.EventStore.DaprEventStore eventStore;
-        private readonly Func<string, Type> typeResolver;
         private readonly Action<Exception, string, object[]> logger;
 
         public DaprCloudEventStore(
-            global::Dapr.EventStore.DaprEventStore eventStore,
-            Func<string, Type> typeResolver
-            ) : this(eventStore, typeResolver, (ex, message, @params) => { })
+            global::Dapr.EventStore.DaprEventStore eventStore
+            ) : this(eventStore, (ex, message, @params) => { })
         { }
 
         public DaprCloudEventStore(
             global::Dapr.EventStore.DaprEventStore eventStore,
-            Func<string, Type> typeResolver,
             Action<Exception, string, object[]> logger
             )
         {
             this.eventStore = eventStore;
-            this.typeResolver = typeResolver;
             this.logger = logger;
         }
 
@@ -39,21 +36,16 @@ namespace Fiffi.Dapr
         {
             var (events, v) = await eventStore.LoadEventStreamAsync(streamName, version);
             var ce = events.Select(e =>
-            ToEvent(e.Data, typeResolver(e.EventName)));
-            return (ce, 0);
+            ToEvent(e.Data as byte[])); //TODO fix!
+            return (ce, v);
                 //.Tap(x => x.Meta.AddStoreMetaData(new EventStoreMetaData { EventVersion = e.Version, EventPosition = e.Version }))),
                 //v);
         }
 
-        public static CloudEvent ToEvent(string data, Type type)
-       => (CloudEvent)JsonSerializer.Deserialize(data, type);
+        public static CloudEvent ToEvent(byte[] data)
+            => new JsonEventFormatter().DecodeStructuredEvent(data, new EventMetaDataExtension());
 
         public static EventData ToEventData(CloudEvent e)
-           => new EventData
-           {
-               EventId = Guid.NewGuid(), //e.EventId(),
-               EventName = e.GetType().Name,
-               Data = JsonSerializer.Serialize<object>(e)
-           };
+           => new EventData(e.Id, e.Type, new JsonEventFormatter().EncodeStructuredEvent(e, out _));
     }
 }

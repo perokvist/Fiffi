@@ -66,7 +66,7 @@ namespace Fiffi.Dapr
         {
             var (events, v) = await eventStore.LoadEventStreamAsync(streamName, version);
             return (events.Select(e =>
-            ToEvent(e.Data, typeResolver(e.EventName))
+            ToEvent(e.Data as string, typeResolver(e.EventName)) //TODO fix!
                 .Tap(x => x.Meta.AddStoreMetaData(new EventStoreMetaData { EventVersion = e.Version, EventPosition = e.Version }))),
                 v);
         }
@@ -75,11 +75,6 @@ namespace Fiffi.Dapr
        => (IEvent)JsonSerializer.Deserialize(data, type);
 
         public static EventData ToEventData(IEvent e)
-            => new EventData
-            {
-                EventId = e.EventId(),
-                EventName = e.GetType().Name,
-                Data = JsonSerializer.Serialize<object>(e)
-            };
+            => new EventData(e.EventId().ToString(), e.GetType().Name, e);
     }
 }
