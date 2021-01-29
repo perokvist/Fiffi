@@ -4,7 +4,10 @@ using Fiffi.CloudEvents;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.IO;
 using System.Linq;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -36,16 +39,17 @@ namespace Fiffi.Dapr
         {
             var (events, v) = await eventStore.LoadEventStreamAsync(streamName, version);
             var ce = events.Select(e =>
-            ToEvent(e.Data as byte[])); //TODO fix!
+            ToEvent(e.Data as string)); //TODO fix!
             return (ce, v);
                 //.Tap(x => x.Meta.AddStoreMetaData(new EventStoreMetaData { EventVersion = e.Version, EventPosition = e.Version }))),
                 //v);
         }
 
-        public static CloudEvent ToEvent(byte[] data)
-            => new JsonEventFormatter().DecodeStructuredEvent(data, new EventMetaDataExtension());
+        public static CloudEvent ToEvent(string data)
+            => new JsonEventFormatter().DecodeStructuredEvent(Encoding.UTF8.GetBytes(data), new EventMetaDataExtension());
 
         public static EventData ToEventData(CloudEvent e)
            => new EventData(e.Id, e.Type, new JsonEventFormatter().EncodeStructuredEvent(e, out _));
-    }
+
+      }
 }
