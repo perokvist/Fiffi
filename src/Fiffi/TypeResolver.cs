@@ -18,8 +18,8 @@ namespace Fiffi
 
 		public static Dictionary<string, Type> GetEventsInAssembly<T>()
 			=> typeof(T).GetTypeInfo().Assembly.GetTypes()
-				.Where(x => x.GetInterfaces().Any(i => i == typeof(IEvent)))
-				.ToDictionary(type => type.Name, type => type);
+                .Where(x => x.BaseType == typeof(EventRecord))
+                .ToDictionary(type => type.Name, type => type);
 
 		public static Dictionary<string, Type> GetEventsFromList(params IEvent[] events)
 			=> GetEventsFromTypes(events.Select(x => x.GetType()).ToArray());

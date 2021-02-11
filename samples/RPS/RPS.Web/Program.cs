@@ -1,11 +1,13 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Fiffi;
-using Microsoft.OpenApi.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.ApplicationInsights;
+using Microsoft.OpenApi.Models;
+using Fiffi;
+using Fiffi.Dapr;
 
 namespace RPS.Web
 {
@@ -21,9 +23,9 @@ namespace RPS.Web
                         services
                             .Tap(s =>
                             {
-                                //if (ctx.Configuration.GetValue<bool>("fiffi-dapr"))
-                                //    s.AddFiffiDapr();
-                                //else
+                                if (ctx.Configuration.GetValue<bool>("FIFFI-DAPR"))
+                                    s.AddFiffiDapr();
+                                else
                                     s.AddFiffiInMemory();
                             })
                             .AddApplicationInsightsTelemetry() 
@@ -64,16 +66,17 @@ namespace RPS.Web
                .AddTransient<ISnapshotStore, Fiffi.InMemory.InMemorySnapshotStore>();
 
 
-        //public static IServiceCollection AddFiffiDapr(this IServiceCollection services)
-        //=> services
-        //.AddSingleton<global::Dapr.EventStore.DaprEventStore>()
-        //.AddSingleton<IAdvancedEventStore, DaprEventStore>()
-        //.AddTransient<ISnapshotStore, Fiffi.Dapr.SnapshotStore>()
-        //.AddSingleton(sp => GameModule.Initialize(
-        //                    sp.GetRequiredService<IAdvancedEventStore>(),
-        //                    sp.GetRequiredService<ISnapshotStore>(),
-        //                    Fiffi.Dapr.Extensions.IntegrationPublisher(sp, "in")
-        //                    ));
+        public static IServiceCollection AddFiffiDapr(this IServiceCollection services)
+        => services
+        .AddSingleton<global::Dapr.EventStore.DaprEventStore>()
+        .AddSingleton<IAdvancedEventStore, DaprEventStore>()
+        .AddTransient<ISnapshotStore, Fiffi.Dapr.SnapshotStore>()
+        .AddSingleton(sp => GameModule.Initialize(
+                            sp.GetRequiredService<IAdvancedEventStore>(),
+                            sp.GetRequiredService<ISnapshotStore>(),
+                            events => sp.GetService<GameModule>().WhenAsync(events)
+                            //Fiffi.Dapr.Extensions.IntegrationPublisher(sp, "in")
+                            ));
 
         //public static IServiceCollection ChangeFeed(this IServiceCollection services, WebHostBuilderContext ctx)
         //    => services
