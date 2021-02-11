@@ -20,7 +20,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="Streamstone" Version="2.3.0" />
-	</ItemGroup>
+  </ItemGroup>
 
 	<ItemGroup>
 		<ProjectReference Include="..\Fiffi\Fiffi.csproj" />
