@@ -22,7 +22,7 @@ namespace Fiffi.Dapr
         public async Task<T> Get<T>(string key)
             where T : class, new()
         {
-            var item = await client.GetStateAsync<T>(StoreName, key).AsTask();
+            var item = await client.GetStateAsync<T>(StoreName, key);
             if (item == null)
                 return new T();
 

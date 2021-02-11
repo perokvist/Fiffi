@@ -16,9 +16,7 @@ namespace Fiffi
          new T Event { get; set; }
     }
 
-    public abstract record Record;
-
-    public abstract record EventRecord : Record;
+    public abstract record EventRecord;
 
     public static class EventEnvelope
     {

@@ -7,11 +7,11 @@
   </PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Dapr.EventStore" Version="0.9.1-alpha" />
+	  <PackageReference Include="Dapr.EventStore" Version="1.0.0-rc5.alpha1" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\Fiffi\Fiffi.csproj" />
+	  <ProjectReference Include="..\Fiffi\Fiffi.csproj" />
 	</ItemGroup>
 
 </Project>
