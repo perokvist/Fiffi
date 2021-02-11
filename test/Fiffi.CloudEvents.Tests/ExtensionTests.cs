@@ -48,7 +48,7 @@ namespace Fiffi.CloudEvents.Tests
             Assert.Equal(eventJson, readEventJson);
         }
 
-        [Fact(Skip = "testing")]
+        [Fact(Skip = "debug")]
         public async Task SerializeCompare()
         {
             var e = EventEnvelope.Create("test", new TestEventRecord("hey"));
@@ -57,6 +57,16 @@ namespace Fiffi.CloudEvents.Tests
             var eventJson = await new CloudEventContent(e.ToCloudEvent(), ContentMode.Structured, new JsonEventFormatter()).ReadAsStringAsync();
             var json = JsonSerializer.Serialize<object>(e.ToCloudEvent());
             Assert.Equal(eventJson, json);
+        }
+
+        [Fact(Skip = "debug")]
+        public void ToMap()
+        {
+            var e = EventEnvelope.Create("test", new TestEventRecord("hey"));
+            e.Meta.AddTypeInfo(e);
+            e.Meta.AddMetaData(new EventMetaData(new(), new(), new(), "testStream", "a", 0, "test", 0));
+            var ce = e.ToCloudEvent();
+            var map = ce.ToJson().ToMap();
         }
     }
 }

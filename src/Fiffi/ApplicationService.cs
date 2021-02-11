@@ -18,14 +18,7 @@ namespace Fiffi
         public static Task ExecuteAsync(this IEventStore store, ICommand command, string streamName, Func<EventRecord[]> action, Func<IEvent[], Task> pub)
             => ExecuteAsync<TestState>(store, command, (null, streamName), state => Task.FromResult(action()), pub);
 
-        public static Task ExecuteAsync<TState, TEvent>(this IEventStore store, ICommand command, string streamName, Func<TState, EventRecord[]> action, Func<IEvent[], Task> pub)
-            where TState : class, new()
-            where TEvent : EventRecord
-            => ExecuteAsync<TState, TEvent>(store,
-                command,
-                (typeof(TState).Name.AsStreamName(command.AggregateId).AggregateName, streamName),
-                state => Task.FromResult(action(state)),
-                pub);
+
 
         public static Task ExecuteAsync<TState>(this IEventStore store, ICommand command, Func<TState, EventRecord[]> action, Func<IEvent[], Task> pub)
           where TState : class, new()
@@ -47,6 +40,15 @@ namespace Fiffi
                 },
                 ThrowOnCausation(command), pub);
 
+
+        public static Task ExecuteAsync<TState, TEvent>(this IEventStore store, ICommand command, string streamName, Func<TState, EventRecord[]> action, Func<IEvent[], Task> pub)
+            where TState : class, new()
+            where TEvent : EventRecord
+                => ExecuteAsync<TState, TEvent>(store,
+                command,
+                (typeof(TState).Name.AsStreamName(command.AggregateId).AggregateName, streamName),
+                state => Task.FromResult(action(state)),
+                pub);
 
         public static Task ExecuteAsync<TState, TEvent>(this IEventStore store, ICommand command,
             (string aggregateName, string streamName) naming, Func<TState, Task<EventRecord[]>> action, Func<IEvent[], Task> pub)
@@ -104,11 +106,6 @@ namespace Fiffi
 
             await pub(events); //need to always execute due to locks        
         }
-
-
-        public static Task ExecuteAsync<TState>(this IStateStore stateManager, ICommand command, Func<TState, IEnumerable<EventRecord>> f, Func<IEvent[], Task> pub)
-            where TState : class, new()
-            => ExecuteAsync(() => stateManager.GetAsync<TState>(command.AggregateId), (state, version, evts) => stateManager.SaveAsync(command.AggregateId, state, version, evts), command, typeof(TState).Name.AsStreamName(command.AggregateId), f, pub);
 
         public static async Task ExecuteAsync<TState>(
             Func<Task<(TState, long)>> getState,
@@ -182,5 +179,10 @@ namespace Fiffi
              if (events.Any(e => e.GetCausationId() == command.CausationId))
                  throw new Exception($"Duplicate Execution of command based on causation - ({command.CausationId}) - {command.GetType()}. Events with the same causation already exsist.");
          };
+
+        public static Task ExecuteAsync<TState>(this IStateStore stateManager, ICommand command, Func<TState, IEnumerable<EventRecord>> f, Func<IEvent[], Task> pub)
+        where TState : class, new()
+        => ExecuteAsync(() => stateManager.GetAsync<TState>(command.AggregateId), (state, version, evts) => stateManager.SaveAsync(command.AggregateId, state, version, evts), command, typeof(TState).Name.AsStreamName(command.AggregateId), f, pub);
+
     }
 }
