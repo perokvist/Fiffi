@@ -29,13 +29,16 @@ namespace Fiffi.Dapr
             return item;
         }
 
-        public async Task Apply<T>(string key, Func<T, T> f)
+        public Task Apply<T>(string key, Func<T, T> f)
             where T : class, new()
+            => Apply<T>(key, f, () => new T());
+
+        public async Task Apply<T>(string key, Func<T, T> f, Func<T> c)
         {
             var (item, tag) = await client.GetStateAndETagAsync<T>(StoreName, key);
             if (item == null)
             {
-                item = new T();
+                item = c();
             }
             var newItem = f(item);
             var success = await client.TrySaveStateAsync(StoreName, key, newItem, tag);

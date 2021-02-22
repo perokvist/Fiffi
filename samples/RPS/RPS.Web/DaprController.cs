@@ -31,7 +31,7 @@ namespace RPS.Web
         }
 
         [HttpPost("/in")]
-        [Topic("in")]
+        [Topic("pubsub", "in")]
         [ApiExplorerSettings(IgnoreApi = true)]
         public async Task<IActionResult> InboxAsync()
         {

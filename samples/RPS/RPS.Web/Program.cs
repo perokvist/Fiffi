@@ -38,7 +38,11 @@ namespace RPS.Web
                             .AddSwaggerGen(c => c.SwaggerDoc("v1", new OpenApiInfo { Title = "RPS Game", Version = "v1" }))
                             .AddLogging(b => b.AddFilter<ApplicationInsightsLoggerProvider>("", LogLevel.Information))
                             .AddMvc()
-                            .AddDapr()
+                            .AddDapr(client => {
+                                var endpoint = ctx.Configuration.GetValue<string>("DAPR_GRPC_ENDPOINT");
+                                if (!string.IsNullOrWhiteSpace(endpoint))
+                                    client.UseGrpcEndpoint(endpoint);
+                            })
                     )
                     .Configure(app =>
                     {
