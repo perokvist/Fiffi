@@ -33,6 +33,8 @@ namespace RPS
             {
                 await store.AppendToStreamAsync(Streams.Games, events.Filter(typeof(GameCreated), typeof(GameStarted), typeof(GameEnded)));
                 await store.Projector<GamesView>().Project(Streams.Games, snapshotStore);
+                //await snapshotStore.Apply<GamesView>(view => events.Select(x => x.Event).Apply(view));
+                //await snapshotStore.Apply<GamesView>(events);
             })
             .Updates(events => store.AppendToStreamAsync(Streams.All, events.ToArray()))
             .Triggers(async (events, d) =>

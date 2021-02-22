@@ -106,7 +106,7 @@ namespace Fiffi
             EventId : Guid.NewGuid(),
             OccuredAt : occuredAt == default(long) ? DateTime.UtcNow.Ticks : occuredAt,
             StreamName : streamName,
-            TriggeredBy : trigger.GetType().Name,
+            TriggeredBy : trigger.Event.GetType().Name,
             BasedOnStreamVersion: 0
         ));
 
