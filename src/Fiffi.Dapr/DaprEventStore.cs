@@ -75,6 +75,6 @@ namespace Fiffi.Dapr
        => (IEvent)JsonSerializer.Deserialize(data, type);
 
         public static EventData ToEventData(IEvent e)
-            => new EventData(e.EventId().ToString(), e.GetType().Name, e);
+            => new EventData(e.EventId().ToString(), e.Event.GetType().Name, e);
     }
 }
