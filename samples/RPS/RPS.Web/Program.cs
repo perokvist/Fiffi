@@ -8,6 +8,8 @@ using Microsoft.Extensions.Logging.ApplicationInsights;
 using Microsoft.OpenApi.Models;
 using Fiffi;
 using Fiffi.Dapr;
+using System.Text.Json;
+using Fiffi.Serialization;
 
 namespace RPS.Web
 {
@@ -29,6 +31,10 @@ namespace RPS.Web
                                     s.AddFiffiInMemory();
                             })
                             .AddApplicationInsightsTelemetry() 
+                            .AddSingleton(new JsonSerializerOptions()
+                                .Tap(x => x.Converters.Add(new EventRecordConverter()))
+                                .Tap(x => x.PropertyNameCaseInsensitive = true)
+                            )
                             .AddSingleton(TypeResolver.FromMap(TypeResolver.GetEventsInNamespace<GameCreated>()))
                             .AddSingleton(sp => GameModule.Initialize(
                                 sp.GetRequiredService<IAdvancedEventStore>(),
