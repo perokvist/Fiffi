@@ -10,26 +10,30 @@ namespace Fiffi.Serialization
 {
     public static class Extensions
     {
-        public static IEvent Deserialize(this Func<string, Type> resolver, string json)
-        {
-            var meta = JsonSerializer.Deserialize<MetaEvent>(json);
-            var e = (IEvent)JsonSerializer.Deserialize(json, resolver(meta.GetEventName()));
-            if (e.Meta == null || !e.Meta.Any())
-                e.Meta = meta.Meta;
 
-            return e;
-        }
+        public static IDictionary<string, object> ToMap(this string json, JsonSerializerOptions opt = null)
+            => JsonSerializer.Deserialize<Dictionary<string, object>>(json, opt) ?? new();
+
+        //public static IEvent Deserialize(this Func<string, Type> resolver, string json)
+        //{
+        //    var meta = JsonSerializer.Deserialize<MetaEvent>(json);
+        //    var e = (IEvent)JsonSerializer.Deserialize(json, resolver(meta.GetEventName()));
+        //    if (e.Meta == null || !e.Meta.Any())
+        //        e.Meta = meta.Meta;
+
+        //    return e;
+        //}
 
 
-        public static async Task<IEvent> DeserializeAsync(this Func<string, Type> resolver, Stream json)
-        {
-            var meta = await JsonSerializer.DeserializeAsync<MetaEvent>(json);
-            var e = (IEvent)(await JsonSerializer.DeserializeAsync(json, resolver(meta.GetEventName())));
-            if (e.Meta == null || !e.Meta.Any())
-                e.Meta = meta.Meta;
+        //public static async Task<IEvent> DeserializeAsync(this Func<string, Type> resolver, Stream json)
+        //{
+        //    var meta = await JsonSerializer.DeserializeAsync<MetaEvent>(json);
+        //    var e = (IEvent)(await JsonSerializer.DeserializeAsync(json, resolver(meta.GetEventName())));
+        //    if (e.Meta == null || !e.Meta.Any())
+        //        e.Meta = meta.Meta;
 
-            return e;
-        }
+        //    return e;
+        //}
     }
 
     public record MetaEvent : IEvent
