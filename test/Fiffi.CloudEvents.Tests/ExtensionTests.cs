@@ -1,4 +1,5 @@
 using CloudNative.CloudEvents;
+using Fiffi.Serialization;
 using Fiffi.Testing;
 using System;
 using System.Collections.Generic;

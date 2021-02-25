@@ -45,7 +45,5 @@ namespace Fiffi.CloudEvents
         public static string ToJson(this CloudEvent e)
             => Encoding.UTF8.GetString(new JsonEventFormatter().EncodeStructuredEvent(e, out _));
 
-        public static IDictionary<string, object> ToMap(this string json)
-            => JsonSerializer.Deserialize<Dictionary<string, object>>(json) ?? new();
     }
 }

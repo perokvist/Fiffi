@@ -7,7 +7,7 @@
   </PropertyGroup>
 
 	<ItemGroup>
-	  <PackageReference Include="StateStore.Dapr.EventStore" Version="1.0.0-rtm-alpha.5" />
+	  <PackageReference Include="StateStore.Dapr.EventStore" Version="1.0.0-rtm-alpha.9" />
 	</ItemGroup>
 
 	<ItemGroup>
