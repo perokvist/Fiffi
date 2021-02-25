@@ -1,10 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace Fiffi.Serialization
 {
@@ -13,6 +9,9 @@ namespace Fiffi.Serialization
 
         public static IDictionary<string, object> ToMap(this string json, JsonSerializerOptions opt = null)
             => JsonSerializer.Deserialize<Dictionary<string, object>>(json, opt) ?? new();
+
+        public static Func<IEvent, JsonSerializerOptions, object> AsMap() => (e, opt)
+            => JsonSerializer.Serialize(e, opt).ToMap(opt);
 
         //public static IEvent Deserialize(this Func<string, Type> resolver, string json)
         //{

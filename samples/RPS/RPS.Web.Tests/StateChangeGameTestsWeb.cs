@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
@@ -76,6 +77,33 @@ namespace RPS.Web.Tests
                 Assert.True(events.AsEnvelopes().Happened<GameStarted>());
                 Assert.True(events.AsEnvelopes().Happened<RoundStarted>());
             });
+        }
+
+        [Fact]
+        public void PlayerTupleConverter()
+        {
+            var gameId = Guid.NewGuid();
+
+            //Given
+            var state = new EventRecord[] {
+                new GameCreated(GameId : gameId, PlayerId : "lisa@tester.com", Rounds : 1, Title : "test game", Created : DateTime.UtcNow),
+                new GameStarted(GameId : gameId, PlayerId : "alex@tester.com"),
+                new RoundStarted(GameId : gameId, Round : 1),
+                new HandShown(GameId : gameId, Hand : Hand.Paper, PlayerId : "lisa@tester.com"),
+                new HandShown(GameId : gameId, Hand : Hand.Rock, PlayerId : "alex@tester.com"),
+                new RoundEnded(GameId : gameId, Round : 1, Looser : "lisa@tester.com", Winner : "alex@tester.com"),
+                new GameEnded(GameId : gameId)
+            }.Rehydrate<GameState>();
+
+            var options = new JsonSerializerOptions().Tap(x => x.Converters.Add(new PlayerTupleConverter()));
+            var json = JsonSerializer.Serialize(state, options);
+            var gameState = JsonSerializer.Deserialize<GameState>(json, options);
+
+            Assert.NotNull(gameState?.Players.PlayerOne);
+            Assert.Equal("lisa@tester.com", gameState.Players.PlayerOne.Id);
+            Assert.Equal("alex@tester.com", gameState.Players.PlayerTwo.Id);
+            Assert.Equal(Hand.Paper, gameState.Players.PlayerOne.Hand);
+            Assert.Equal(Hand.Rock, gameState.Players.PlayerTwo.Hand);
         }
     }
 }

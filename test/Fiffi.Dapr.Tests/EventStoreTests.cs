@@ -23,10 +23,14 @@ namespace Fiffi.Dapr.Tests
             //Environment.SetEnvironmentVariable("DAPR_GRPC_PORT", "50001");
             var inDapr = Environment.GetEnvironmentVariable("DAPR_GRPC_PORT") != null;
             global::Dapr.EventStore.DaprEventStore store = null;
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+            .Tap(x => x.Converters.Add(new EventRecordConverter()))
+            .Tap(x => x.PropertyNameCaseInsensitive = true);
 
             if (inDapr)
             {
                 client = new DaprClientBuilder()
+                    .UseJsonSerializationOptions(options)
                     .Build();
 
                 store = new global::Dapr.EventStore.DaprEventStore(client, NullLogger<global::Dapr.EventStore.DaprEventStore>.Instance)
@@ -51,7 +55,8 @@ namespace Fiffi.Dapr.Tests
             this.store = new DaprEventStore(
                 store,
                 TypeResolver.FromMap(TypeResolver.GetEventsFromTypes(typeof(GameCreated), typeof(TestEventRecord))),
-                new JsonSerializerOptions { PropertyNameCaseInsensitive = true }.Tap(x => x.Converters.Add(new EventRecordConverter())),
+                options,
+                Serialization.Extensions.AsMap(),
                 (ex, s, o) => { });
         }
 

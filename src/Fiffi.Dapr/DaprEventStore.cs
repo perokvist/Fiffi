@@ -15,19 +15,23 @@ namespace Fiffi.Dapr
         private readonly global::Dapr.EventStore.DaprEventStore eventStore;
         private readonly Func<string, Type> typeResolver;
         private readonly JsonSerializerOptions jsonSerializerOptions;
+        private readonly Func<IEvent, JsonSerializerOptions, object> converter;
         private readonly Action<Exception, string, object[]> logger;
 
         public DaprEventStore(
             global::Dapr.EventStore.DaprEventStore eventStore,
             JsonSerializerOptions jsonSerializerOptions,
             Func<string, Type> typeResolver
-            ) : this(eventStore, typeResolver, jsonSerializerOptions, (ex, message, @params) => { })
+            ) : this(eventStore, typeResolver, jsonSerializerOptions,
+                Serialization.Extensions.AsMap(),
+                (ex, message, @params) => { })
         { }
 
         public DaprEventStore(
             global::Dapr.EventStore.DaprEventStore eventStore,
             Func<string, Type> typeResolver,
             JsonSerializerOptions jsonSerializerOptions,
+            Func<IEvent, JsonSerializerOptions, object> converter,
             Action<Exception, string, object[]> logger
             )
         {
@@ -37,6 +41,7 @@ namespace Fiffi.Dapr
                     });
             this.typeResolver = typeResolver;
             this.jsonSerializerOptions = jsonSerializerOptions;
+            this.converter = converter;
             this.logger = logger;
         }
 
@@ -48,7 +53,7 @@ namespace Fiffi.Dapr
             {
                 try
                 {
-                    return await eventStore.AppendToStreamAsync(streamName, events.Select(e => ToEventData(e, this.jsonSerializerOptions)).ToArray());
+                    return await eventStore.AppendToStreamAsync(streamName, events.Select(e => ToEventData(e, x => this.converter(x, jsonSerializerOptions))).ToArray());
                 }
                 catch (DBConcurrencyException ex)
                 {
@@ -69,7 +74,7 @@ namespace Fiffi.Dapr
         }
 
         public Task<long> AppendToStreamAsync(string streamName, long version, params IEvent[] events)
-         => eventStore.AppendToStreamAsync(streamName, version, events.Select(e => ToEventData(e, this.jsonSerializerOptions)).ToArray());
+         => eventStore.AppendToStreamAsync(streamName, version, events.Select(e => ToEventData(e, x => this.converter(x, this.jsonSerializerOptions))).ToArray());
 
         public async Task<(IEnumerable<IEvent> Events, long Version)> LoadEventStreamAsync(string streamName, long version)
         {
@@ -97,10 +102,7 @@ namespace Fiffi.Dapr
             };
         }
 
-        public static EventData ToEventData(IEvent e, JsonSerializerOptions options)
-        {
-            var data = JsonSerializer.Serialize(e, options).ToMap(options);
-            return new EventData(e.EventId().ToString(), e.Event.GetType().Name, data);
-        }
+        public static EventData ToEventData(IEvent e, Func<IEvent, object> f)
+         => new EventData(e.EventId().ToString(), e.Event.GetType().Name, f(e));
     }
 }

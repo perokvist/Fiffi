@@ -39,7 +39,7 @@ namespace RPS
                   }).ToAsyncEnumerable()) ;
             })
             .Query<GamesQuery, GamesView>(q => snapshotStore.Get<GamesView>())
-            .Query<GameQuery, GameView>(async q => (await store.Projector<GamesView>().ProjectAsync(Streams.Games)).Games.First(x => x.Key == q.GameId.ToString()).Value) //TODO ext with stream name only
+            .Query<GameQuery, GameView>(async q => (await snapshotStore.Get<GamesView>()).Games.First(x => x.Key == q.GameId.ToString()).Value) //TODO ext with stream name only
             .Query<ScoreQuery, ScoresView>(q => store.Projector<ScoresView>().ProjectAsync(Streams.All))
             .Create(store);
     }

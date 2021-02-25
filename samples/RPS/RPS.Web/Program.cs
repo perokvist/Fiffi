@@ -15,6 +15,11 @@ namespace RPS.Web
 {
     public class Program
     {
+        readonly static JsonSerializerOptions JsonSerializerOptions = new JsonSerializerOptions()
+                                .Tap(x => x.Converters.Add(new EventRecordConverter()))
+                                .Tap(x => x.Converters.Add(new PlayerTupleConverter()))
+                                .Tap(x => x.PropertyNameCaseInsensitive = true);
+
         public static void Main(string[] args)
             => CreateHostBuilder(args).Build().Run();
 
@@ -26,15 +31,12 @@ namespace RPS.Web
                             .Tap(s =>
                             {
                                 if (ctx.Configuration.GetValue<bool>("FIFFI-DAPR"))
-                                    s.AddFiffiDapr("statestore", "statestore");
+                                    s.AddFiffiDapr("statestore");
                                 else
                                     s.AddFiffiInMemory();
                             })
-                            .AddApplicationInsightsTelemetry() 
-                            .AddSingleton(new JsonSerializerOptions()
-                                .Tap(x => x.Converters.Add(new EventRecordConverter()))
-                                .Tap(x => x.PropertyNameCaseInsensitive = true)
-                            )
+                            .AddApplicationInsightsTelemetry()
+                            .AddSingleton(JsonSerializerOptions)
                             .AddSingleton(TypeResolver.FromMap(TypeResolver.GetEventsInNamespace<GameCreated>()))
                             .AddSingleton(sp => GameModule.Initialize(
                                 sp.GetRequiredService<IAdvancedEventStore>(),
@@ -44,7 +46,9 @@ namespace RPS.Web
                             .AddSwaggerGen(c => c.SwaggerDoc("v1", new OpenApiInfo { Title = "RPS Game", Version = "v1" }))
                             .AddLogging(b => b.AddFilter<ApplicationInsightsLoggerProvider>("", LogLevel.Information))
                             .AddMvc()
-                            .AddDapr(client => {
+                            .AddDapr(client =>
+                            {
+                                client.UseJsonSerializationOptions(JsonSerializerOptions);
                                 var endpoint = ctx.Configuration.GetValue<string>("DAPR_GRPC_ENDPOINT");
                                 if (!string.IsNullOrWhiteSpace(endpoint))
                                     client.UseGrpcEndpoint(endpoint);
@@ -64,6 +68,7 @@ namespace RPS.Web
                             endpoints.MapControllers();
                             endpoints.MapDefaultControllerRoute();
                         });
+                        app.UseWelcomePage();
                     })
                 );
     }
@@ -77,8 +82,7 @@ namespace RPS.Web
 
 
         public static IServiceCollection AddFiffiDapr(this IServiceCollection services,
-            string eventStoreStateStore,
-            string snapshotStateStore)
+            string eventStoreStateStore)
         => services
         .AddSingleton<global::Dapr.EventStore.DaprEventStore>()
         .AddSingleton<IAdvancedEventStore, DaprEventStore>()
