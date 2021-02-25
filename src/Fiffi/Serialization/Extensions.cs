@@ -13,7 +13,7 @@ namespace Fiffi.Serialization
         public static Func<IEvent, JsonSerializerOptions, object> AsMap() => (e, opt)
             => JsonSerializer.Serialize(e, opt).ToMap(opt);
 
-        //public static IEvent Deserialize(this Func<string, Type> resolver, string json)
+      //public static IEvent Deserialize(this Func<string, Type> resolver, string json)
         //{
         //    var meta = JsonSerializer.Deserialize<MetaEvent>(json);
         //    var e = (IEvent)JsonSerializer.Deserialize(json, resolver(meta.GetEventName()));
