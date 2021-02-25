@@ -26,7 +26,7 @@ namespace RPS.Web
                             .Tap(s =>
                             {
                                 if (ctx.Configuration.GetValue<bool>("FIFFI-DAPR"))
-                                    s.AddFiffiDapr();
+                                    s.AddFiffiDapr("statestore", "statestore");
                                 else
                                     s.AddFiffiInMemory();
                             })
@@ -76,15 +76,18 @@ namespace RPS.Web
                .AddTransient<ISnapshotStore, Fiffi.InMemory.InMemorySnapshotStore>();
 
 
-        public static IServiceCollection AddFiffiDapr(this IServiceCollection services)
+        public static IServiceCollection AddFiffiDapr(this IServiceCollection services,
+            string eventStoreStateStore,
+            string snapshotStateStore)
         => services
         .AddSingleton<global::Dapr.EventStore.DaprEventStore>()
         .AddSingleton<IAdvancedEventStore, DaprEventStore>()
+        .Configure<global::Dapr.EventStore.DaprEventStore>(x => x.StoreName = eventStoreStateStore)
         .AddTransient<ISnapshotStore, Fiffi.Dapr.SnapshotStore>()
         .AddSingleton(sp => GameModule.Initialize(
                             sp.GetRequiredService<IAdvancedEventStore>(),
                             sp.GetRequiredService<ISnapshotStore>(),
-                            events => sp.GetService<GameModule>().WhenAsync(events)
+                            events => sp.GetService<GameModule>().WhenAsync(events) //TODO fix :)
                             //Fiffi.Dapr.Extensions.IntegrationPublisher(sp, "in")
                             ));
 

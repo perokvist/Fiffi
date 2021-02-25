@@ -2,7 +2,6 @@
 using Fiffi.Modularization;
 using Fiffi.Projections;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -29,13 +28,7 @@ namespace RPS
                         await snapshotStore.Apply<GamesView>(events.Select(e => e.Event).Apply);
                         await pub(events);
                     }, snapshotStore, state => state.Version, (newVersion, state) => state.Pipe(x => x with { Version = newVersion })))
-            .Updates(async events =>
-            {
-                await store.AppendToStreamAsync(Streams.Games, events.Filter(typeof(GameCreated), typeof(GameStarted), typeof(GameEnded)));
-                await store.Projector<GamesView>().Project(Streams.Games, snapshotStore);
-                //await snapshotStore.Apply<GamesView>(view => events.Select(x => x.Event).Apply(view));
-                //await snapshotStore.Apply<GamesView>(events);
-            })
+            .Updates(events => snapshotStore.Apply<GamesView>(events))
             .Updates(events => store.AppendToStreamAsync(Streams.All, events.ToArray()))
             .Triggers(async (events, d) =>
             {

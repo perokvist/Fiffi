@@ -34,8 +34,7 @@ namespace Fiffi.Dapr
             this.eventStore = eventStore.Tap(x => x.MetaProvider = streamName => new Dictionary<string, string>
                     {
                         { "partitionKey", streamName }
-                    })
-                    .Tap(x => x.StoreName = "localcosmos");
+                    });
             this.typeResolver = typeResolver;
             this.jsonSerializerOptions = jsonSerializerOptions;
             this.logger = logger;
