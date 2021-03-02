@@ -30,7 +30,7 @@ namespace RPS.Web
                         services
                             .Tap(s =>
                             {
-                                if (ctx.Configuration.GetValue<bool>("FIFFI-DAPR"))
+                                if (ctx.Configuration.GetValue<bool>("FIFFI_DAPR"))
                                     s.AddFiffiDapr("statestore");
                                 else
                                     s.AddFiffiInMemory();
