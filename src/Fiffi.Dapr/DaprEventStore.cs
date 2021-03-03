@@ -1,9 +1,11 @@
 ﻿using Dapr.EventStore;
+using Fiffi.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace Fiffi.Dapr
@@ -12,22 +14,34 @@ namespace Fiffi.Dapr
     {
         private readonly global::Dapr.EventStore.DaprEventStore eventStore;
         private readonly Func<string, Type> typeResolver;
+        private readonly JsonSerializerOptions jsonSerializerOptions;
+        private readonly Func<IEvent, JsonSerializerOptions, object> converter;
         private readonly Action<Exception, string, object[]> logger;
 
         public DaprEventStore(
             global::Dapr.EventStore.DaprEventStore eventStore,
+            JsonSerializerOptions jsonSerializerOptions,
             Func<string, Type> typeResolver
-            ) : this(eventStore, typeResolver, (ex, message, @params) => { })
-        {}
+            ) : this(eventStore, typeResolver, jsonSerializerOptions,
+                Serialization.Extensions.AsMap(),
+                (ex, message, @params) => { })
+        { }
 
         public DaprEventStore(
             global::Dapr.EventStore.DaprEventStore eventStore,
             Func<string, Type> typeResolver,
+            JsonSerializerOptions jsonSerializerOptions,
+            Func<IEvent, JsonSerializerOptions, object> converter,
             Action<Exception, string, object[]> logger
             )
         {
-            this.eventStore = eventStore;
+            this.eventStore = eventStore.Tap(x => x.MetaProvider = streamName => new Dictionary<string, string>
+                    {
+                        { "partitionKey", streamName }
+                    });
             this.typeResolver = typeResolver;
+            this.jsonSerializerOptions = jsonSerializerOptions;
+            this.converter = converter;
             this.logger = logger;
         }
 
@@ -39,7 +53,7 @@ namespace Fiffi.Dapr
             {
                 try
                 {
-                    return await eventStore.AppendToStreamAsync(streamName, events.Select(e => ToEventData(e)).ToArray());
+                    return await eventStore.AppendToStreamAsync(streamName, events.Select(e => ToEventData(e, x => this.converter(x, jsonSerializerOptions))).ToArray());
                 }
                 catch (DBConcurrencyException ex)
                 {
@@ -60,26 +74,35 @@ namespace Fiffi.Dapr
         }
 
         public Task<long> AppendToStreamAsync(string streamName, long version, params IEvent[] events)
-         => eventStore.AppendToStreamAsync(streamName, version, events.Select(e => ToEventData(e)).ToArray());
+         => eventStore.AppendToStreamAsync(streamName, version, events.Select(e => ToEventData(e, x => this.converter(x, this.jsonSerializerOptions))).ToArray());
 
         public async Task<(IEnumerable<IEvent> Events, long Version)> LoadEventStreamAsync(string streamName, long version)
         {
             var (events, v) = await eventStore.LoadEventStreamAsync(streamName, version);
-            return (events.Select(e =>
-            ToEvent(e.Data, typeResolver(e.EventName))
+            var toEvent = ToEvent();
+
+            var result = (events
+                .Select(e => toEvent(e, typeResolver(e.EventName), this.jsonSerializerOptions)
                 .Tap(x => x.Meta.AddStoreMetaData(new EventStoreMetaData { EventVersion = e.Version, EventPosition = e.Version }))),
                 v);
+            return result;
         }
 
-        public static IEvent ToEvent(string data, Type type)
-            => (IEvent)JsonSerializer.Deserialize(data, type);
+        public static Func<EventData, Type, JsonSerializerOptions, IEvent> ToEvent()
+        {
+            var t = typeof(EventEnvelope<>);
+            var methodInfo = typeof(global::Dapr.EventStore.Extensions).GetMethod(nameof(global::Dapr.EventStore.Extensions.EventAs), new[] { typeof(EventData), typeof(JsonSerializerOptions) });
 
-        public static EventData ToEventData(IEvent e)
-            => new EventData {
-                EventId = e.EventId(),
-                EventName = e.GetType().Name,
-                Data = JsonSerializer.Serialize<object>(e)
+            return (eventData, eventType, options) =>
+            {
+                var ft = t.MakeGenericType(eventType);
+                var genericMethod = methodInfo.MakeGenericMethod(ft);
+                var result = genericMethod.Invoke(null, new object[] { eventData, options });
+                return result as IEvent;
             };
+        }
 
+        public static EventData ToEventData(IEvent e, Func<IEvent, object> f)
+         => new EventData(e.EventId().ToString(), e.Event.GetType().Name, f(e));
     }
 }

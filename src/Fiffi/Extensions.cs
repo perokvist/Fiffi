@@ -93,5 +93,21 @@ namespace Fiffi
 
         public static Func<T, Task> Combine<T>(params Func<Func<T, Task>, Func<T, Task>>[] funcs)
             => input => funcs.Aggregate((l, r) => f => l(r(f)))(c => Task.CompletedTask)(input);
+
+        public static Task<(IEnumerable<T> Events, long Version)> LoadEventStreamAsync<T>(this IEventStore<T> store, string streamName, StreamVersion version)
+            => store.LoadEventStreamAsync(streamName, version.mode switch
+            {
+                Mode.Inclusive => version.version,
+                Mode.Exclusive => version.version + 1,
+                _ => throw new NotImplementedException($"{version.mode} not supported")
+            });
+
+        public record StreamVersion(long version, Mode mode = Mode.Inclusive);
+
+        public enum Mode
+        {
+            Inclusive,
+            Exclusive
+        }
     }
 }

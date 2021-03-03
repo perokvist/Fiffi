@@ -2,7 +2,6 @@
 using Fiffi.Modularization;
 using Fiffi.Projections;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -29,11 +28,7 @@ namespace RPS
                         await snapshotStore.Apply<GamesView>(events.Select(e => e.Event).Apply);
                         await pub(events);
                     }, snapshotStore, state => state.Version, (newVersion, state) => state.Pipe(x => x with { Version = newVersion })))
-            .Updates(async events =>
-            {
-                await store.AppendToStreamAsync(Streams.Games, events.Filter(typeof(GameCreated), typeof(GameStarted), typeof(GameEnded)));
-                await store.Projector<GamesView>().Project(Streams.Games, snapshotStore);
-            })
+            .Updates(events => snapshotStore.Apply<GamesView>(events))
             .Updates(events => store.AppendToStreamAsync(Streams.All, events.ToArray()))
             .Triggers(async (events, d) =>
             {
@@ -44,7 +39,7 @@ namespace RPS
                   }).ToAsyncEnumerable()) ;
             })
             .Query<GamesQuery, GamesView>(q => snapshotStore.Get<GamesView>())
-            .Query<GameQuery, GameView>(async q => (await store.Projector<GamesView>().ProjectAsync(Streams.Games)).Games.First(x => x.Key == q.GameId.ToString()).Value) //TODO ext with stream name only
+            .Query<GameQuery, GameView>(async q => (await snapshotStore.Get<GamesView>()).Games.First(x => x.Key == q.GameId.ToString()).Value) //TODO ext with stream name only
             .Query<ScoreQuery, ScoresView>(q => store.Projector<ScoresView>().ProjectAsync(Streams.All))
             .Create(store);
     }

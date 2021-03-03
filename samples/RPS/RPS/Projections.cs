@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using System.Text;
 
 namespace RPS
 {
@@ -21,13 +20,17 @@ namespace RPS
 
         public GamesView When(GameCreated @event)
         {
-            Games.Add(@event.GameId.ToString(), new GameView
-            (
-                Id : @event.GameId,
-                Title : @event.Title,
-                StartedBy : @event.PlayerId,
-                Status : @event.Status.ToString()
-            ));
+            var key = @event.GameId.ToString();
+            if (!Games.ContainsKey(key))
+            {
+                Games.Add(key, new GameView
+                (
+                    Id: @event.GameId,
+                    Title: @event.Title,
+                    StartedBy: @event.PlayerId,
+                    Status: @event.Status.ToString()
+                ));
+            }
             return this;
         }
 

@@ -1,8 +1,6 @@
 name: Github package
 
-on:
-  push:
-    branches: [ master, rps_web_container ]
+on: workflow_dispatch
 
 jobs:
   build:

@@ -1,16 +1,25 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Fiffi;
-using Microsoft.OpenApi.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.ApplicationInsights;
+using Microsoft.OpenApi.Models;
+using Fiffi;
+using Fiffi.Dapr;
+using System.Text.Json;
+using Fiffi.Serialization;
 
 namespace RPS.Web
 {
     public class Program
     {
+        readonly static JsonSerializerOptions JsonSerializerOptions = new JsonSerializerOptions()
+                                .Tap(x => x.Converters.Add(new EventRecordConverter()))
+                                .Tap(x => x.Converters.Add(new PlayerTupleConverter()))
+                                .Tap(x => x.PropertyNameCaseInsensitive = true);
+
         public static void Main(string[] args)
             => CreateHostBuilder(args).Build().Run();
 
@@ -21,12 +30,13 @@ namespace RPS.Web
                         services
                             .Tap(s =>
                             {
-                                //if (ctx.Configuration.GetValue<bool>("fiffi-dapr"))
-                                //    s.AddFiffiDapr();
-                                //else
+                                if (ctx.Configuration.GetValue<bool>("FIFFI_DAPR"))
+                                    s.AddFiffiDapr("statestore");
+                                else
                                     s.AddFiffiInMemory();
                             })
-                            .AddApplicationInsightsTelemetry() 
+                            .AddApplicationInsightsTelemetry()
+                            .AddSingleton(JsonSerializerOptions)
                             .AddSingleton(TypeResolver.FromMap(TypeResolver.GetEventsInNamespace<GameCreated>()))
                             .AddSingleton(sp => GameModule.Initialize(
                                 sp.GetRequiredService<IAdvancedEventStore>(),
@@ -36,7 +46,13 @@ namespace RPS.Web
                             .AddSwaggerGen(c => c.SwaggerDoc("v1", new OpenApiInfo { Title = "RPS Game", Version = "v1" }))
                             .AddLogging(b => b.AddFilter<ApplicationInsightsLoggerProvider>("", LogLevel.Information))
                             .AddMvc()
-                            .AddDapr()
+                            .AddDapr(client =>
+                            {
+                                client.UseJsonSerializationOptions(JsonSerializerOptions);
+                                var endpoint = ctx.Configuration.GetValue<string>("DAPR_GRPC_ENDPOINT");
+                                if (!string.IsNullOrWhiteSpace(endpoint))
+                                    client.UseGrpcEndpoint(endpoint);
+                            })
                     )
                     .Configure(app =>
                     {
@@ -52,6 +68,7 @@ namespace RPS.Web
                             endpoints.MapControllers();
                             endpoints.MapDefaultControllerRoute();
                         });
+                        app.UseWelcomePage();
                     })
                 );
     }
@@ -64,16 +81,19 @@ namespace RPS.Web
                .AddTransient<ISnapshotStore, Fiffi.InMemory.InMemorySnapshotStore>();
 
 
-        //public static IServiceCollection AddFiffiDapr(this IServiceCollection services)
-        //=> services
-        //.AddSingleton<global::Dapr.EventStore.DaprEventStore>()
-        //.AddSingleton<IAdvancedEventStore, DaprEventStore>()
-        //.AddTransient<ISnapshotStore, Fiffi.Dapr.SnapshotStore>()
-        //.AddSingleton(sp => GameModule.Initialize(
-        //                    sp.GetRequiredService<IAdvancedEventStore>(),
-        //                    sp.GetRequiredService<ISnapshotStore>(),
-        //                    Fiffi.Dapr.Extensions.IntegrationPublisher(sp, "in")
-        //                    ));
+        public static IServiceCollection AddFiffiDapr(this IServiceCollection services,
+            string eventStoreStateStore)
+        => services
+        .AddSingleton<global::Dapr.EventStore.DaprEventStore>()
+        .AddSingleton<IAdvancedEventStore, DaprEventStore>()
+        .Configure<global::Dapr.EventStore.DaprEventStore>(x => x.StoreName = eventStoreStateStore)
+        .AddTransient<ISnapshotStore, Fiffi.Dapr.SnapshotStore>()
+        .AddSingleton(sp => GameModule.Initialize(
+                            sp.GetRequiredService<IAdvancedEventStore>(),
+                            sp.GetRequiredService<ISnapshotStore>(),
+                            events => sp.GetService<GameModule>().WhenAsync(events) //TODO fix :)
+                            //Fiffi.Dapr.Extensions.IntegrationPublisher(sp, "in")
+                            ));
 
         //public static IServiceCollection ChangeFeed(this IServiceCollection services, WebHostBuilderContext ctx)
         //    => services

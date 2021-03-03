@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json.Serialization;
 
 namespace Fiffi
 {
@@ -16,9 +17,7 @@ namespace Fiffi
          new T Event { get; set; }
     }
 
-    public abstract record Record;
-
-    public abstract record EventRecord : Record;
+    public abstract record EventRecord;
 
     public static class EventEnvelope
     {
@@ -47,12 +46,13 @@ namespace Fiffi
 
     public static class EventExtensions
     {
-        public static IEvent[] ToEnvelopes(this EventRecord[] eventRecords, string sourceId)
-            => eventRecords.Select(r => EventEnvelope.Create(sourceId, r)).ToArray();
+        public static IEvent[] ToEnvelopes<T>(this T[] eventRecords, string sourceId)
+            where T : EventRecord
+            => eventRecords.ToEnvelopes<T>(e => sourceId);
 
         public static IEvent[] ToEnvelopes<T>(this T[] eventRecords, Func<T, string> sourceId)
             where T : EventRecord
-           => eventRecords.Select(r => EventEnvelope.Create(sourceId(r), r)).ToArray();
+           => eventRecords.Select(r => EventEnvelope.Create<T>(sourceId(r), r)).ToArray();
 
         public static EventEnvelope<EventRecord>[] AsEnvelopes(this IEvent[] events)
             => events
