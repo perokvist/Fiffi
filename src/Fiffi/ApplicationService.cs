@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
+using static Fiffi.Extensions;
 
 namespace Fiffi
 {
@@ -153,7 +154,7 @@ namespace Fiffi
                 async () =>
                 {
                     var state = await snapshotStore.Get<TState>(naming.streamName);
-                    var (events, version) = await store.LoadEventStreamAsync(naming.streamName, getVersion(state));
+                    var (events, version) = await store.LoadEventStreamAsync(naming.streamName, new StreamVersion(getVersion(state), Mode.Exclusive));
                     return (events.Select(e => e.Event).Apply(state), version);
                 },
                 async (newState, version, events) =>
