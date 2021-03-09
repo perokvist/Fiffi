@@ -1,4 +1,5 @@
 ﻿using CloudNative.CloudEvents;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -44,6 +45,18 @@ namespace Fiffi.CloudEvents
 
         public static string ToJson(this CloudEvent e)
             => Encoding.UTF8.GetString(new JsonEventFormatter().EncodeStructuredEvent(e, out _));
+
+        public static T? DataAs<T>(this CloudEvent e, JsonSerializerOptions? options = null)
+        {
+            var value = e.Data switch
+            {
+                JObject d => JsonSerializer.Deserialize<T>(d.ToString(), options),
+                T d => d,
+                _ => throw new Exception($"Data was not of type {typeof(T).Name}")
+            };
+            return value;
+        }
+
 
     }
 }

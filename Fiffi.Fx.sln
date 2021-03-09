@@ -11,6 +11,8 @@ Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Fiffi.Fx", "src\Fiffi.Fx\Fi
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fiffi.CloudEvents", "src\Fiffi.CloudEvents\Fiffi.CloudEvents.csproj", "{E967FA19-DFA9-4847-9637-D765F618790A}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Fiffi.Fx.Tests", "test\Fiffi.Fx.Tests\Fiffi.Fx.Tests.fsproj", "{98B8A975-0A0D-4E7B-BE5F-F9ADAE41AB09}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -51,6 +53,14 @@ Global
 		{E967FA19-DFA9-4847-9637-D765F618790A}.Release|Any CPU.Build.0 = Release|Any CPU
 		{E967FA19-DFA9-4847-9637-D765F618790A}.Release|x64.ActiveCfg = Release|Any CPU
 		{E967FA19-DFA9-4847-9637-D765F618790A}.Release|x64.Build.0 = Release|Any CPU
+		{98B8A975-0A0D-4E7B-BE5F-F9ADAE41AB09}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{98B8A975-0A0D-4E7B-BE5F-F9ADAE41AB09}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{98B8A975-0A0D-4E7B-BE5F-F9ADAE41AB09}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{98B8A975-0A0D-4E7B-BE5F-F9ADAE41AB09}.Debug|x64.Build.0 = Debug|Any CPU
+		{98B8A975-0A0D-4E7B-BE5F-F9ADAE41AB09}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{98B8A975-0A0D-4E7B-BE5F-F9ADAE41AB09}.Release|Any CPU.Build.0 = Release|Any CPU
+		{98B8A975-0A0D-4E7B-BE5F-F9ADAE41AB09}.Release|x64.ActiveCfg = Release|Any CPU
+		{98B8A975-0A0D-4E7B-BE5F-F9ADAE41AB09}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
