@@ -104,15 +104,8 @@ module State =
                   Status = Game.GameStatus.Created }
         | _ -> state
 
-module App =
+module ApplicationServices =
     open Game
-
-    let pub events = async { return 0 } |> Async.Ignore
-    let store = Fiffi.CloudEvents.CloudEventStore null
-    let streamExecution = EventStore.execute store pub
-
-    let functionThatCallsDomainModel =
-        streamExecution ("myStream" |> EventStore.StreamName)
 
     let dummyHandle state =
         [ GameStarted
@@ -122,28 +115,36 @@ module App =
               { GameId = Guid.Empty
                 Title = "testing" } ]
 
-    let createGame (history: CloudEvent list) : Async<CloudEvent list> =
+
+    let options = JsonSerializerOptions()
+    options.Converters.Add(JsonFSharpConverter())
+    let converter = CloudEvents.convertToDomainEvent<Events> options
+
+    let createGame (cmd: CreateGame) (history: CloudEvent list) : Async<CloudEvent list> =
         async {
-            let options = JsonSerializerOptions()
-            options.Converters.Add(JsonFSharpConverter())
-
             let state =
-                List.fold
-                    State.apply
-                    State.DefaultGameState
-                    (history
-                     |> List.map (fun x -> x |> CloudEvents.dataAs<Events> null))
+                List.fold State.apply State.DefaultGameState (history |> converter)
 
-            return
-                dummyHandle state
-                |> List.map (fun x -> x |> CloudEvents.createCloudEvent)
+            return dummyHandle state |> CloudEvents.toCloudEvents
         }
 
-    let r = functionThatCallsDomainModel createGame
+module App =
+    open Game
+    open ApplicationServices
 
-//let dispatch cmd : Async<unit> =
-//    let store = InMemoryEventStore()
-//    match cmd with
-//    | Game.CreateGame c -> App.applicationService store State.DefaultGameState State.When cmd c Game.handle
-//    | Game.JoinGame c -> App.applicationService store State.DefaultGameState State.When cmd c Game.handle
-//    | _ -> async.Return()
+    let pub events = async { return 0 } |> Async.Ignore
+    let store = Fiffi.CloudEvents.CloudEventStore null
+    let streamExecution = EventStore.execute store pub
+    let appExecute = App.execute streamExecution
+
+    let gameStream gameId =
+        $"games-{gameId}" |> EventStore.StreamName
+
+    let dispatch cmd : Async<unit> =
+        match cmd with
+        | CreateGame c ->
+            let streamName = c.GameId |> gameStream
+            streamName 
+            |> CloudEvents.meta(c.CorrelationId, c.CausationId, "") 
+            |> appExecute streamName (c |> createGame)
+        | _ -> async.Return()
