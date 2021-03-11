@@ -26,6 +26,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\samples\RPS\RPS.Domain\RPS.Domain.fsproj" />
     <ProjectReference Include="..\..\src\Fiffi.Fx\Fiffi.Fx.fsproj" />
   </ItemGroup>
 

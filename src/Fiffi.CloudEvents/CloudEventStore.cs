@@ -34,7 +34,7 @@ namespace Fiffi.CloudEvents
         public async Task<(IEnumerable<CloudEvent> Events, long Version)> LoadEventStreamAsync(string streamName, long version)
         {
             var (events, v) = await eventStore.LoadEventStreamAsync(streamName, version);
-            var ce = events.Select(e => e.ToEvent()); 
+            var ce = events.Select(e => e.ToEvent());
             return (ce, v);
             //.Tap(x => x.Meta.AddStoreMetaData(new EventStoreMetaData { EventVersion = e.Version, EventPosition = e.Version }))),
             //v);
@@ -42,6 +42,17 @@ namespace Fiffi.CloudEvents
 
         public static IDictionary<string, object> ToMapData(CloudEvent e)
             => e.ToJson().ToMap();
+
+        public static IEventStore<CloudEvent> CreateInMemoryStore()
+            => new InMemory.InMemoryEventStore<CloudEvent>(
+                x => x.Extension<EventStoreMetaDataExtension>().MetaData.EventVersion,
+                (e, v) => {
+                    var ext = e.Extension<EventStoreMetaDataExtension>();
+                    ext.MetaData = ext.MetaData with { EventVersion = v };
+                    ext.Attach(e);
+                    },
+                x => x.Extension<EventMetaDataExtension>().MetaData.EventId
+                );
 
     }
 }

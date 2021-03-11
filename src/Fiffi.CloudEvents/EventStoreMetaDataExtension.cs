@@ -8,15 +8,15 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Fiffi.CloudEvents
 {
-    public class EventMetaDataExtension : ICloudEventExtension
+    public class EventStoreMetaDataExtension : ICloudEventExtension
     {
         Dictionary<string, string?> attributes = new();
-        readonly string[] names = typeof(EventMetaData).GetProperties().Select(x => x.Name.ToLower()).ToArray();
+        readonly string[] names = typeof(EventStoreMetaData).GetProperties().Select(x => x.Name.ToLower()).ToArray();
 
-        public EventMetaData MetaData
+        public EventStoreMetaData MetaData
         {
-            get => attributes.GetEventMetaData();
-            set => attributes.AddMetaData(value);
+            get => attributes.GetEventStoreMetaData();
+            set => attributes.AddStoreMetaData(value);
         }
 
         public void Attach(CloudEvent cloudEvent)
@@ -26,7 +26,8 @@ namespace Fiffi.CloudEvents
             if (attributes == eventAttributes)
                 return;
 
-            attributes.ForEach(kv => eventAttributes[kv.Key] = kv.Value);
+            attributes
+                .ForEach(kv => eventAttributes[kv.Key] = kv.Value);
 
             attributes = eventAttributes
                 .Where(kv => names.Contains(kv.Key))

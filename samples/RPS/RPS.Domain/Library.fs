@@ -39,8 +39,8 @@ module Game =
           PlayerId: string
           Title: string
           Rounds: int
-          mutable CorrelationId: Guid
-          mutable CausationId: Guid }
+          CorrelationId: Guid
+          CausationId: Guid }
 
     type JoinGame =
         { GameId: Guid
@@ -118,7 +118,9 @@ module ApplicationServices =
 
     let options = JsonSerializerOptions()
     options.Converters.Add(JsonFSharpConverter())
-    let converter = CloudEvents.convertToDomainEvent<Events> options
+
+    let converter =
+        CloudEvents.convertToDomainEvent<Events> options
 
     let createGame (cmd: CreateGame) (history: CloudEvent list) : Async<CloudEvent list> =
         async {
@@ -132,19 +134,21 @@ module App =
     open Game
     open ApplicationServices
 
-    let pub events = async { return 0 } |> Async.Ignore
-    let store = Fiffi.CloudEvents.CloudEventStore null
-    let streamExecution = EventStore.execute store pub
-    let appExecute = App.execute streamExecution
+    let init store pub =
+        //let pub events = async { return 0 } |> Async.Ignore
+        let streamExecution = EventStore.execute store pub
+        let appExecute = App.execute streamExecution
 
-    let gameStream gameId =
-        $"games-{gameId}" |> EventStore.StreamName
+        let gameStream gameId =
+            $"games-{gameId}" |> EventStore.StreamName
 
-    let dispatch cmd : Async<unit> =
-        match cmd with
-        | CreateGame c ->
-            let streamName = c.GameId |> gameStream
-            streamName 
-            |> CloudEvents.meta(c.CorrelationId, c.CausationId, "") 
-            |> appExecute streamName (c |> createGame)
-        | _ -> async.Return()
+        let dispatch cmd : Async<unit> =
+            match cmd with
+            | CreateGame c ->
+                let streamName = c.GameId |> gameStream
+
+                streamName
+                |> CloudEvents.meta (c.CorrelationId, c.CausationId, "")
+                |> appExecute streamName (c |> createGame)
+            | _ -> async.Return()
+        dispatch
