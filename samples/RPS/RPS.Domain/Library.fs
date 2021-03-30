@@ -66,8 +66,6 @@ module Game =
         | Started
         | Endend
 
-
-
     type Events =
         | GameCreated of GameCreated
         | GameStarted of GameStarted
@@ -122,7 +120,7 @@ module ApplicationServices =
     let converter =
         CloudEvents.convertToDomainEvent<Events> options
 
-    let createGame (cmd: CreateGame) (history: CloudEvent list) : Async<CloudEvent list> =
+    let createGame (cmd: CreateGame) (history: CloudEvent list)  : Async<CloudEvent list> =
         async {
             let state =
                 List.fold State.apply State.DefaultGameState (history |> converter)
@@ -135,7 +133,6 @@ module App =
     open ApplicationServices
 
     let init store pub =
-        //let pub events = async { return 0 } |> Async.Ignore
         let streamExecution = EventStore.execute store pub
         let appExecute = App.execute streamExecution
 
@@ -146,9 +143,8 @@ module App =
             match cmd with
             | CreateGame c ->
                 let streamName = c.GameId |> gameStream
-
                 streamName
-                |> CloudEvents.meta (c.CorrelationId, c.CausationId, "")
-                |> appExecute streamName (c |> createGame)
+                |> CloudEvents.meta (c.CorrelationId, c.CausationId, "game", "creategame")
+                |> appExecute streamName (createGame c)
             | _ -> async.Return()
         dispatch

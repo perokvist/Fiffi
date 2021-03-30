@@ -3,6 +3,8 @@
 open Fiffi.CloudEvents
 open CloudNative.CloudEvents
 open System
+open Fiffi
+open System.Net.Mime
 
 type ApplicationService = CloudEvent list -> Async<CloudEvent list>
 type StreamExecution = EventStore.StreamName -> (ApplicationService) -> Async<unit>
@@ -14,7 +16,14 @@ module Serialization =
 
 module CloudEvents =
 
-    let attachMetaData (meta: Fiffi.EventMetaData) (f: ApplicationService) : ApplicationService =
+    type MetaData =
+        { Correlation: Guid
+          Causation: Guid
+          AggregateName: string
+          Trigger: string
+          StreamName: string }
+
+    let attachMetaData (meta: MetaData) (f: ApplicationService) : ApplicationService =
         fun x ->
             async {
                 let! appServiceResult = f x
@@ -23,50 +32,56 @@ module CloudEvents =
                     appServiceResult
                     |> List.map
                         (fun ce ->
-                            let et = new EventMetaDataExtension()
-                            et.MetaData <- meta
-                            et.Attach ce
+                            let ext = ce.Extension<EventMetaDataExtension>()
+                            let extMeta =
+                                new EventMetaData(
+                                    meta.Correlation,
+                                    meta.Causation,
+                                    ce.Id |> Guid,
+                                    meta.StreamName,
+                                    meta.AggregateName,
+                                    0 |> int64, //unsupported
+                                    meta.Trigger,
+                                    ce.Time.Value.Ticks
+                                )
+                            ce.Subject <- meta.StreamName
+                            ext.MetaData <- extMeta
+                            ext.Attach ce
                             ce)
             }
 
     let createCloudEvent data : CloudEvent =
-        let ext = new EventMetaDataExtension()
-        let ext2 = new EventStoreMetaDataExtension()
-
         let e =
-            CloudEvent("test", Uri("urn:test"), null, DateTime.UtcNow, ext, ext2)
+            CloudEvent(
+                data.GetType().Name,
+                new Uri(
+                    $"urn:{
+                               data
+                                   .GetType()
+                                   .Namespace.ToLower()
+                                   .Replace('.', ':')
+                    }"
+                ),
+                Guid.NewGuid() |> string,
+                DateTime.UtcNow,
+                new EventMetaDataExtension(),
+                new EventStoreMetaDataExtension()
+            )
 
+        e.DataContentType <- new ContentType(MediaTypeNames.Application.Json)
         e.Data <- data
         e
-
-        //=> new CloudEvent(CloudEventsSpecVersion.V1_0,
-        //@event.GetEventName(),
-        //source ?? new Uri($"urn:{@event.GetType().Namespace?.Replace('.', ':').ToLower()}"),
-        //@event.GetStreamName(),
-        //id: @event.SourceId,
-        //time: @event.OccuredAt(),
-        //new EventMetaDataExtension { MetaData = @event.Meta.GetEventMetaData() })
-        //        {
-        //DataContentType = new ContentType(MediaTypeNames.Application.Json),
-        //Data = @event.Event
-        //        };
-
 
     let toCloudEvents domainEvents =
         domainEvents
         |> List.map (fun x -> x |> createCloudEvent)
 
-    let meta (correlation, causation, aggregateName) (streamName: EventStore.StreamName) =
-        new Fiffi.EventMetaData(
-            correlation,
-            causation,
-            Guid.NewGuid(),
-            (string) streamName,
-            aggregateName,
-            0 |> int64,
-            "",
-            DateTime.UtcNow.Ticks
-        )
+    let meta (correlation, causation, aggregateName, trigger) (streamName: EventStore.StreamName) =
+        { Correlation = correlation
+          Causation = causation
+          StreamName = (string) streamName
+          AggregateName = aggregateName
+          Trigger = trigger }
 
     let dataAs<'T> options cloudEvent =
         Extensions.DataAs<'T>(cloudEvent, options)
@@ -83,5 +98,12 @@ module App =
             return (f v)
         }
 
-    let execute (a: StreamExecution) (s: EventStore.StreamName) (f: ApplicationService) (m: Fiffi.EventMetaData) =
-        f |> (m |> CloudEvents.attachMetaData) |> a s
+    let execute
+        (streamExecution: StreamExecution)
+        (streamName: EventStore.StreamName)
+        (f: ApplicationService)
+        (m: CloudEvents.MetaData)
+        =
+        f
+        |> (m |> CloudEvents.attachMetaData)
+        |> streamExecution streamName

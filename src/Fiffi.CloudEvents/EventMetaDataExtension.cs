@@ -2,9 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
-using Fiffi;
-using System.Diagnostics.CodeAnalysis;
 
 namespace Fiffi.CloudEvents
 {

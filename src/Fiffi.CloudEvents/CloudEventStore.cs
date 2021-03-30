@@ -30,11 +30,17 @@ namespace Fiffi.CloudEvents
 
         public Task<long> AppendToStreamAsync(string streamName, long version, params CloudEvent[] events)
          => eventStore.AppendToStreamAsync(streamName, version, events.Select(e => ToMapData(e)).ToArray());
+        //TODO add eventstore meta
 
         public async Task<(IEnumerable<CloudEvent> Events, long Version)> LoadEventStreamAsync(string streamName, long version)
         {
             var (events, v) = await eventStore.LoadEventStreamAsync(streamName, version);
-            var ce = events.Select(e => e.ToEvent());
+            var ce = events.Select((e, i) => e.ToEvent());
+            //.Tap(x => {
+            //    var m = new EventStoreMetaDataExtension();
+            //    m.MetaData.EventVersion = version + i + 1;
+            //    m.Attach(x);
+            //}));
             return (ce, v);
             //.Tap(x => x.Meta.AddStoreMetaData(new EventStoreMetaData { EventVersion = e.Version, EventPosition = e.Version }))),
             //v);

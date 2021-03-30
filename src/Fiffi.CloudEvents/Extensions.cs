@@ -3,6 +3,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
@@ -33,12 +34,21 @@ namespace Fiffi.CloudEvents
 
             var envelope = EventEnvelope.Create(cloudEvent.Id, @event);
             envelope.Meta.AddMetaData(cloudEvent.Extension<EventMetaDataExtension>().MetaData);
+            envelope.Meta.AddStoreMetaData(cloudEvent.Extension<EventStoreMetaDataExtension>().MetaData);
             return envelope;
         }
 
 
         public static CloudEvent ToEvent(this string data)
-            => new JsonEventFormatter().DecodeStructuredEvent(Encoding.UTF8.GetBytes(data), new EventMetaDataExtension());
+        {
+            var d = JsonSerializer.Deserialize<Dictionary<string, object>>
+                (data, new JsonSerializerOptions { PropertyNameCaseInsensitive = true })?
+                  .ToDictionary(kv => kv.Key.ToLower(), kv => kv.Value?.ToString());;
+            var @event = new JsonEventFormatter().DecodeStructuredEvent(Encoding.UTF8.GetBytes(data),
+            new EventMetaDataExtension().Tap(x => x.MetaData = d.GetEventMetaData()),
+            new EventStoreMetaDataExtension().Tap(x => x.MetaData = d.GetEventStoreMetaData()));
+            return @event;
+        }
 
         public static CloudEvent ToEvent(this IDictionary<string, object> data)
             => JsonSerializer.Serialize(data).ToEvent();

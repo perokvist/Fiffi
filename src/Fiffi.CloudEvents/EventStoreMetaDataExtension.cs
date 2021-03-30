@@ -11,7 +11,7 @@ namespace Fiffi.CloudEvents
     public class EventStoreMetaDataExtension : ICloudEventExtension
     {
         Dictionary<string, string?> attributes = new();
-        readonly string[] names = typeof(EventStoreMetaData).GetProperties().Select(x => x.Name.ToLower()).ToArray();
+        readonly PropertyInfo[] names = typeof(EventStoreMetaData).GetProperties().ToArray();
 
         public EventStoreMetaData MetaData
         {
@@ -30,29 +30,28 @@ namespace Fiffi.CloudEvents
                 .ForEach(kv => eventAttributes[kv.Key] = kv.Value);
 
             attributes = eventAttributes
-                .Where(kv => names.Contains(kv.Key))
-                .ToDictionary(kv => kv.Key, kv => kv.Value?.ToString());
+                //.Where(kv => names.Any(x => x.Name.ToLower() == kv.Key))
+                .ToDictionary(kv => kv.Key.ToLower(), kv => kv.Value?.ToString());
         }
 
-        public Type? GetAttributeType(string name)
+        public Type GetAttributeType(string name)
         {
-            if (!names.Contains(name))
-                return null;
-
-            return typeof(string); 
+            var r = names.SingleOrDefault(x => x.Name.ToLower() == name)?.PropertyType;
+            return r == null ? throw new ArgumentNullException("boom") : r;
         }
 
         public bool ValidateAndNormalize(string key, ref dynamic value)
         {
-            if (!attributes.ContainsKey(key))
+            if (!names.Any(x => x.Name.ToLower() == key))
                 return false;
 
-            var type = typeof(string);
+            var types = new [] { typeof(string), typeof(int) };
       
             if (value == null)
                 return false;
 
-            if (value.GetType().Equals(type))
+            var t = value.GetType();
+            if (types.Any(x => t.Equals(x)))
                 return true;
 
             throw new InvalidOperationException($"Ivalid type for {key}");

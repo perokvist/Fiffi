@@ -37,14 +37,12 @@ namespace Fiffi.CloudEvents.Tests
                         return Task.CompletedTask;
                     });
 
-            var eventJson = await new CloudEventContent(e.First(), ContentMode.Structured, new JsonEventFormatter()).ReadAsStringAsync();
+            var eventJson = e.First().ToJson(); 
             
             helper.WriteLine(eventJson);
 
-            var stream = new MemoryStream(Encoding.ASCII.GetBytes(eventJson));
-
-            var readEvent = await new JsonEventFormatter().DecodeStructuredEventAsync(stream, Enumerable.Empty<ICloudEventExtension>());
-            var readEventJson = await new CloudEventContent(readEvent, ContentMode.Structured, new JsonEventFormatter()).ReadAsStringAsync();
+            var readEvent = eventJson.ToEvent();
+            var readEventJson = readEvent.ToJson();
 
             Assert.Equal(eventJson, readEventJson);
         }
