@@ -92,6 +92,18 @@ module CloudEvents =
 
 module App =
 
+    type Source<'event, 'view> =
+        | Stream of 'event list
+        | Snapshot of 'view
+
+    type dispatch<'T> = 'T -> Async<unit>
+    type query<'T, 'R> = 'T -> Async<'R>
+
+    type Module<'command, 'event, 'query, 'view>(commandDispatch:dispatch<'command>, eventDispatch:dispatch<'event>, query:query<'query,'view>) = 
+        member x.Dispatch(c) = commandDispatch c 
+        member x.When(e) = eventDispatch e
+        member x.Query = query
+
     let mapAsync f a =
         async {
             let! v = a

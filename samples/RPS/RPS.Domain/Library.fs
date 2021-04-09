@@ -6,6 +6,7 @@ open System
 open CloudNative.CloudEvents
 open System.Text.Json
 open System.Text.Json.Serialization
+open Fiffi.Fx.App
 
 module Game =
 
@@ -60,6 +61,27 @@ module Game =
 
     type Player = { Id: string; Hand: Hand }
 
+    type GamesQuery() =
+        class
+        end
+
+    type GameQuery = { Id: Guid }
+
+    type GameView =
+        { Id: Guid
+          Title: string
+          Description: string }
+
+    type GameSummaryView = { Id: Guid; Title: string }
+
+    type Query =
+        | GameQuery of GameQuery
+        | GamesQuery of GamesQuery
+
+    type View =
+        | GameView of GameView
+        | GameSummaryView of GameSummaryView list
+
     type GameStatus =
         | NotStarted
         | Created
@@ -74,6 +96,8 @@ module Game =
         | CreateGame of CreateGame
         | JoinGame of JoinGame
         | PlayGame of PlayGame
+
+
 
 module State =
 
@@ -120,7 +144,7 @@ module ApplicationServices =
     let converter =
         CloudEvents.convertToDomainEvent<Events> options
 
-    let createGame (cmd: CreateGame) (history: CloudEvent list)  : Async<CloudEvent list> =
+    let createGame (cmd: CreateGame) (history: CloudEvent list) : Async<CloudEvent list> =
         async {
             let state =
                 List.fold State.apply State.DefaultGameState (history |> converter)
@@ -131,6 +155,20 @@ module ApplicationServices =
 module App =
     open Game
     open ApplicationServices
+
+    let gameQuery (q:GameQuery) (s:Source<Events, GameView>) : GameView =
+        match s with
+        | Stream x -> { Id = Guid.NewGuid(); Title = "f"; Description = "f" }
+        | Snapshot x -> x
+   
+    let gamesQuery  (q:GamesQuery)(s:Source<Events, GameSummaryView>) : GameSummaryView list =
+       [ { Id = Guid.NewGuid(); Title = "f";  } ]
+
+    type Query2 =
+        | GameQuery of (Source<Events, GameView> -> GameView)
+        | GamesQuery of (Source<Events, GameSummaryView> -> GameSummaryView list)
+
+    //let foo (projection:Source<Events, 'view> -> 'view) : Async<'view>
 
     let init store pub =
         let streamExecution = EventStore.execute store pub
@@ -143,8 +181,44 @@ module App =
             match cmd with
             | CreateGame c ->
                 let streamName = c.GameId |> gameStream
+
                 streamName
                 |> CloudEvents.meta (c.CorrelationId, c.CausationId, "game", "creategame")
                 |> appExecute streamName (createGame c)
             | _ -> async.Return()
-        dispatch
+
+        let updates evt : Async<unit> =
+            match evt with
+            | GameCreated c -> async.Return()
+            | _ -> async.Return()
+
+        let triggers evt : Async<unit> =
+            match evt with
+            | _ -> async.Return()
+
+        let eventDispatch evt : Async<unit> = //TODO cloud event with know events
+            async {
+                updates evt |> ignore
+                triggers evt |> ignore
+            }
+
+        let queries q : Async<View> =
+            match q with
+            | Query.GameQuery x ->
+                async.Return(
+                    View.GameView(
+                        { GameView.Id = Guid.NewGuid()
+                          Title = "dummy title"
+                          Description = "dummy desc" }
+                    )
+                )
+            | Query.GamesQuery x ->
+                async.Return(
+                    View.GameSummaryView(
+                        [ { GameSummaryView.Id = Guid.NewGuid()
+                            Title = "dummy title" } ]
+                    )
+                )
+
+        Fiffi.Fx.App.Module<Command, Events, Query, View>(dispatch, eventDispatch, queries)
+
