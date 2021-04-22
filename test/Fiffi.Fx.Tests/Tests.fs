@@ -9,7 +9,9 @@ open System.Text.Json
 open System.Text.Json.Serialization
 open RPS.Game
 open RPS.App
+open RPS.Read
 open Fiffi.CloudEvents
+
 
 //[<Fact>]
 //let ``Serialize CloudEvent with union`` () =
@@ -32,8 +34,8 @@ open Fiffi.CloudEvents
 [<Fact>]
 let ``Dipatch event spy`` () = async {
     let mutable events = List.empty<CloudNative.CloudEvents.CloudEvent>
-    let pub (e:CloudNative.CloudEvents.CloudEvent list) =
-        events <- List.append events e
+    let pub (e:CloudNative.CloudEvents.CloudEvent seq) =
+        events <- List.append events (e |> List.ofSeq)
         async.Return()
     
     let store = Fiffi.CloudEvents.CloudEventStore.CreateInMemoryStore()
@@ -54,8 +56,8 @@ let ``Dipatch event spy`` () = async {
 [<Fact>]
 let ``query`` () = async {
     let mutable events = List.empty<CloudNative.CloudEvents.CloudEvent>
-    let pub (e:CloudNative.CloudEvents.CloudEvent list) =
-        events <- List.append events e
+    let pub (e:CloudNative.CloudEvents.CloudEvent seq) =
+        events <- List.append events (e |> List.ofSeq)
         async.Return()
     
     let store = Fiffi.CloudEvents.CloudEventStore.CreateInMemoryStore()

@@ -6,8 +6,8 @@ open System
 open Fiffi
 open System.Net.Mime
 
-type ApplicationService = CloudEvent list -> Async<CloudEvent list>
-type StreamExecution = EventStore.StreamName -> (ApplicationService) -> Async<unit>
+type ApplicationService = CloudEvent seq -> Async<CloudEvent seq>
+type StreamExecution = EventStore.StreamName -> EventStore.Version option -> (ApplicationService) -> Async<unit>
 
 module Serialization =
     let toJson cloudEvent = Extensions.ToJson cloudEvent
@@ -30,7 +30,7 @@ module CloudEvents =
 
                 return
                     appServiceResult
-                    |> List.map
+                    |> Seq.map
                         (fun ce ->
                             let ext = ce.Extension<EventMetaDataExtension>()
                             let extMeta =
@@ -74,7 +74,7 @@ module CloudEvents =
 
     let toCloudEvents domainEvents =
         domainEvents
-        |> List.map (fun x -> x |> createCloudEvent)
+        |> Seq.map (fun x -> x |> createCloudEvent)
 
     let meta (correlation, causation, aggregateName, trigger) (streamName: EventStore.StreamName) =
         { Correlation = correlation
@@ -88,7 +88,38 @@ module CloudEvents =
 
     let convertToDomainEvent<'T> options cloudEvents =
         cloudEvents
-        |> List.map (fun x -> x |> dataAs<'T> options)
+        |> Seq.map (fun x -> x |> dataAs<'T> options)
+
+module Snapshot =
+
+    [<CLIMutable>]
+    type snapshot<'view> = { 
+    value : 'view 
+    version : EventStore.Version }
+
+    let private getsnapshot<'snap when 'snap : (new: unit -> 'snap) and 'snap: not struct> (s:ISnapshotStore) (key:string) =
+        async {
+            let! v = s.Get<'snap>(key) |> Async.AwaitTask
+            return match box v with
+                    | null -> Option.None
+                    | _ -> Option.Some v
+        }
+
+
+    let private applysnapshot<'snap when 'snap : (new: unit -> 'snap) and 'snap: not struct> (s:ISnapshotStore) (key:string) f =
+        async {
+                let cf = System.Func<'snap,'snap>(f)
+                let! x = s.Apply<'snap>(key, cf) |> Async.AwaitTask
+                x
+              } 
+              |> Async.Ignore
+
+
+    let get<'snap> (s:ISnapshotStore) (key:string) =
+        getsnapshot<snapshot<'snap>> s key
+
+    let apply<'snap> (s:ISnapshotStore) (key:string) f =
+        applysnapshot<snapshot<'snap>> s key (fun(v) -> { value = f(v.value); version = v.version } )
 
 module App =
 
@@ -100,6 +131,7 @@ module App =
     type query<'T, 'R> = 'T -> Async<'R>
 
     type Module<'command, 'event, 'query, 'view>(commandDispatch:dispatch<'command>, eventDispatch:dispatch<'event>, query:query<'query,'view>) = 
+
         member x.Dispatch(c) = commandDispatch c 
         member x.When(e) = eventDispatch e
         member x.Query = query
@@ -118,4 +150,4 @@ module App =
         =
         f
         |> (m |> CloudEvents.attachMetaData)
-        |> streamExecution streamName
+        |> streamExecution streamName None
