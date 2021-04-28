@@ -96,8 +96,9 @@ module Read =
         | GamesQuery of GamesQuery
 
     type View =
-        | GameView of Option<GameView>
+        | GameView of GameView
         | GameSummaryView of GameSummaryView seq
+        | Empty
 
     let gameSummaryViewDefault =
         {
@@ -231,9 +232,10 @@ module App =
             | Query.GameQuery x ->
                 async {
                     let! snapView = Snapshot.get<GameView> snapshot (x.Id |> string)
-                    return match snapView with
-                            | Option.Some(v) -> View.GameView (Option.Some v.value)
-                            | Option.None -> View.GameView Option.None
+                    let v = match snapView with
+                            | Option.None -> View.Empty
+                            | _ -> View.GameView snapView.Value
+                    return v
                 }
             | Query.GamesQuery x ->
                 async {

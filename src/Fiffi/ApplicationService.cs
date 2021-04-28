@@ -153,7 +153,8 @@ namespace Fiffi
             => ExecuteAsync(
                 async () =>
                 {
-                    var state = await snapshotStore.Get<TState>(naming.streamName);
+                    var stateMaybe = await snapshotStore.Get<TState>(naming.streamName);
+                    var state = stateMaybe.GetOrDefault(default);
                     var (events, version) = await store.LoadEventStreamAsync(naming.streamName, new StreamVersion(getVersion(state), Mode.Exclusive));
                     return (events.Select(e => e.Event).Apply(state), version);
                 },

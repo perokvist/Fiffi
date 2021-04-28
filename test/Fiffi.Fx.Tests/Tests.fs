@@ -1,35 +1,55 @@
 module Tests
 
 open System
-open Xunit
-open Fiffi.Fx.App
-open Fiffi.Fx.Serialization
-open Fiffi.Fx.CloudEvents
 open System.Text.Json
 open System.Text.Json.Serialization
-open RPS.Game
-open RPS.App
-open RPS.Read
+open Xunit
+open Fiffi.Fx.Serialization
+open Fiffi.Fx.CloudEvents
+open Fiffi.Fx.Interop
+open Fiffi.Fx.Snapshot
 open Fiffi.CloudEvents
+open RPS.Game
+open RPS.Read
 
 
-//[<Fact>]
-//let ``Serialize CloudEvent with union`` () =
-//    let options = JsonSerializerOptions()
-//    options.Converters.Add(JsonFSharpConverter())
+[<Fact>]
+let ``maybe to option`` () =
+    let m = Fiffi.Maybe<GameView>.None
+    let o = toOption m
 
-//    let events =
-//        GameCreated
-//            { GameId = Guid.NewGuid()
-//              Title = "test" }
-//        |> createCloudEvent
-//        |> toJson
-//        |> toEvent
-//        |> dataAs<Events> options
+    match o with
+    | Option.None -> Assert.True(true)
+    | _ -> Assert.True(false, "wrong option")
 
-//    match events with
-//    | GameCreated e -> Assert.Equal("test", e.Title)
-//    | _ -> raise (new Exception("boom"))
+[<Fact>]
+let ``snapshot get`` () = async {
+        let snapStore = new Fiffi.InMemory.InMemorySnapshotStore()
+   
+        let! o = get<GameView> snapStore "test"
+    
+        match o with
+        | Option.None -> Assert.True(true)
+        | _ -> Assert.True(false, "wrong option")
+    }
+    
+[<Fact>]
+let ``Serialize CloudEvent with union`` () =
+    let options = JsonSerializerOptions()
+    options.Converters.Add(JsonFSharpConverter())
+
+    let events =
+        GameCreated
+            { GameId = Guid.NewGuid()
+              Title = "test" }
+        |> createCloudEvent
+        |> toJson
+        |> toEvent
+        |> dataAs<Events> options
+
+    match events with
+    | GameCreated e -> Assert.Equal("test", e.Title)
+    | _ -> raise (new Exception("boom"))
 
 [<Fact>]
 let ``Dipatch event spy`` () = async {
@@ -72,3 +92,27 @@ let ``query`` () = async {
     |> ignore
 
     }
+
+[<Fact>]
+let ``query game view title`` () = async {
+
+    let pub (e:CloudNative.CloudEvents.CloudEvent seq) =
+        async.Return()
+    
+    let store = Fiffi.CloudEvents.CloudEventStore.CreateInMemoryStore()
+    let app = RPS.App.init store pub
+    let gameId = Guid.NewGuid()
+
+    let cmd:Command = CreateGame { GameId = gameId; PlayerId = "test"; Title = "test game"; Rounds = 1; CorrelationId = Guid.NewGuid(); CausationId = Guid.NewGuid() } 
+    let! _ = app.Dispatch cmd
+    
+    let q = Query.GameQuery { Id = gameId} 
+
+    let! r = app.Query q 
+
+    match r with
+        | GameView v -> Assert.Equal("test game", v.Title) 
+        | _ -> raise (new Exception("wrong view"))
+        |> ignore
+    }
+

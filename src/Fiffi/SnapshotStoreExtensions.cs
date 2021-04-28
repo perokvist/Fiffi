@@ -6,9 +6,12 @@ namespace Fiffi
 {
     public static class SnapshotStoreExtensions
     {
-        public static Task<T> Get<T>(this ISnapshotStore snapshotStore)
+        public static async Task<T> Get<T>(this ISnapshotStore snapshotStore)
             where T : class, new()
-            => snapshotStore.Get<T>(typeof(T).Name);
+        {
+            var r = await snapshotStore.Get<T>(typeof(T).Name);
+            return r.GetOrDefault(default);
+        }
 
         public static Task Apply<T>(this ISnapshotStore snapshotStore, Func<T, T> f)
             where T : class, new()

@@ -44,6 +44,8 @@ namespace Fiffi.CloudEvents.Tests
             var readEvent = eventJson.ToEvent();
             var readEventJson = readEvent.ToJson();
 
+            helper.WriteLine(readEventJson);
+
             Assert.Equal(eventJson, readEventJson);
         }
 

@@ -9,14 +9,23 @@ namespace Fiffi.InMemory
     {
         readonly IDictionary<string, object> store = new ConcurrentDictionary<string, object>();
 
-        public async Task Apply<T>(string key, Func<T, T> f) where T : class, new()
+        public async Task Apply<T>(string key, Func<T, T> f) 
         {
             var currentValue = await Get<T>(key);
-            var newValue = f(currentValue);
+            var newValue = f(currentValue.GetOrDefault(default));
             store[key] = newValue;
         }
 
-        public Task<T> Get<T>(string key) where T : class, new()
-            => Task.FromResult(store.ContainsKey(key) ? (T)store[key] ?? new T() : new T().Tap(x => store.Add(key, x)));
+        public Task<Maybe<T>> Get<T>(string key)
+        {
+            if (store.ContainsKey(key))
+            {
+                var v = (T)store[key];
+                if (v != null)
+                    return Task.FromResult(Maybe<T>.Some(v));
+            }
+
+            return Task.FromResult(Maybe<T>.None);
+        }
     }
 }

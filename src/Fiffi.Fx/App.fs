@@ -9,6 +9,10 @@ open System.Net.Mime
 type ApplicationService = CloudEvent seq -> Async<CloudEvent seq>
 type StreamExecution = EventStore.StreamName -> EventStore.Version option -> (ApplicationService) -> Async<unit>
 
+module Interop =
+    let toOption<'T> (m:Fiffi.Maybe<'T>) : Option<'T> =
+        m.GetOrElse((fun v -> Option.Some(v)), Option<'T>.None)
+
 module Serialization =
     let toJson cloudEvent = Extensions.ToJson cloudEvent
 
@@ -92,21 +96,14 @@ module CloudEvents =
 
 module Snapshot =
 
-    [<CLIMutable>]
-    type snapshot<'view> = { 
-    value : 'view 
-    version : EventStore.Version }
-
-    let private getsnapshot<'snap when 'snap : (new: unit -> 'snap) and 'snap: not struct> (s:ISnapshotStore) (key:string) =
+    let get<'snap> (s:ISnapshotStore) (key:string) =
         async {
             let! v = s.Get<'snap>(key) |> Async.AwaitTask
-            return match box v with
-                    | null -> Option.None
-                    | _ -> Option.Some v
+            let o = Interop.toOption v
+            return o
         }
 
-
-    let private applysnapshot<'snap when 'snap : (new: unit -> 'snap) and 'snap: not struct> (s:ISnapshotStore) (key:string) f =
+    let private applysnapshot<'snap> (s:ISnapshotStore) (key:string) f =
         async {
                 let cf = System.Func<'snap,'snap>(f)
                 let! x = s.Apply<'snap>(key, cf) |> Async.AwaitTask
@@ -114,12 +111,8 @@ module Snapshot =
               } 
               |> Async.Ignore
 
-
-    let get<'snap> (s:ISnapshotStore) (key:string) =
-        getsnapshot<snapshot<'snap>> s key
-
     let apply<'snap> (s:ISnapshotStore) (key:string) f =
-        applysnapshot<snapshot<'snap>> s key (fun(v) -> { value = f(v.value); version = v.version } )
+        applysnapshot<'snap> s key f
 
 module App =
 
