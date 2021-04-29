@@ -17,7 +17,6 @@ namespace Fiffi.Dapr
             var dc = (DaprClient)sp.GetService(typeof(DaprClient));
             return async events =>
             {
-
                 foreach (var item in events.OfType<IIntegrationEvent>())
                 {
                     logger.Log(logLevel, "publishing event {eventType} to {topicName}", item.GetType().Name, topicName);
