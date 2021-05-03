@@ -128,7 +128,7 @@ namespace RPS.Tests
             context.Then((events, visual) =>
             {
                 this.helper.WriteLine(visual);
-                Assert.True(events.AsEnvelopes().Happened<GameEnded>());
+                Assert.True(events.Happened<GameEnded>());
             });
         }
     }
