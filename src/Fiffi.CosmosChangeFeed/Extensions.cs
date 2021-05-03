@@ -42,7 +42,7 @@ namespace Fiffi.CosmosChangeFeed
             IConfiguration configuration,
             Action<SubscriptionOptions> options,
             Func<T, JsonDocument> converter,
-            Func<IEnumerable<JsonDocument>, Func<string, Type>, ILogger, IEnumerable<IEvent>> filter,
+            Func<IEnumerable<JsonDocument>, Func<string, Type>, ILogger, JsonSerializerOptions ,Func<IEnumerable<IEvent>>> filter,
             Action<ChangeFeedProcessorBuilder> config)
             where TModule : Module
             => AddChangeFeedSubscription(sc, configuration, options, converter, filter,
@@ -53,19 +53,20 @@ namespace Fiffi.CosmosChangeFeed
             IConfiguration configuration,
             Action<SubscriptionOptions> options,
             Func<T, JsonDocument> converter,
-            Func<IEnumerable<JsonDocument>, Func<string, Type>, ILogger, IEnumerable<IEvent>> filter,
+            Func<IEnumerable<JsonDocument>, Func<string, Type>, ILogger, JsonSerializerOptions,Func<IEnumerable<IEvent>>> filter,
             Func<IServiceProvider, IEnumerable<IEvent>, Task> handler,
             Action<ChangeFeedProcessorBuilder> config)
             => AddChangeFeedSubscription<T>(
                 sc, configuration, options, sp => async (docs, ct) =>
                 {
                     var logger = sp.GetService<ILogger<ChangeFeedHostedService>>();
+                    var jsonOptions = sp.GetService<JsonSerializerOptions>(); 
 
                     try
                     {
                         var typeProvider = sp.GetService<Func<string, Type>>();
-                        var convertedDocs = docs.Select(converter);
-                        await handler(sp, filter(convertedDocs, typeProvider, logger));
+                        var convertedDocs = docs.Select(converter).ToArray();
+                        await handler(sp, filter(convertedDocs, typeProvider, logger, jsonOptions)());
                     }
                     catch (Exception ex)
                     {

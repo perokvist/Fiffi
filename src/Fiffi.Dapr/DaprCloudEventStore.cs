@@ -29,6 +29,6 @@ namespace Fiffi.Dapr
         }
 
         public static EventData ToEventData(IDictionary<string, object> e)
-        => new EventData(e["id"].ToString(), e["type"].ToString(), e);
+        => new(e["id"].ToString(), e["type"].ToString(), e);
     }
 }

@@ -1,3 +1,7 @@
+using System;
+using System.Text.Json;
+using System.Threading.Tasks;
+
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
@@ -6,12 +10,13 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.ApplicationInsights;
 using Microsoft.OpenApi.Models;
+
+using Newtonsoft.Json.Linq;
+
 using Fiffi;
 using Fiffi.Dapr;
-using System.Text.Json;
 using Fiffi.Serialization;
-using System;
-using System.Threading.Tasks;
+using Fiffi.CosmosChangeFeed;
 
 namespace RPS.Web
 {
@@ -30,21 +35,13 @@ namespace RPS.Web
                 .ConfigureWebHostDefaults(webBuilder =>
                     webBuilder.ConfigureServices((ctx, services) =>
                         services
-                            .Tap(s =>
-                            {
-                                if (ctx.Configuration.GetValue<bool>("FIFFI_DAPR"))
-                                    s.AddFiffiDapr("statestore");
-                                else
-                                    s.AddFiffiInMemory();
-                            })
+                            .Conditional(() => ctx.Configuration.GetValue<bool>("FIFFI_DAPR"),
+                            s => s.AddFiffiDapr("localcosmos").Tap(x => x.AddChangeFeed(ctx)),
+                            s => s.AddFiffiInMemory())
                             .AddApplicationInsightsTelemetry()
                             .AddSingleton(JsonSerializerOptions)
                             .AddSingleton(TypeResolver.FromMap(TypeResolver.GetEventsInNamespace<GameCreated>()))
-                            .AddSingleton(sp => GameModule.Initialize(
-                                sp.GetRequiredService<IAdvancedEventStore>(),
-                                sp.GetRequiredService<ISnapshotStore>(),
-                                sp.GetRequiredService<Func<IEvent[], Task>>()
-                                ))
+                            .AddModule(GameModule.Initialize)
                             .AddSwaggerGen(c => c.SwaggerDoc("v1", new OpenApiInfo { Title = "RPS Game", Version = "v1" }))
                             .AddLogging(b => b.AddFilter<ApplicationInsightsLoggerProvider>("", LogLevel.Information))
                             .AddMvc()
@@ -77,36 +74,50 @@ namespace RPS.Web
 
     public static class Extensions
     {
+        public static IServiceCollection Conditional(this IServiceCollection services,
+            Func<bool> condition,
+            Func<IServiceCollection, IServiceCollection> ifTrue,
+            Func<IServiceCollection, IServiceCollection> ifFalse)
+         => condition() ? ifTrue(services) : ifFalse(services);
+
+        public static IServiceCollection AddModule<T>(this IServiceCollection services,
+            Func<IAdvancedEventStore, ISnapshotStore, Func<IEvent[], Task>, T> f)
+            where T : class
+            => services.AddSingleton<T>(sp => f(
+                      sp.GetRequiredService<IAdvancedEventStore>(),
+                      sp.GetRequiredService<ISnapshotStore>(),
+                      sp.GetRequiredService<Func<IEvent[], Task>>()
+                ));
+
+
         public static IServiceCollection AddFiffiInMemory(this IServiceCollection services)
             => services
                .AddSingleton<IAdvancedEventStore, Fiffi.InMemory.InMemoryEventStore>()
                .AddTransient<ISnapshotStore, Fiffi.InMemory.InMemorySnapshotStore>()
-               .AddSingleton<Func<IEvent[], Task>>(sp => sp.GetService<GameModule>().WhenAsync);
+               .AddTransient<Func<IEvent[], Task>>(sp => events => sp.GetService<GameModule>().WhenAsync(events));
 
         public static IServiceCollection AddFiffiDapr(this IServiceCollection services,
             string eventStoreStateStore)
         => services
-        .AddSingleton<global::Dapr.EventStore.DaprEventStore>()
-        .AddSingleton<IAdvancedEventStore, DaprEventStore>()
-        .Configure<global::Dapr.EventStore.DaprEventStore>(x => x.StoreName = eventStoreStateStore)
-        .AddTransient<ISnapshotStore, Fiffi.Dapr.SnapshotStore>()
-        .AddSingleton(sp => sp.IntegrationPublisher("in", "topic"));
+        .AddEventStore(eventStoreStateStore)
+        .AddSnapshotStore(eventStoreStateStore)
+        .AddIntegrationEventPublisher("in", "topic");
 
-        //public static IServiceCollection ChangeFeed(this IServiceCollection services, WebHostBuilderContext ctx)
-        //    => services
-        //       .AddChangeFeedSubscription<JToken, GameModule>(
-        //           ctx.Configuration,
-        //           opt =>
-        //           { //TODO use dapr secrets + ext to map secrets -> opt | or via config ?
-        //               opt.InstanceName = "RPS.Web";
-        //               opt.ServiceUri = new System.Uri("https://localhost:8081");
-        //               opt.Key = "C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==";
-        //               opt.DatabaseName = "dapr";
-        //               opt.ContainerId = "events";
-        //               opt.ProcessorName = "eventsubscription";
-        //           },
-        //           token => JsonDocument.Parse(token.ToString()),
-        //           Fiffi.Dapr.Extensions.FeedFilter,
-        //           feedBuilder => { });
+        public static IServiceCollection AddChangeFeed(this IServiceCollection services, WebHostBuilderContext ctx)
+            => services
+               .AddChangeFeedSubscription<JToken, GameModule>(
+                   ctx.Configuration,
+                   opt =>
+                   { //TODO use dapr secrets + ext to map secrets -> opt | or via config ?
+                       opt.InstanceName = "RPS.Web";
+                       opt.ServiceUri = new System.Uri("https://localhost:8081");
+                       opt.Key = "C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==";
+                       opt.DatabaseName = "dapr";
+                       opt.ContainerId = "dapreventstore";
+                       opt.ProcessorName = "eventsubscription";
+                   },
+                   token => JsonDocument.Parse(token.ToString()),
+                   Fiffi.Dapr.ChangeFeed.Extensions.FeedFilter,
+                   feedBuilder => { });
     }
 }
