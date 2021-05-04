@@ -19,8 +19,6 @@ namespace Fiffi
         public static Task ExecuteAsync(this IEventStore store, ICommand command, string streamName, Func<EventRecord[]> action, Func<IEvent[], Task> pub)
             => ExecuteAsync<TestState>(store, command, (null, streamName), state => Task.FromResult(action()), pub);
 
-
-
         public static Task ExecuteAsync<TState>(this IEventStore store, ICommand command, Func<TState, EventRecord[]> action, Func<IEvent[], Task> pub)
           where TState : class, new()
           => ExecuteAsync<TState>(store, command, typeof(TState).Name.AsStreamName(command.AggregateId), state => Task.FromResult(action(state)), pub);
@@ -148,6 +146,24 @@ namespace Fiffi
         => ExecuteAsync(() => stateManager.GetAsync<TState>(command.AggregateId), (state, version, evts) => stateManager.SaveAsync(command.AggregateId, state, version, evts), command, typeof(TState).Name.AsStreamName(command.AggregateId), f, pub);
 
 
+        public static Task ExecuteAsync<TState>(
+            Func<Task<(TState, long)>> getState,
+            Func<TState, long, IEvent[], Task> saveState,
+            ICommand command,
+            (string aggregateName, string streamName) naming,
+            Func<TState, IEnumerable<EventRecord>> f,
+            Func<IEvent[], Task> pub)
+            where TState : class, new()
+            => ExecuteAsync(getState, saveState, command, f,
+            (a, version, events) =>
+            {
+                var (aggregateName, streamName) = naming;
+                var envelopes = events.ToEnvelopes(command.AggregateId.Id);
+                if (envelopes.Any())
+                    envelopes.AddMetaData(command, aggregateName, streamName, version);
+                return envelopes;
+            }, pub);
+
         public static async Task ExecuteAsync<T>(this IEventStore<T> store,
         string streamName,
         Func<(IEnumerable<T> events, long version), Task<T[]>> action,
@@ -163,24 +179,21 @@ namespace Fiffi
             await pub(events); //need to always execute due to locks        
         }
 
-        public static async Task ExecuteAsync<TState>(
+        public static async Task ExecuteAsync<TState, TEnvelope, TEvent>(
             Func<Task<(TState, long)>> getState,
-            Func<TState, long, IEvent[], Task> saveState,
+            Func<TState, long, TEnvelope[], Task> saveState,
             ICommand command,
-            (string aggregateName, string streamName) naming,
-            Func<TState, IEnumerable<EventRecord>> f,
-            Func<IEvent[], Task> pub)
+            Func<TState, IEnumerable<TEvent>> f,
+            Func<IAggregateId, long, TEvent[], TEnvelope[]> envFactory,
+            Func<TEnvelope[], Task> pub)
             where TState : class, new()
         {
-            var (aggregateName, streamName) = naming;
             var (state, version) = await getState();
             if (state == null) state = new TState();
             var events = f(state).ToArray();
             var newState = events.Apply(state);
 
-            var envelopes = events.ToEnvelopes(command.AggregateId.Id);
-            if (envelopes.Any())
-                envelopes.AddMetaData(command, aggregateName, streamName, version);
+            var envelopes = envFactory(command.AggregateId, version, events);
 
             await saveState(newState, version, envelopes); //2PC trouble
             await pub(envelopes);
