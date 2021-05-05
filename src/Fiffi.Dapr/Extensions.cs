@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -35,10 +36,23 @@ namespace Fiffi.Dapr
                     .Tap(x => x.StoreName = storeName))
                     .AddSingleton<IAdvancedEventStore, DaprEventStore>();
 
-        public static IServiceCollection AddSnapshotStore(this IServiceCollection services, string storeName = "statestore") =>
+        public static IServiceCollection AddSnapshotStore(this IServiceCollection services,
+            string storeName = "statestore", string viewPartition = "views") =>
             services.AddSingleton<ISnapshotStore>(sp => new SnapshotStore(
                     sp.GetRequiredService<DaprClient>(),
                     sp.GetRequiredService<ILogger<SnapshotStore>>())
-                    .Tap(x => x.StoreName = storeName));
+                    .Tap(x => x.StoreName = storeName)
+                    .Tap(x => x.MetaProvider = key =>
+                    {
+                        var partitionKey = viewPartition;
+                        var snapshotSufix = "|snapshot";
+                        if (key.EndsWith(snapshotSufix))
+                            partitionKey = key.TrimEnd(snapshotSufix.ToCharArray());
+
+                        return new Dictionary<string, string>
+                        {
+                            { "partitionKey", partitionKey }
+                        };
+                    }));
     }
 }
