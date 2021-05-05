@@ -1,6 +1,7 @@
 ﻿using Dapr.Client;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Threading.Tasks;
 
@@ -13,6 +14,8 @@ namespace Fiffi.Dapr
 
         public string StoreName { get; set; } = "statestore";
 
+        public Func<string, Dictionary<string, string>> MetaProvider { get; set; } = key => new Dictionary<string, string>();
+
         public SnapshotStore(DaprClient client, ILogger<SnapshotStore> logger)
         {
             this.client = client;
@@ -22,7 +25,8 @@ namespace Fiffi.Dapr
         public async Task<T> Get<T>(string key)
             where T : class, new()
         {
-            var item = await client.GetStateAsync<T>(StoreName, key);
+            var meta = MetaProvider(key);
+            var item = await client.GetStateAsync<T>(StoreName, key, metadata: meta);
             if (item == null)
                 return new T();
 
@@ -35,7 +39,8 @@ namespace Fiffi.Dapr
 
         public async Task Apply<T>(string key, Func<T, T> f, Func<T> c)
         {
-            var (item, tag) = await client.GetStateAndETagAsync<T>(StoreName, key);
+            var meta = MetaProvider(key);
+            var (item, tag) = await client.GetStateAndETagAsync<T>(StoreName, key, metadata: meta);
             if (item == null)
             {
                 item = c();
@@ -43,7 +48,7 @@ namespace Fiffi.Dapr
             var newItem = f(item);
             if (!item.Equals(newItem))
             {
-                var success = await client.TrySaveStateAsync(StoreName, key, newItem, tag);
+                var success = await client.TrySaveStateAsync(StoreName, key, newItem, tag, metadata: meta);
                 if (!success)
                 {
                     var ex = new DBConcurrencyException($"item with {key} have been updated");
