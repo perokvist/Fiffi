@@ -41,12 +41,15 @@ namespace Fiffi.Dapr
                 item = c();
             }
             var newItem = f(item);
-            var success = await client.TrySaveStateAsync(StoreName, key, newItem, tag);
-            if (!success)
+            if (!item.Equals(newItem))
             {
-                var ex = new DBConcurrencyException($"item with {key} have been updated");
-                logger.LogError(ex, ex.Message);
-                throw ex;
+                var success = await client.TrySaveStateAsync(StoreName, key, newItem, tag);
+                if (!success)
+                {
+                    var ex = new DBConcurrencyException($"item with {key} have been updated");
+                    logger.LogError(ex, ex.Message);
+                    throw ex;
+                }
             }
         }
     }

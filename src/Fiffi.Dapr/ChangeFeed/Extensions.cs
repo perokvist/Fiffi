@@ -10,28 +10,29 @@ namespace Fiffi.Dapr.ChangeFeed
     public static class Extensions
     {
 
-        public static Func<IEnumerable<IEvent>> FeedFilter(
-            this IEnumerable<JsonDocument> docs,
+        public static Func<IEnumerable<JsonDocument>, IEnumerable<IEvent>> FeedFilter(
             Func<string, Type> typeProvider,
-            ILogger logger, JsonSerializerOptions options) => FeedFilter(docs, typeProvider, logger, logLevel: LogLevel.Information);
+            ILogger logger, JsonSerializerOptions options) => FeedFilter(typeProvider, logger, logLevel: LogLevel.Information);
 
-        public static Func<IEnumerable<IEvent>> FeedFilter(
-            this IEnumerable<JsonDocument> docs,
+        public static Func<IEnumerable<JsonDocument>, IEnumerable<IEvent>> FeedFilter(
             Func<string, Type> typeProvider,
             ILogger logger, LogLevel logLevel = LogLevel.Information,
             JsonSerializerOptions options = null)
         {
             var toEvent = DaprEventStore.ToEvent();
 
-            return () =>
+            return docs =>
             {
                 logger.Log(logLevel, $"Recieved : {docs.Count()} event(s).");
+                docs.ForEach(d => logger.Log(logLevel, $"Recieved : {d.RootElement.GetProperty("id").GetString()}"));
+
                 var eventsToProcess = docs
                          .Where(Filter())
                          .Select(ToEventData)
-                         .Select(ed => toEvent(ed, typeProvider(ed.EventName), options ?? new()));
+                         .Select(ed => toEvent(ed, typeProvider(ed.EventName), options ?? new()))
+                         .ToArray();
 
-                logger.Log(logLevel, $"{eventsToProcess.Count()} event(s) to process.");
+                logger.Log(logLevel, $"{eventsToProcess.Length} event(s) to process.");
 
                 return eventsToProcess;
             };
@@ -40,6 +41,7 @@ namespace Fiffi.Dapr.ChangeFeed
         public static Func<JsonDocument, bool> Filter(string aggregateStreamIdentifier = "aggregate") =>
             d => new[] { d }
             .Where(x => !x.RootElement.GetProperty("id").GetString().EndsWith("|head"))
+            .Where(x => !x.RootElement.GetProperty("id").GetString().EndsWith("|snapshot"))
             .Where(x => x.RootElement.GetProperty("id").GetString().Contains(aggregateStreamIdentifier))
             .Any();
 

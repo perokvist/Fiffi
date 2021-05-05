@@ -113,7 +113,7 @@ namespace Fiffi
             => ExecuteAsync(
                 async () =>
                 {
-                    var state = await snapshotStore.Get<TState>(naming.streamName);
+                    var state = await snapshotStore.Get<TState>($"{naming.streamName}|snapshot");
                     var (events, version) = await store.LoadEventStreamAsync(naming.streamName, new StreamVersion(getVersion(state), Mode.Exclusive));
                     return (events.Select(e => e.Event).Apply(state), version);
                 },
@@ -122,7 +122,7 @@ namespace Fiffi
                     if (events.Any())
                     {
                         var newVersion = await store.AppendToStreamAsync(naming.streamName, version, events);
-                        await snapshotStore.Apply<TState>(naming.streamName, s =>
+                        await snapshotStore.Apply<TState>($"{naming.streamName}|snapshot", s =>
                         {
                             return setVersion(newVersion, newState);
                         });
