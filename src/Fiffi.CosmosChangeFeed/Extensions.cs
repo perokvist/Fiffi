@@ -42,7 +42,7 @@ namespace Fiffi.CosmosChangeFeed
             IConfiguration configuration,
             Action<SubscriptionOptions> options,
             Func<T, JsonDocument> converter,
-            Func<IEnumerable<JsonDocument>, Func<string, Type>, ILogger, IEnumerable<IEvent>> filter,
+            Func<Func<string, Type>, ILogger, JsonSerializerOptions, Func<IEnumerable<JsonDocument>, IEnumerable<IEvent>>> filter,
             Action<ChangeFeedProcessorBuilder> config)
             where TModule : Module
             => AddChangeFeedSubscription(sc, configuration, options, converter, filter,
@@ -53,25 +53,33 @@ namespace Fiffi.CosmosChangeFeed
             IConfiguration configuration,
             Action<SubscriptionOptions> options,
             Func<T, JsonDocument> converter,
-            Func<IEnumerable<JsonDocument>, Func<string, Type>, ILogger, IEnumerable<IEvent>> filter,
+            Func<Func<string, Type>, ILogger, JsonSerializerOptions, Func<IEnumerable<JsonDocument>, IEnumerable<IEvent>>> filter,
             Func<IServiceProvider, IEnumerable<IEvent>, Task> handler,
             Action<ChangeFeedProcessorBuilder> config)
             => AddChangeFeedSubscription<T>(
-                sc, configuration, options, sp => async (docs, ct) =>
+                sc, configuration, options, sp =>
                 {
                     var logger = sp.GetService<ILogger<ChangeFeedHostedService>>();
+                    var jsonOptions = sp.GetService<JsonSerializerOptions>();
+                    var typeProvider = sp.GetService<Func<string, Type>>();
+                    var applyFilter = filter(typeProvider, logger, jsonOptions);
 
-                    try
+                    return async (docs, ct) =>
                     {
-                        var typeProvider = sp.GetService<Func<string, Type>>();
-                        var convertedDocs = docs.Select(converter);
-                        await handler(sp, filter(convertedDocs, typeProvider, logger));
-                    }
-                    catch (Exception ex)
-                    {
-                        logger.LogError(ex, $"Fail to proccess events. {ex.Message}");
-                        throw;
-                    }
+                        try
+                        {
+                            var convertedDocs = docs.Select(converter).ToArray();
+                            var filtered = applyFilter(convertedDocs);
+                            logger.LogInformation($"About to proccess {filtered.Count()} events.");
+                            await handler(sp, filtered);
+                            logger.LogInformation($"Proccessed {filtered.Count()} events.");
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.LogError(ex, $"Fail to proccess events. {ex.Message}");
+                            throw;
+                        }
+                    };
                 }, config);
 
 

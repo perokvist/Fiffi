@@ -13,7 +13,9 @@ namespace Fiffi.InMemory
         {
             var currentValue = await Get<T>(key);
             var newValue = f(currentValue);
-            store[key] = newValue;
+
+            if (!currentValue.Equals(newValue))
+                store[key] = newValue;
         }
 
         public Task<T> Get<T>(string key) where T : class, new()

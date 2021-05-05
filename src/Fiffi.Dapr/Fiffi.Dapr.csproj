@@ -4,10 +4,24 @@
 		<TargetFramework>net5.0</TargetFramework>
     <Platform>x64</Platform>
     <PlatformTarget>x64</PlatformTarget>
+    <VersionPrefix>0.1.0</VersionPrefix>
+    <VersionSuffix>beta</VersionSuffix>
+    <PackageId>Fiffi.Dapr</PackageId>
+    <Title>Fiffi.Dapr</Title>
+    <Authors>Per Ökvist</Authors>
+    <PackageLicenseExpression>MS-PL</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/perokvist/Fiffi/</PackageProjectUrl>
+    <PackageIconUrl>https://github.com/perokvist/Fiffi/raw/master/fiffi.ico</PackageIconUrl>
+    <Description>Exploration kit for eventdriven services - dapr</Description>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <PackageTags>event-driven infrastructure</PackageTags>
+    <LangVersion>9.0</LangVersion>
+    <RepositoryUrl>https://github.com/perokvist/Fiffi</RepositoryUrl>
   </PropertyGroup>
 
 	<ItemGroup>
-	  <PackageReference Include="StateStore.Dapr.EventStore" Version="1.0.0-rtm-alpha.9" />
+	  <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="5.0.0" />
+	  <PackageReference Include="StateStore.Dapr.EventStore" Version="1.1.0-alpha.1" />
 	</ItemGroup>
 
 	<ItemGroup>

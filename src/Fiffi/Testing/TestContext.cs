@@ -47,7 +47,7 @@ namespace Fiffi.Testing
                     .GetAwaiter().GetResult();
 
         public Task WhenAsync(IEvent @event)
-            => Task.WhenAll(this.whens.Select(w => w(@event)));
+            => WhenAsync(() => Task.WhenAll(this.whens.Select(w => w(@event))));
 
         public Task WhenAsync(ICommand command)
          => WhenAsync(() => this.dispatch(command));
