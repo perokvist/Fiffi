@@ -53,7 +53,7 @@ namespace RPS.Web.Tests
             context.Given(
                 EventEnvelope.Create(
                     gameId.ToString(),
-                    new GameCreated(GameId : gameId, PlayerId : "test@tester.com", Rounds : 1, Title : "test game", Created : DateTime.UtcNow ))
+                    new GameCreated(GameId: gameId, PlayerId: "test@tester.com", Rounds: 1, Title: "test game", Created: DateTime.UtcNow))
                                 .AddTestMetaData<GameState>(new AggregateId(gameId)));
 
             //When
@@ -76,6 +76,40 @@ namespace RPS.Web.Tests
                 this.helper.WriteLine(visual);
                 Assert.True(events.AsEnvelopes().Happened<GameStarted>());
                 Assert.True(events.AsEnvelopes().Happened<RoundStarted>());
+            });
+        }
+
+        [Fact]
+        public async Task GameEndedPublishesGamePlayed()
+        {
+            var host = await hostBuilder.StartAsync();
+            var client = host.GetTestClient();
+
+            //Given
+            var gameId = Guid.NewGuid();
+            var aggregateId = new AggregateId(gameId);
+            context.Given<GameState>(aggregateId, new EventRecord[]
+            {
+                new GameCreated(GameId: gameId, PlayerId: "lisa@tester.com", Rounds: 1, Title: "test game", Created: DateTime.UtcNow),
+                new GameStarted(GameId: gameId, PlayerId: "alex@tester.com"),
+                new RoundStarted(GameId: gameId, Round: 1),
+                new HandShown(GameId: gameId, Hand: Hand.Paper, PlayerId: "lisa@tester.com"),
+                new HandShown(GameId: gameId, Hand: Hand.Rock, PlayerId: "alex@tester.com"),
+                new RoundEnded(GameId: gameId, Round: 1, Looser: "lisa@tester.com", Winner: "alex@tester.com"),
+                new GameEnded(GameId: gameId) }
+            );
+
+            //When
+            await context.WhenAsync(EventEnvelope.Create(
+                aggregateId.Id,
+                new GameEnded(GameId: gameId)).AddTestMetaData<GameState>(aggregateId)
+                );
+
+            //Then  
+            context.Then((events, visual) =>
+            {
+                this.helper.WriteLine(visual);
+                Assert.True(events.Happened<GamePlayed>());
             });
         }
 

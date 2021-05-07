@@ -16,9 +16,12 @@ namespace Fiffi.Testing
 
         public static bool Happened(this IEnumerable<IEvent> events) => events.Count() >= 1;
 
+        [Obsolete("Use non envelope signature")]
         public static bool Happened<T>(this IEnumerable<EventEnvelope<EventRecord>> events) 
             => events.Select(x => x.Event).OfType<T>().Count() >= 1;
 
+        public static bool Happened<T>(this IEnumerable<IEvent> events)
+            => events.Select(x => x.Event).OfType<T>().Count() >= 1;
 
         public static async Task<(object Value, long Version)> GetAsync(this IStateStore stateManager, Type type, IAggregateId aggregateId)
         {

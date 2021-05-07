@@ -7,6 +7,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Fiffi.CosmosChangeFeed;
 using Newtonsoft.Json.Linq;
 using System.Text.Json;
+using System;
+using System.Linq;
 
 namespace ChangeFeedSample
 {
@@ -20,23 +22,31 @@ namespace ChangeFeedSample
                 .ConfigureLogging(lb => lb.AddConsole())
                 .ConfigureServices((ctx, sc) =>
                     sc
+                    .AddSingleton(Fiffi.TypeResolver.Default())
                     .AddChangeFeedSubscription<JToken>(
                                 ctx.Configuration,
                                 opt =>
                                 {
-                                    opt.InstanceName = "ProcessorSample";
+                                    opt.InstanceName = "DaprProcessorSample";
                                     opt.ServiceUri = new System.Uri("https://localhost:8081");
                                     opt.Key = "C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==";
                                     opt.DatabaseName = "dapr";
-                                    opt.ContainerId = "events";
-                                    opt.ProcessorName = "sample";
+                                    opt.ContainerId = "dapreventstore";
+                                    opt.ProcessorName = "daprsample";
                                 },
                                 token => JsonDocument.Parse(token.ToString()),
-                                Fiffi.Dapr.Extensions.FeedFilter,
-                                (sp, events) => Task.CompletedTask,
+                                Fiffi.Dapr.ChangeFeed.Extensions.FeedFilter,
+                                (sp, events) => {
+                                    events.ToArray();
+                                    return Task.CompletedTask;
+                                },
                                 feedBuilder => { })
-                    .AddMvc())
-                .Configure(builder => builder.UseMvcWithDefaultRoute());
+                                .AddMvc(opt => opt.EnableEndpointRouting = false))
+                                .Configure(app =>
+                                {
+                                    app.UseMvc();
+                                    app.UseWelcomePage();
+                                });
 
 
     }

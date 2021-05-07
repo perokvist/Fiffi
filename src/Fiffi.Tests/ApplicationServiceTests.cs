@@ -41,10 +41,12 @@ namespace Fiffi.Tests
 
             await ApplicationService.ExecuteAsync<TestState>
                (store, new TestCommand(id),
-               state => new EventRecord[] { new TestEventRecord("test") }, e => Task.CompletedTask, snapshotStore, s => s.Version, (v, s) => s.Tap(x => x.Version = v));
+               state => new EventRecord[] { new TestEventRecord("test") }, 
+               e => Task.CompletedTask, 
+               snapshotStore, s => s.Version, (v, s) => s.Tap(x => x.Version = v));
 
             var result = await store.LoadEventStreamAsync(streamName, 0);
-            var state = await snapshotStore.Get<TestState>(streamName);
+            var state = await snapshotStore.Get<TestState>($"{streamName}|snapshot");
 
             Assert.Equal(1, arrangeVersion);
             Assert.Equal(2, result.Version);

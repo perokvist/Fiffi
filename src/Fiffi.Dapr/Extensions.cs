@@ -1,15 +1,19 @@
 ﻿using Dapr.Client;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace Fiffi.Dapr
 {
     public static class Extensions
     {
+
+        public static IServiceCollection AddIntegrationEventPublisher(this IServiceCollection services, string pubsubname, string topicName)
+            => services.AddSingleton(sp => sp.IntegrationPublisher(pubsubname, topicName));
+
         public static Func<IEvent[], Task> IntegrationPublisher(
             this IServiceProvider sp, string pubsubname, string topicName, LogLevel logLevel = LogLevel.Information)
         {
@@ -17,7 +21,6 @@ namespace Fiffi.Dapr
             var dc = (DaprClient)sp.GetService(typeof(DaprClient));
             return async events =>
             {
-
                 foreach (var item in events.OfType<IIntegrationEvent>())
                 {
                     logger.Log(logLevel, "publishing event {eventType} to {topicName}", item.GetType().Name, topicName);
@@ -26,35 +29,30 @@ namespace Fiffi.Dapr
             };
         }
 
-        public static IEnumerable<IEvent> FeedFilter(
-            this IEnumerable<JsonDocument> docs,
-            Func<string, Type> typeProvider,
-            ILogger logger) => FeedFilter(docs, typeProvider, logger, logLevel: LogLevel.Information);
+        public static IServiceCollection AddEventStore(this IServiceCollection services, string storeName = "statestore") =>
+           services.AddSingleton(sp => new global::Dapr.EventStore.DaprEventStore(
+                    sp.GetRequiredService<DaprClient>(),
+                    sp.GetRequiredService<ILogger<global::Dapr.EventStore.DaprEventStore>>())
+                    .Tap(x => x.StoreName = storeName))
+                    .AddSingleton<IAdvancedEventStore, DaprEventStore>();
 
-        public static IEnumerable<IEvent> FeedFilter(
-            this IEnumerable<JsonDocument> docs,
-            Func<string, Type> typeProvider,
-            ILogger logger, LogLevel logLevel)
-        {
-            foreach (var d in docs)
-            {
-                using (logger.BeginScope($"Document {d.RootElement.GetProperty("id")}"))
-                {
-                    foreach (var e in new[] { d }.FeedFilter(typeProvider))
+        public static IServiceCollection AddSnapshotStore(this IServiceCollection services,
+            string storeName = "statestore", string viewPartition = "views") =>
+            services.AddSingleton<ISnapshotStore>(sp => new SnapshotStore(
+                    sp.GetRequiredService<DaprClient>(),
+                    sp.GetRequiredService<ILogger<SnapshotStore>>())
+                    .Tap(x => x.StoreName = storeName)
+                    .Tap(x => x.MetaProvider = key =>
                     {
-                        logger.Log(logLevel, $"Filter included : {e.GetEventName()}");
-                        yield return e;
-                    }
-                }
-            }
-        }
+                        var partitionKey = viewPartition;
+                        var snapshotSufix = "|snapshot";
+                        if (key.EndsWith(snapshotSufix))
+                            partitionKey = key.TrimEnd(snapshotSufix.ToCharArray());
 
-        public static IEnumerable<IEvent> FeedFilter(this IEnumerable<JsonDocument> docs, Func<string, Type> typeProvider,
-            string aggregateStreamIdentifier = "aggregate")
-            => docs
-            .Where(x => !x.RootElement.GetProperty("id").GetString().EndsWith("|head"))
-            .Where(x => x.RootElement.GetProperty("id").GetString().Contains(aggregateStreamIdentifier))
-            .SelectMany(x => JsonSerializer.Deserialize<global::Dapr.EventStore.EventData[]>(x.RootElement.GetProperty("value").GetRawText()))
-            .Select(x => (IEvent)JsonSerializer.Deserialize(x.Data as byte[], typeProvider(x.EventName))); //TODO fix!
+                        return new Dictionary<string, string>
+                        {
+                            { "partitionKey", partitionKey }
+                        };
+                    }));
     }
 }
