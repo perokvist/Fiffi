@@ -87,6 +87,11 @@ namespace Fiffi.FileSystem
             return (events, version + events.Count());
         }
 
-
+        public async IAsyncEnumerable<IEvent> LoadEventStreamAsAsync(string streamName, long version)
+        {
+            var (events, _) = await LoadEventStreamAsync(streamName, version);
+            foreach (var e in events)
+                yield return e;
+        }
     }
 }
