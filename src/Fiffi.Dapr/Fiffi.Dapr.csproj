@@ -20,8 +20,8 @@
   </PropertyGroup>
 
 	<ItemGroup>
+	  <PackageReference Include="StateStore.Dapr.EventStore" Version="1.1.1-alpha.4" />
 	  <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="5.0.0" />
-	  <PackageReference Include="StateStore.Dapr.EventStore" Version="1.1.0-alpha.1" />
 	</ItemGroup>
 
 	<ItemGroup>

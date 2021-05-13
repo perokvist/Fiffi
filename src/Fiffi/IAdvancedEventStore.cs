@@ -1,11 +1,16 @@
-﻿using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Fiffi
 {
-    public interface IAdvancedEventStore : IEventStore
+    public interface IAdvancedEventStore :IEventStore, IAdvancedEventStore<IEvent>
     {
-        Task<long> AppendToStreamAsync(string streamName, params IEvent[] events);
-
         //Task DeleteStreamAsync(string streamName);
+    }
+
+    public interface IAdvancedEventStore<T> : IEventStore<T>
+    {
+        Task<long> AppendToStreamAsync(string streamName, params T[] events);
+        IAsyncEnumerable<T> LoadEventStreamAsAsync(string streamName, long version);
     }
 }
