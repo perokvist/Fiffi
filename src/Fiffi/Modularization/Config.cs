@@ -23,8 +23,15 @@ namespace Fiffi.Modularization
         public Configuration<T> Commands(params Func<ICommand, Task>[] f)
          => this.Tap(x => x.dispatch = f.Aggregate((l, r) => async c =>
             {
-                await l(c);
-                await r(c);
+                try
+                {
+                    await l(c);
+                    await r(c);
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception($"Error handeling {c.GetType().Name} - {c.AggregateId}", ex);
+                }
             }));
 
         public Configuration<T> Updates(Func<IEvent[], Task> f)
