@@ -1,11 +1,9 @@
 ﻿using Dapr.EventStore;
-using Fiffi.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace Fiffi.Dapr
@@ -78,13 +76,16 @@ namespace Fiffi.Dapr
 
         public async Task<(IEnumerable<IEvent> Events, long Version)> LoadEventStreamAsync(string streamName, long version)
         {
-            var (events, v) = await eventStore.LoadEventStreamAsync(streamName, version);
+            var meta = await eventStore.GetStreamMetaData(streamName);
+            var eventsAsync = eventStore.LoadEventStreamAsync(streamName, version);
             var toEvent = ToEvent();
+            var events = await eventsAsync.ToArrayAsync();
 
             var result = (events
                 .Select(e => toEvent(e, typeResolver(e.EventName), this.jsonSerializerOptions)
-                .Tap(x => x.Meta.AddStoreMetaData(new EventStoreMetaData { EventVersion = e.Version, EventPosition = e.Version }))),
-                v);
+                .Tap(x => x.Meta.AddStoreMetaData(new EventStoreMetaData { EventVersion = e.Version, EventPosition = e.Version })))
+                .AsEnumerable(),
+                events.LastOrDefault()?.Version ?? (meta?.Version ?? 0));
             return result;
         }
 
@@ -104,5 +105,14 @@ namespace Fiffi.Dapr
 
         public static EventData ToEventData(IEvent e, Func<IEvent, object> f)
          => new EventData(e.EventId().ToString(), e.Event.GetType().Name, f(e));
+
+        public IAsyncEnumerable<IEvent> LoadEventStreamAsAsync(string streamName, long version)
+        {
+            var events = eventStore.LoadEventStreamAsync(streamName, version);
+            var toEvent = ToEvent();
+            return events
+                .Select(e => toEvent(e, typeResolver(e.EventName), this.jsonSerializerOptions)
+                .Tap(x => x.Meta.AddStoreMetaData(new EventStoreMetaData { EventVersion = e.Version, EventPosition = e.Version })));
+        }
     }
 }

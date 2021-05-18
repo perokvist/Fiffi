@@ -30,19 +30,23 @@ namespace RPS.Web
         public static Player Read(Utf8JsonReader reader)
         {
             var p = new Player(default, default);
+            var propertyCount = 0;
             while (reader.Read())
             {
                 if (reader.TokenType == JsonTokenType.PropertyName && reader.GetString() == nameof(Player.Id))
                 {
                     reader.Read();
                     p = p with { Id = reader.GetString() };
+                    propertyCount++;
                 }
                 if (reader.TokenType == JsonTokenType.PropertyName && reader.GetString() == nameof(Player.Hand))
                 {
                     reader.Read();
                     p = p with { Hand = (Hand)reader.GetInt16() };
-                    break;
+                    propertyCount++;
                 }
+                if (propertyCount == 2)
+                    break;
             }
             return p;
         }

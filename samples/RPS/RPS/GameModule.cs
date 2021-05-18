@@ -13,11 +13,14 @@ namespace RPS
             : base(dispatcher, publish, queryDispatcher, onStart)
         { }
 
+        static GameModule Create(Func<ICommand, Task> dispatcher, Func<IEvent[], Task> publish, QueryDispatcher queryDispatcher, Func<IEvent[], Task> onStart)
+            => new(dispatcher, publish, queryDispatcher, onStart);
+
         public static GameModule Initialize(
             IAdvancedEventStore store,
             ISnapshotStore snapshotStore,
             Func<IEvent[], Task> pub)
-                => new Configuration<GameModule>((c, p, q, s) => new GameModule(c, p, q, s))
+                => new Configuration<GameModule>(Create)
             .Commands(
                 Commands.Validate<ICommand>(),
                 Commands.GuaranteeCorrelation<ICommand>(),
@@ -32,7 +35,7 @@ namespace RPS
             .Updates(events => store.AppendToStreamAsync(Streams.All, events.ToArray()))
             .Triggers(async (events, d) =>
             {
-                await foreach (var t in events.Select(e => e switch
+                await foreach (var t in events.Select(e => e.Event switch
                   {
                       GameEnded evt => store.Projector<GamePlayed>().Publish(e, Streams.All, pub),
                       _ => Task.CompletedTask

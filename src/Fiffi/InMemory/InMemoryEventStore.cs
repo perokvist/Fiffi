@@ -76,7 +76,13 @@ namespace Fiffi.InMemory
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
         public async Task<(IEnumerable<T> Events, long Version)> LoadEventStreamAsync(string streamName, long version) =>
 #pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
-            store.ContainsKey(streamName) ? (store[streamName].Where(x => getVersion(x) >= version).ToArray(), store[streamName].Last().Pipe(x => getVersion(x))) : (new T[] { }, 0);
+            store.ContainsKey(streamName) ? (store[streamName].Where(x => x.Meta.GetEventStoreMetaData().EventVersion >= version).ToArray(), store[streamName].Last().Meta.GetEventStoreMetaData().EventVersion) : (new IEvent[] { }, 0);
 
+        public async IAsyncEnumerable<IEvent> LoadEventStreamAsAsync(string streamName, long version)
+        {
+            var (events, _) = await LoadEventStreamAsync(streamName, version);
+            foreach (var e in events)
+                yield return e;
+        }
     }
 }

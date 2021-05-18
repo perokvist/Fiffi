@@ -2,7 +2,7 @@
 
 namespace Fiffi.Testing
 {
-    public class TestState
+    public record TestState
     {
         public TestState When(EventRecord @event) => this.Tap(x => x.Applied.Add(@event));
 
