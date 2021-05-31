@@ -12,7 +12,7 @@ namespace Fiffi.InMemory
         public async Task Apply<T>(string key, Func<T, T> f) 
         {
             var currentValue = await Get<T>(key);
-            var newValue = f(currentValue);
+            var newValue = f(currentValue.GetOrDefault(default));
 
             if (currentValue is IEquatable<T>)
                 if (currentValue.Equals(newValue))

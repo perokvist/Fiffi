@@ -2,7 +2,6 @@
 open Fiffi
 open CloudNative.CloudEvents
 
-
 module Projections =
 
     let projection(defaultView:'view) (project:'view -> 'event -> 'view) (e:'event seq) =

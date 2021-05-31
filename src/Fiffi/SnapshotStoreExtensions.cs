@@ -15,7 +15,24 @@ namespace Fiffi
 
         public static Task Apply<T>(this ISnapshotStore snapshotStore, Func<T, T> f)
             where T : class, new()
-            => snapshotStore.Apply<T>(typeof(T).Name, f);
+            => snapshotStore.Apply<T>(typeof(T).Name, x =>
+            {
+                if (x == null)
+                    return f(new T());
+
+                return f(x);
+            });
+
+        public static Task Apply<T>(this ISnapshotStore snapshotStore,
+            string streamName,
+            Func<T, T> f,
+            Func<T> create)
+        => snapshotStore.Apply<T>(streamName, x =>
+        {
+            if (x == null)
+                return f(create());
+            return f(x);
+        });
 
         public static Task Apply<T>(this ISnapshotStore snapshotStore, params IEvent[] events)
             where T : class, new()

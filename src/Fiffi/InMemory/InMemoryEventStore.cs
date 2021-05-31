@@ -18,7 +18,7 @@ namespace Fiffi.InMemory
 
     public class InMemoryEventStore<T> : IEventStore<T> 
     {
-        readonly ConcurrentDictionary<string, T[]> innerStore = new ConcurrentDictionary<string, T[]>();
+        readonly ConcurrentDictionary<string, T[]> innerStore = new();
         private readonly Func<T, long> getVersion;
         private readonly Action<T, long> setVersion;
         private readonly Func<T, Guid> getEventId;
@@ -76,9 +76,9 @@ namespace Fiffi.InMemory
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
         public async Task<(IEnumerable<T> Events, long Version)> LoadEventStreamAsync(string streamName, long version) =>
 #pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
-            store.ContainsKey(streamName) ? (store[streamName].Where(x => x.Meta.GetEventStoreMetaData().EventVersion >= version).ToArray(), store[streamName].Last().Meta.GetEventStoreMetaData().EventVersion) : (new IEvent[] { }, 0);
+            store.ContainsKey(streamName) ? (store[streamName].Where(x => getVersion(x) >= version).ToArray(), getVersion(store[streamName].Last())) : (Array.Empty<T>(), 0);
 
-        public async IAsyncEnumerable<IEvent> LoadEventStreamAsAsync(string streamName, long version)
+        public async IAsyncEnumerable<T> LoadEventStreamAsAsync(string streamName, long version)
         {
             var (events, _) = await LoadEventStreamAsync(streamName, version);
             foreach (var e in events)
