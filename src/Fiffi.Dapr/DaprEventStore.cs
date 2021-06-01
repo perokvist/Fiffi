@@ -104,7 +104,7 @@ namespace Fiffi.Dapr
         }
 
         public static EventData ToEventData(IEvent e, Func<IEvent, object> f)
-         => new EventData(e.EventId().ToString(), e.Event.GetType().Name, f(e));
+         => new(e.EventId().ToString(), e.Event.GetType().Name, f(e));
 
         public IAsyncEnumerable<IEvent> LoadEventStreamAsAsync(string streamName, long version)
         {
