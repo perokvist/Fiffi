@@ -16,7 +16,7 @@ namespace Fiffi.Dapr.Tests
     {
         private readonly DaprClient client;
         private readonly string streamName;
-        private readonly Fiffi.Dapr.DaprEventStore store;
+        private readonly IAdvancedEventStore store;
 
         public EventStoreTests()
         {
@@ -52,12 +52,11 @@ namespace Fiffi.Dapr.Tests
 
             streamName = $"teststream-{Guid.NewGuid().ToString().Substring(0, 5)}";
 
-            this.store = new DaprEventStore(
-                store,
-                TypeResolver.FromMap(TypeResolver.GetEventsFromTypes(typeof(GameCreated), typeof(TestEventRecord))),
+            var daprEventDataStore = new DaprEventStore(store);
+            this.store = new AdvancedEventStore(
+                daprEventDataStore,
                 options,
-                Serialization.Extensions.AsMap(),
-                (ex, s, o) => { });
+                TypeResolver.FromMap(TypeResolver.GetEventsFromTypes(typeof(GameCreated), typeof(TestEventRecord))));
         }
 
         [Fact]
@@ -100,7 +99,7 @@ namespace Fiffi.Dapr.Tests
             var json = JsonSerializer.Serialize(events.First(), opt);
             var element = JsonSerializer.Deserialize<object>(json);
             var data = global::Dapr.EventStore.EventData.Create("GameCreated", element, 1);
-            var result = Fiffi.Dapr.DaprEventStore.ToEvent()(data, typeof(GameCreated), opt);
+            var result = EventStore.ToEvent()(DaprEventStore.ToEventData(data), typeof(GameCreated), opt);
 
             Assert.Equal("tester", ((GameCreated)result.Event).PlayerId);
         }

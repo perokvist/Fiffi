@@ -34,7 +34,8 @@ namespace Fiffi.Dapr
                     sp.GetRequiredService<DaprClient>(),
                     sp.GetRequiredService<ILogger<global::Dapr.EventStore.DaprEventStore>>())
                     .Tap(x => x.StoreName = storeName))
-                    .AddSingleton<IAdvancedEventStore, DaprEventStore>();
+                    .AddSingleton<IAdvancedEventStore<EventData>, DaprEventStore>()
+                    .AddSingleton<IAdvancedEventStore, AdvancedEventStore>();
 
         public static IServiceCollection AddSnapshotStore(this IServiceCollection services,
             string storeName = "statestore", string viewPartition = "views") =>

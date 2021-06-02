@@ -2,19 +2,52 @@
 using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace Fiffi
 {
+    public class AdvancedEventStore : EventStore, IAdvancedEventStore
+    {
+        private readonly IAdvancedEventStore<EventData> store;
+
+        public AdvancedEventStore(IAdvancedEventStore<EventData> store, 
+            JsonSerializerOptions jsonSerializerOptions, 
+            Func<string, Type> typeResolver) : base(store, jsonSerializerOptions, typeResolver)
+        {
+            this.store = store;
+        }
+
+        public AdvancedEventStore(IAdvancedEventStore<EventData> store, 
+            JsonSerializerOptions jsonSerializerOptions, 
+            Func<IEvent, JsonSerializerOptions, object> converter, 
+            Func<string, Type> typeResolver, 
+            Func<EventData, Type, JsonSerializerOptions, IEvent> toEvent) : base(store, jsonSerializerOptions, converter, typeResolver, toEvent)
+        {
+            this.store = store;
+        }
+
+        public Task<long> AppendToStreamAsync(string streamName, params IEvent[] events)
+            => store.AppendToStreamAsync(streamName, events.Select(e => ToEventData(e, x => this.converter(x, jsonSerializerOptions))).ToArray());
+
+        public async IAsyncEnumerable<IEvent> LoadEventStreamAsAsync(string streamName, long version)
+        {
+            var events = store.LoadEventStreamAsAsync(streamName, version);
+            await foreach (var item in events)
+            {
+                yield return toEvent(item, typeResolver(item.EventName), jsonSerializerOptions)
+                .Tap(x => x.Meta.AddStoreMetaData(new EventStoreMetaData { EventVersion = item.Version, EventPosition = item.Version }));
+            }
+        }
+    }
+
     public class EventStore : IEventStore
     {
         private readonly IEventStore<EventData> store;
-        private readonly JsonSerializerOptions jsonSerializerOptions;
-        private readonly Func<IEvent, JsonSerializerOptions, object> converter;
-        private readonly Func<string, Type> typeResolver;
-        private readonly Func<EventData, Type, JsonSerializerOptions, IEvent> toEvent;
+        protected readonly JsonSerializerOptions jsonSerializerOptions;
+        protected readonly Func<IEvent, JsonSerializerOptions, object> converter;
+        protected readonly Func<string, Type> typeResolver;
+        protected readonly Func<EventData, Type, JsonSerializerOptions, IEvent> toEvent;
 
         public EventStore(
             IEventStore<EventData> store,

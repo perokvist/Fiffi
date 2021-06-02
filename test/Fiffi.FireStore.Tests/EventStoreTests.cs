@@ -23,6 +23,7 @@ namespace Fiffi.FireStore.Tests
         }
 
         [Fact]
+        [Trait("Category", "Integration")]
         public async Task WriteAsync()
         {
             var e = new EventData("test", "testEvent", new Dictionary<string, object> { { "testprop", "message" } });
@@ -33,6 +34,7 @@ namespace Fiffi.FireStore.Tests
 
 
         [Fact]
+        [Trait("Category", "Integration")]
         public async Task AppendAsync()
         {
             var eventStore = new FireStoreEventStore(store);
@@ -42,6 +44,7 @@ namespace Fiffi.FireStore.Tests
         }
 
         [Fact]
+        [Trait("Category", "Integration")]
         public async Task AppendAndLoadAsync()
         {
             var eventStore = new FireStoreEventStore(store);

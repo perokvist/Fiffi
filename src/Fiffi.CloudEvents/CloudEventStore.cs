@@ -1,47 +1,36 @@
 ﻿using CloudNative.CloudEvents;
-using Fiffi.Serialization;
-using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace Fiffi.CloudEvents
 {
     public class CloudEventStore : IEventStore<CloudEvent>
     {
-        private readonly IEventStore<IDictionary<string, object>> eventStore;
-
-        private readonly Action<Exception, string, object[]> logger;
-
-        public CloudEventStore(
-            IEventStore<IDictionary<string, object>> eventStore
-            ) : this(eventStore, (ex, message, @params) => { })
-        { }
+        private readonly IEventStore<EventData> eventStore;
+        private readonly JsonSerializerOptions jsonSerializerOptions;
 
         public CloudEventStore(
-            IEventStore<IDictionary<string, object>> eventStore,
-            Action<Exception, string, object[]> logger
+            IEventStore<EventData> eventStore,
+            JsonSerializerOptions jsonSerializerOptions
             )
         {
             this.eventStore = eventStore;
-            this.logger = logger;
+            this.jsonSerializerOptions = jsonSerializerOptions;
         }
 
         public Task<long> AppendToStreamAsync(string streamName, long version, params CloudEvent[] events)
-         => eventStore.AppendToStreamAsync(streamName, version, events.Select(e => ToMapData(e)).ToArray());
+         => eventStore.AppendToStreamAsync(streamName, version, events.Select(e => e.ToEventData(e.Extension<EventMetaDataExtension>().MetaData.EventId.ToString())).ToArray());
 
         public async Task<(IEnumerable<CloudEvent> Events, long Version)> LoadEventStreamAsync(string streamName, long version)
         {
             var (events, v) = await eventStore.LoadEventStreamAsync(streamName, version);
-            var ce = events.Select(e => e.ToEvent()); 
+            var ce = events.Select(e => e.ToEvent(jsonSerializerOptions));
             return (ce, v);
             //.Tap(x => x.Meta.AddStoreMetaData(new EventStoreMetaData { EventVersion = e.Version, EventPosition = e.Version }))),
             //v);
         }
-
-        public static IDictionary<string, object> ToMapData(CloudEvent e)
-            => e.ToJson().ToMap();
-
     }
 }

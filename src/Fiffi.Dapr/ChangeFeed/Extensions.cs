@@ -18,7 +18,7 @@ namespace Fiffi.Dapr.ChangeFeed
             ILogger logger, LogLevel logLevel = LogLevel.Information,
             JsonSerializerOptions options = null)
         {
-            var toEvent = DaprEventStore.ToEvent();
+            var toEvent = EventStore.ToEvent();
 
             return docs =>
             {
@@ -28,6 +28,7 @@ namespace Fiffi.Dapr.ChangeFeed
                 var eventsToProcess = docs
                          .Where(Filter())
                          .Select(ToEventData)
+                         .Select(DaprEventStore.ToEventData)
                          .Select(ed => toEvent(ed, typeProvider(ed.EventName), options ?? new()))
                          .ToArray();
 
