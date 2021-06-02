@@ -25,7 +25,7 @@ namespace Fiffi.Streamstone
 				: 0;
 		}
 
-		public static async Task<long> AppendToStreamAsync(this Partition partition, long version, IEvent[] events, Func<IEvent, EventData> mapper)
+		public static async Task<long> AppendToStreamAsync(this Partition partition, long version, IEvent[] events, Func<IEvent, global::Streamstone.EventData> mapper)
 		{
 			var existent = await Stream.TryOpenAsync(partition);
 			var stream = existent.Found
@@ -119,7 +119,7 @@ namespace Fiffi.Streamstone
 		//TODO move ?
 		public static IEvent ToEvent(string data, Type type) => (IEvent)JsonConvert.DeserializeObject(data, type);
 
-		public static EventData ToEventData(this IEvent e, params Include[] includes)
+		public static global::Streamstone.EventData ToEventData(this IEvent e, params Include[] includes)
 		{
 			var id = Guid.NewGuid();
 
@@ -131,7 +131,7 @@ namespace Fiffi.Streamstone
 				Offset = e.Meta == null ? -1 : e.Meta.ContainsKey("Offset") ? long.Parse(e.Meta["Offset"]) : -1,
 				SequenceNumber = e.Meta == null ? -1 : e.Meta.ContainsKey("SequenceNumber") ? long.Parse(e.Meta["SequenceNumber"]) : -1
 			};
-			return new EventData(EventId.From(properties.Id), EventProperties.From(properties), includes.Any() ? EventIncludes.From(includes) : EventIncludes.None);
+			return new global::Streamstone.EventData(EventId.From(properties.Id), EventProperties.From(properties), includes.Any() ? EventIncludes.From(includes) : EventIncludes.None);
 		}
 	}
 }

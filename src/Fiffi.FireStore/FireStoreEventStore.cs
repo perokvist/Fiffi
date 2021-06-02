@@ -1,21 +1,17 @@
 ﻿using Google.Cloud.Firestore;
-using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
-using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using static Fiffi.FireStore.FireStoreEventStore;
 
 namespace Fiffi.FireStore
 {
     public class FireStoreEventStore : IEventStore<EventData>
     {
         private readonly FirestoreDb store;
-        //private readonly JsonSerializerOptions jsonSerializerOptions;
-        //private readonly Func<IEvent, JsonSerializerOptions, object> converter;
-        //private readonly Func<string, Type> typeResolver;
 
-        const string eventCollection = "eventstore";
+
+        public string storeCollection { get; set; } = "eventstore";
 
         public FireStoreEventStore(FirestoreDb store)
         {
@@ -25,13 +21,16 @@ namespace Fiffi.FireStore
         public Task<long> AppendToStreamAsync(string streamName, long version, params EventData[] events)
             => store.RunTransactionAsync<long>(async tx =>
             {
-                var headRef = store.Document($"{eventCollection}/{streamName}");
+                var headRef = store.Document($"{storeCollection}/{streamName}");
                 var head = await headRef.GetSnapshotAsync();
                 long headVersion = 0;
                 if (head.Exists)
                     headVersion = head.GetValue<long>("version");
                 else
                     await headRef.CreateAsync(new Dictionary<string, object> { { "version", 0 } });
+
+                if (headVersion != version)
+                    throw new DBConcurrencyException($"stream head {streamName} have been updated. Expected {version}, streamversion {headVersion} ");
 
                 if (!events.Any())
                     return headVersion;
@@ -53,17 +52,17 @@ namespace Fiffi.FireStore
 
         public async Task<(IEnumerable<EventData> Events, long Version)> LoadEventStreamAsync(string streamName, long version)
         {
-            var headRef = store.Document($"{eventCollection}/{streamName}");
+            var headRef = store.Document($"{storeCollection}/{streamName}");
             var head = await headRef.GetSnapshotAsync();
             var headVersion = head.GetValue<long>("version");
 
             if (headVersion == default)
                 return (Enumerable.Empty<EventData>(), 0);
-            if(headVersion > version)
+            if (headVersion > version)
                 return (Enumerable.Empty<EventData>(), headVersion);
 
             var snapShot = await store
-                .Collection($"{eventCollection}/{streamName}/events")
+                .Collection($"{storeCollection}/{streamName}/events")
                 .WhereGreaterThan(nameof(EventData.Version), version)
                 .GetSnapshotAsync();
 
@@ -72,22 +71,7 @@ namespace Fiffi.FireStore
                 .OrderBy(x => x.Version)
                 .ToArray();
 
-            //    var result = (events
-            //.Select(e => toEvent(e, typeResolver(e.EventName), this.jsonSerializerOptions)
-            //.Tap(x => x.Meta.AddStoreMetaData(new EventStoreMetaData { EventVersion = e.Version, EventPosition = e.Version })))
-            //.AsEnumerable(),
-            //events.LastOrDefault()?.Version ?? (meta?.Version ?? 0));
-
-
             return (events, events.LastOrDefault()?.Version ?? 0); //Todo head
-        }
-
-        //public static EventData ToEventData(IEvent e, Func<IEvent, object> f)
-        //    => new(e.EventId().ToString(), e.Event.GetType().Name, f(e));
-
-        public record EventData(string EventId, string EventName, object Data, long Version = 0)
-        {
-            public static EventData Create(string EventName, object Data, long Version = 0) => new(Guid.NewGuid().ToString(), EventName, Data, Version);
         }
     }
 }

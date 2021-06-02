@@ -99,7 +99,7 @@ namespace Fiffi.Dapr.Tests
             var opt = new JsonSerializerOptions().Tap(x => x.Converters.Add(new EventRecordConverter()));
             var json = JsonSerializer.Serialize(events.First(), opt);
             var element = JsonSerializer.Deserialize<object>(json);
-            var data = EventData.Create("GameCreated", element, 1);
+            var data = global::Dapr.EventStore.EventData.Create("GameCreated", element, 1);
             var result = Fiffi.Dapr.DaprEventStore.ToEvent()(data, typeof(GameCreated), opt);
 
             Assert.Equal("tester", ((GameCreated)result.Event).PlayerId);

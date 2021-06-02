@@ -89,7 +89,7 @@ namespace Fiffi.Dapr
             return result;
         }
 
-        public static Func<EventData, Type, JsonSerializerOptions, IEvent> ToEvent()
+        public static Func<global::Dapr.EventStore.EventData, Type, JsonSerializerOptions, IEvent> ToEvent()
         {
             var t = typeof(EventEnvelope<>);
             var methodInfo = typeof(global::Dapr.EventStore.Extensions).GetMethod(nameof(global::Dapr.EventStore.Extensions.EventAs), new[] { typeof(EventData), typeof(JsonSerializerOptions) });
@@ -103,7 +103,7 @@ namespace Fiffi.Dapr
             };
         }
 
-        public static EventData ToEventData(IEvent e, Func<IEvent, object> f)
+        public static global::Dapr.EventStore.EventData ToEventData(IEvent e, Func<IEvent, object> f)
          => new(e.EventId().ToString(), e.Event.GetType().Name, f(e));
 
         public IAsyncEnumerable<IEvent> LoadEventStreamAsAsync(string streamName, long version)

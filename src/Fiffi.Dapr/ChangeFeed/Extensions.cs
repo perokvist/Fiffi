@@ -1,5 +1,4 @@
-﻿using Dapr.EventStore;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -45,10 +44,10 @@ namespace Fiffi.Dapr.ChangeFeed
             .Where(x => x.RootElement.GetProperty("id").GetString().Contains(aggregateStreamIdentifier))
             .Any();
 
-        public static EventData ToEventData(this JsonDocument doc)
+        public static global::Dapr.EventStore.EventData ToEventData(this JsonDocument doc)
         {
             var value = doc.RootElement.GetProperty("value").GetRawText();
-            var eventData = JsonSerializer.Deserialize<EventData>(value);
+            var eventData = JsonSerializer.Deserialize<global::Dapr.EventStore.EventData>(value);
             return eventData;
         }
 

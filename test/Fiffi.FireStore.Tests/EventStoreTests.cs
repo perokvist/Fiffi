@@ -25,7 +25,7 @@ namespace Fiffi.FireStore.Tests
         [Fact]
         public async Task WriteAsync()
         {
-            var e = new FireStoreEventStore.EventData("test", "testEvent", new Dictionary<string, object> { { "testprop", "message" } });
+            var e = new EventData("test", "testEvent", new Dictionary<string, object> { { "testprop", "message" } });
 
             await store.Document("testing/per").SetAsync(new Dictionary<string, object> { { "version", "0" } });
             await store.Collection("testing/per/events").AddAsync(e.Data);
@@ -38,7 +38,7 @@ namespace Fiffi.FireStore.Tests
             var eventStore = new FireStoreEventStore(store);
 
             await eventStore.AppendToStreamAsync("test-stream", 0,
-                new FireStoreEventStore.EventData(Guid.NewGuid().ToString(), "testEvent", new Dictionary<string, object> { { "eventprop", "test" } }));
+                new EventData(Guid.NewGuid().ToString(), "testEvent", new Dictionary<string, object> { { "eventprop", "test" } }));
         }
 
         [Fact]
@@ -48,7 +48,7 @@ namespace Fiffi.FireStore.Tests
             var streamName = $"test-stream-{Guid.NewGuid()}";
 
             await eventStore.AppendToStreamAsync(streamName, 0,
-                new FireStoreEventStore.EventData(Guid.NewGuid().ToString(), "testEvent", new Dictionary<string, object> { { "eventprop", "test" } }));
+                new EventData(Guid.NewGuid().ToString(), "testEvent", new Dictionary<string, object> { { "eventprop", "test" } }));
 
             var r = await eventStore.LoadEventStreamAsync(streamName, 0);
 

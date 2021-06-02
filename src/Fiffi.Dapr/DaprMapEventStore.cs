@@ -33,7 +33,7 @@ namespace Fiffi.Dapr
             return (ce, events.LastOrDefault()?.Version ?? 0);
         }
 
-        public EventData ToEventData(IDictionary<string, object> e)
+        public global::Dapr.EventStore.EventData ToEventData(IDictionary<string, object> e)
         => new(IdProvider(e), NameProvider(e) , e);
     }
 }
