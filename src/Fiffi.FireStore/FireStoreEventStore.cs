@@ -42,7 +42,7 @@ namespace Fiffi.FireStore
                 foreach (var item in versionedEvents)
                 {
                     var eventsRef = headRef.Collection("events");
-                    await eventsRef.Document($"{item.EventName}-{item.EventId}").CreateAsync(item.Data);
+                    await eventsRef.Document($"{item.EventName}-{item.EventId}").CreateAsync(item);
                 }
 
                 var newVersion = versionedEvents.Last().Version;
@@ -58,12 +58,12 @@ namespace Fiffi.FireStore
 
             if (headVersion == default)
                 return (Enumerable.Empty<EventData>(), 0);
-            if (headVersion > version)
+            if (headVersion < version)
                 return (Enumerable.Empty<EventData>(), headVersion);
 
             var snapShot = await store
                 .Collection($"{storeCollection}/{streamName}/events")
-                .WhereGreaterThan(nameof(EventData.Version), version)
+                .WhereGreaterThanOrEqualTo(nameof(EventData.Version), version)
                 .GetSnapshotAsync();
 
             var events = snapShot
@@ -71,7 +71,7 @@ namespace Fiffi.FireStore
                 .OrderBy(x => x.Version)
                 .ToArray();
 
-            return (events, events.LastOrDefault()?.Version ?? 0); //Todo head
+            return (events, events.LastOrDefault()?.Version ?? headVersion); 
         }
     }
 }

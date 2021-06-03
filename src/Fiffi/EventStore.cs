@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Fiffi.Serialization;
+using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
@@ -115,19 +116,13 @@ namespace Fiffi
         public static T EventAs<T>(this EventData eventData, JsonSerializerOptions options = null)
             => eventData.Data switch
             {
-                JsonElement d => ToObject<T>(d, options),
+                JsonElement d => d.ToObject<T>(options),
+                IDictionary<string, object> d => d.ToObject<T>(options),
                 T d => d,
                 _ => throw new Exception($"Data was not of type {typeof(T).Name}")
             };
 
-        public static T ToObject<T>(this JsonElement element, JsonSerializerOptions options = null)
-        {
-            var bufferWriter = new ArrayBufferWriter<byte>();
-            using (var writer = new Utf8JsonWriter(bufferWriter))
-                element.WriteTo(writer);
-            var result = JsonSerializer.Deserialize<T>(bufferWriter.WrittenSpan, options);
-            return result;
-        }
+ 
     }
 
     public record EventData(string EventId, string EventName, object Data, long Version = 0)
