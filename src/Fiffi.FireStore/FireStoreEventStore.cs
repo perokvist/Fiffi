@@ -10,8 +10,7 @@ namespace Fiffi.FireStore
     {
         private readonly FirestoreDb store;
 
-
-        public string storeCollection { get; set; } = "eventstore";
+        public string StoreCollection { get; set; } = "eventstore";
 
         public FireStoreEventStore(FirestoreDb store)
         {
@@ -21,7 +20,7 @@ namespace Fiffi.FireStore
         public Task<long> AppendToStreamAsync(string streamName, long version, params EventData[] events)
             => store.RunTransactionAsync<long>(async tx =>
             {
-                var headRef = store.Document($"{storeCollection}/{streamName}");
+                var headRef = store.Document($"{StoreCollection}/{streamName}");
                 var head = await headRef.GetSnapshotAsync();
                 long headVersion = 0;
                 if (head.Exists)
@@ -52,7 +51,7 @@ namespace Fiffi.FireStore
 
         public async Task<(IEnumerable<EventData> Events, long Version)> LoadEventStreamAsync(string streamName, long version)
         {
-            var headRef = store.Document($"{storeCollection}/{streamName}");
+            var headRef = store.Document($"{StoreCollection}/{streamName}");
             var head = await headRef.GetSnapshotAsync();
             var headVersion = head.GetValue<long>("version");
 
@@ -62,7 +61,7 @@ namespace Fiffi.FireStore
                 return (Enumerable.Empty<EventData>(), headVersion);
 
             var snapShot = await store
-                .Collection($"{storeCollection}/{streamName}/events")
+                .Collection($"{StoreCollection}/{streamName}/events")
                 .WhereGreaterThanOrEqualTo(nameof(EventData.Version), version)
                 .GetSnapshotAsync();
 

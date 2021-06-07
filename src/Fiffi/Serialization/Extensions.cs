@@ -7,6 +7,9 @@ namespace Fiffi.Serialization
 {
     public static class Extensions
     {
+        public static Dictionary<string, object> ToMap(this object item, JsonSerializerOptions opt = null)
+            => JsonSerializer.Serialize(item, opt).ToMap(opt);
+
         public static Dictionary<string, object> ToMap(this string json, JsonSerializerOptions opt = null)
             => JsonSerializer.Deserialize<Dictionary<string, object>>(json, opt) ?? new();
 

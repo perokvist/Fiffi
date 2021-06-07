@@ -47,7 +47,7 @@ namespace Fiffi.Dapr
                     {
                         var partitionKey = viewPartition;
                         var snapshotSufix = "|snapshot";
-                        if (key.EndsWith(snapshotSufix))
+                        if (key.EndsWith(snapshotSufix)) //writing aggregate snapshots to the same partition
                             partitionKey = key.TrimEnd(snapshotSufix.ToCharArray());
 
                         return new Dictionary<string, string>

@@ -9,7 +9,7 @@ namespace Fiffi.InMemory
 {
     public class InMemoryEventStore : IAdvancedEventStore
     {
-        readonly ConcurrentDictionary<string, IEvent[]> innerStore = new ConcurrentDictionary<string, IEvent[]>();
+        readonly ConcurrentDictionary<string, IEvent[]> innerStore = new();
         IDictionary<string, IEvent[]> store => innerStore;
 
         public Task<long> AppendToStreamAsync(string streamName, IEvent[] events)
