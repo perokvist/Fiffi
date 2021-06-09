@@ -36,7 +36,7 @@ jobs:
       env: 
         NUGET_AUTH_TOKEN: ${{ secrets.NUGET_API_KEY }}
     - name: Push to nuget
-      run: dotnet nuget push ./artifacts/**.nupkg --skip-duplicate --api-key ${{secrets.NUGET_API_KEY}}
+      run: dotnet nuget push './artifacts/*.nupkg' --skip-duplicate --api-key ${{secrets.NUGET_API_KEY}}
 
                        
     - name: Set up QEMU
