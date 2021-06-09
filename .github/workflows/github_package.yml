@@ -16,8 +16,10 @@ jobs:
         source-url: https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
       env : 
         NUGET_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
-    - name: Pack
+    - name: Pack Fiffi
       run: dotnet pack src/Fiffi/Fiffi.csproj --configuration Release -o artifacts
+    - name: Pack Firestore
+      run: dotnet pack src/Fiffi/Fiffi.FireStore.csproj --configuration Release -o artifacts
     - name: Publish artifact
       uses: actions/upload-artifact@master
       with:
