@@ -36,7 +36,8 @@ namespace Fiffi.FireStore.Tests
         }
 
         [Fact]
-        public async Task tAsync()
+        [Trait("Category", "Integration")]
+        public async Task ApplySnapshotAsync()
         {
             await snapshotStore.Apply<TestState>($"test-{Guid.NewGuid()}", current => current with { Version = 99 });
         }

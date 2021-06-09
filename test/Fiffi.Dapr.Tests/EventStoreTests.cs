@@ -20,7 +20,6 @@ namespace Fiffi.Dapr.Tests
 
         public EventStoreTests()
         {
-            //Environment.SetEnvironmentVariable("DAPR_GRPC_PORT", "50001");
             var inDapr = Environment.GetEnvironmentVariable("DAPR_GRPC_PORT") != null;
             global::Dapr.EventStore.DaprEventStore store = null;
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
