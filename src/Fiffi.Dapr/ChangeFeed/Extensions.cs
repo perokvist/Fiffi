@@ -1,5 +1,4 @@
-﻿using Dapr.EventStore;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,7 +18,7 @@ namespace Fiffi.Dapr.ChangeFeed
             ILogger logger, LogLevel logLevel = LogLevel.Information,
             JsonSerializerOptions options = null)
         {
-            var toEvent = DaprEventStore.ToEvent();
+            var toEvent = EventStore.ToEvent();
 
             return docs =>
             {
@@ -29,6 +28,7 @@ namespace Fiffi.Dapr.ChangeFeed
                 var eventsToProcess = docs
                          .Where(Filter())
                          .Select(ToEventData)
+                         .Select(DaprEventStore.ToEventData)
                          .Select(ed => toEvent(ed, typeProvider(ed.EventName), options ?? new()))
                          .ToArray();
 
@@ -45,10 +45,10 @@ namespace Fiffi.Dapr.ChangeFeed
             .Where(x => x.RootElement.GetProperty("id").GetString().Contains(aggregateStreamIdentifier))
             .Any();
 
-        public static EventData ToEventData(this JsonDocument doc)
+        public static global::Dapr.EventStore.EventData ToEventData(this JsonDocument doc)
         {
             var value = doc.RootElement.GetProperty("value").GetRawText();
-            var eventData = JsonSerializer.Deserialize<EventData>(value);
+            var eventData = JsonSerializer.Deserialize<global::Dapr.EventStore.EventData>(value);
             return eventData;
         }
 

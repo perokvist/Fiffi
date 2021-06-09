@@ -19,7 +19,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Streamstone" Version="2.3.0" />
+		<PackageReference Include="Streamstone" Version="2.3.1" />
   </ItemGroup>
 
 	<ItemGroup>

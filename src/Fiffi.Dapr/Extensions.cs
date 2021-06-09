@@ -34,7 +34,8 @@ namespace Fiffi.Dapr
                     sp.GetRequiredService<DaprClient>(),
                     sp.GetRequiredService<ILogger<global::Dapr.EventStore.DaprEventStore>>())
                     .Tap(x => x.StoreName = storeName))
-                    .AddSingleton<IAdvancedEventStore, DaprEventStore>();
+                    .AddSingleton<IAdvancedEventStore<EventData>, DaprEventStore>()
+                    .AddSingleton<IAdvancedEventStore, AdvancedEventStore>();
 
         public static IServiceCollection AddSnapshotStore(this IServiceCollection services,
             string storeName = "statestore", string viewPartition = "views") =>
@@ -46,7 +47,7 @@ namespace Fiffi.Dapr
                     {
                         var partitionKey = viewPartition;
                         var snapshotSufix = "|snapshot";
-                        if (key.EndsWith(snapshotSufix))
+                        if (key.EndsWith(snapshotSufix)) //writing aggregate snapshots to the same partition
                             partitionKey = key.TrimEnd(snapshotSufix.ToCharArray());
 
                         return new Dictionary<string, string>

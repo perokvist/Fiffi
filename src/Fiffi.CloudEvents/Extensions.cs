@@ -1,4 +1,5 @@
 ﻿using CloudNative.CloudEvents;
+using Fiffi.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -11,7 +12,7 @@ namespace Fiffi.CloudEvents
     public static class Extensions
     {
         public static CloudEvent ToCloudEvent(this IEvent @event, Uri? source = null)
-            => new CloudEvent(CloudEventsSpecVersion.V1_0,
+            => new(CloudEventsSpecVersion.V1_0,
                 @event.GetEventName(),
                 source ?? new Uri($"urn:{@event.GetType().Namespace?.Replace('.', ':').ToLower()}"),
                 @event.GetStreamName(),
@@ -35,6 +36,16 @@ namespace Fiffi.CloudEvents
             return envelope;
         }
 
+        public static EventData ToEventData(this CloudEvent cloudEvent, string id)
+            => new(id, cloudEvent.Type, cloudEvent.ToMapData());
+
+        public static CloudEvent ToEvent(this EventData eventData, JsonSerializerOptions options)
+            => eventData
+            .EventAs<IDictionary<string, object>>(options)
+            .ToEvent();
+
+        public static IDictionary<string, object> ToMapData(this CloudEvent e)
+            => e.ToJson().ToMap();
 
         public static CloudEvent ToEvent(this string data)
             => new JsonEventFormatter().DecodeStructuredEvent(Encoding.UTF8.GetBytes(data), new EventMetaDataExtension());
