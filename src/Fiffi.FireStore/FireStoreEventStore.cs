@@ -53,6 +53,9 @@ namespace Fiffi.FireStore
         {
             var headRef = store.Document($"{StoreCollection}/{streamName}");
             var head = await headRef.GetSnapshotAsync();
+            if (!head.Exists)
+                return (Enumerable.Empty<EventData>(), 0);
+
             var headVersion = head.GetValue<long>("version");
 
             if (headVersion == default)

@@ -38,6 +38,18 @@ namespace Fiffi.FireStore.Tests
 
         [Fact]
         [Trait("Category", "Integration")]
+        public async Task LoadEventFromBlankAsync()
+        {
+            var eventStore = new FireStoreEventStore(store);
+            var streamName = $"test-stream-{Guid.NewGuid()}";
+            var r = await eventStore.LoadEventStreamAsync(streamName, 0);
+
+            Assert.Empty(r.Events);
+            Assert.Equal(0, r.Version);
+        }
+
+        [Fact]
+        [Trait("Category", "Integration")]
         public async Task WriteAsync()
         {
             var e = new EventData("test", "testEvent", new Dictionary<string, object> { { "testprop", "message" } });
