@@ -31,7 +31,7 @@ namespace Fiffi.Testing
             Func<TPersitance> creator,
             Func<TPersitance, Func<IEvent[], Task>, TModule> f,
             params Func<TPersitance, Func<IEvent[], Task>, Module>[] additional)
-            where TPersitance : class, IEventStore, new()
+            where TPersitance : class, IEventStore
             where TModule : Module
             => Create(creator, (store, q) =>
             {
