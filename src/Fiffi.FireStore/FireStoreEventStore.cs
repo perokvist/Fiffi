@@ -80,8 +80,7 @@ namespace Fiffi.FireStore
         public async Task Category(string categoryName)
         {
             var eventStoreDoc = await store.Collection(this.StoreCollection).GetSnapshotAsync();
-            eventStoreDoc.Documents.Where(x => x.Id.StartsWith(categoryName))
-
+            eventStoreDoc.Documents.Where(x => x.Id.StartsWith(categoryName));
         }
     }
 }

@@ -13,7 +13,7 @@ namespace Fiffi.FireStore
            string projectId,
            string storeCollection = "eventstore",
            bool emulatorOnly = false,
-            int port = 8080) =>
+           int port = 8080) =>
            services
                    .Tap(x =>
                    {
