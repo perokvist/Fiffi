@@ -20,6 +20,7 @@ namespace Fiffi.FireStore
         public Task<long> AppendToStreamAsync(string streamName, long version, params EventData[] events)
             => store.RunTransactionAsync<long>(async tx =>
             {
+               
                 var headRef = store.Document($"{StoreCollection}/{streamName}");
                 var head = await headRef.GetSnapshotAsync();
                 long headVersion = 0;
@@ -74,6 +75,13 @@ namespace Fiffi.FireStore
                 .ToArray();
 
             return (events, events.LastOrDefault()?.Version ?? headVersion); 
+        }
+
+        public async Task Category(string categoryName)
+        {
+            var eventStoreDoc = await store.Collection(this.StoreCollection).GetSnapshotAsync();
+            eventStoreDoc.Documents.Where(x => x.Id.StartsWith(categoryName))
+
         }
     }
 }

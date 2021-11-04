@@ -16,9 +16,9 @@ namespace Fiffi.Modularization
         }
 
         Func<ICommand, Task> dispatch;
-        List<Func<IEvent[], Task>> updates = new List<Func<IEvent[], Task>>();
-        List<Func<IEvent[], Func<IEvent, ICommand, Task>, Task>> triggers = new List<Func<IEvent[], Func<IEvent, ICommand, Task>, Task>>();
-        QueryDispatcher queries = new QueryDispatcher();
+        readonly List<Func<IEvent[], Task>> updates = new();
+        readonly List<Func<IEvent[], Func<IEvent, ICommand, Task>, Task>> triggers = new();
+        readonly QueryDispatcher queries = new();
 
         public Configuration<T> Commands(params Func<ICommand, Task>[] f)
          => this.Tap(x => x.dispatch = f.Aggregate((l, r) => async c =>

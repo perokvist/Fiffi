@@ -12,12 +12,13 @@ namespace Fiffi.FireStore
         public static IServiceCollection AddEventStore(this IServiceCollection services,
            string projectId,
            string storeCollection = "eventstore",
-           bool emulatorOnly = false) =>
+           bool emulatorOnly = false,
+            int port = 8080) =>
            services
                    .Tap(x =>
                    {
                        if (emulatorOnly)
-                           Environment.SetEnvironmentVariable("FIRESTORE_EMULATOR_HOST", "localhost:8080");
+                           Environment.SetEnvironmentVariable("FIRESTORE_EMULATOR_HOST", $"localhost:{port}");
                    })
                    .AddSingleton(sp => new FirestoreDbBuilder
                    {
