@@ -1,11 +1,10 @@
-﻿namespace Fiffi
-{
-	public interface IDomainEvent
-	{ }
+﻿namespace Fiffi;
 
-	public interface IIntegrationEvent
-	{ }
+public interface IDomainEvent
+{ }
 
-	public interface IEphemeralEvent
-	{ }
-}
+public interface IIntegrationEvent
+{ }
+
+public interface IEphemeralEvent
+{ }
