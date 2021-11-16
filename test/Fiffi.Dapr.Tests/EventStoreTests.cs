@@ -10,114 +10,113 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace Fiffi.Dapr.Tests
+namespace Fiffi.Dapr.Tests;
+
+public class EventStoreTests
 {
-    public class EventStoreTests
+    private readonly DaprClient client;
+    private readonly string streamName;
+    private readonly IAdvancedEventStore store;
+
+    public EventStoreTests()
     {
-        private readonly DaprClient client;
-        private readonly string streamName;
-        private readonly IAdvancedEventStore store;
+        var inDapr = Environment.GetEnvironmentVariable("DAPR_GRPC_PORT") != null;
+        global::Dapr.EventStore.DaprEventStore store = null;
+        var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+        .Tap(x => x.Converters.Add(new EventRecordConverter()))
+        .Tap(x => x.PropertyNameCaseInsensitive = true);
 
-        public EventStoreTests()
+        if (inDapr)
         {
-            var inDapr = Environment.GetEnvironmentVariable("DAPR_GRPC_PORT") != null;
-            global::Dapr.EventStore.DaprEventStore store = null;
-            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
-            .Tap(x => x.Converters.Add(new EventRecordConverter()))
-            .Tap(x => x.PropertyNameCaseInsensitive = true);
+            client = new DaprClientBuilder()
+                .UseJsonSerializationOptions(options)
+                .Build();
 
-            if (inDapr)
+            store = new global::Dapr.EventStore.DaprEventStore(client, NullLogger<global::Dapr.EventStore.DaprEventStore>.Instance)
             {
-                client = new DaprClientBuilder()
-                    .UseJsonSerializationOptions(options)
-                    .Build();
-
-                store = new global::Dapr.EventStore.DaprEventStore(client, NullLogger<global::Dapr.EventStore.DaprEventStore>.Instance)
-                {
-                    StoreName = "localcosmos",
-                    MetaProvider = stream => new Dictionary<string, string>
+                StoreName = "localcosmos",
+                MetaProvider = stream => new Dictionary<string, string>
                     {
                         { "partitionKey", streamName }
                     },
-                };
-            }
-            else
-            {
-                client = new StateTestClient();
-                store = new global::Dapr.EventStore.DaprEventStore(
-                    new StateTestClient(),
-                    NullLogger<global::Dapr.EventStore.DaprEventStore>.Instance);
-            }
-
-            streamName = $"teststream-{Guid.NewGuid().ToString().Substring(0, 5)}";
-
-            var daprEventDataStore = new DaprEventStore(store);
-            this.store = new AdvancedEventStore(
-                daprEventDataStore,
-                options,
-                TypeResolver.FromMap(TypeResolver.GetEventsFromTypes(typeof(GameCreated), typeof(TestEventRecord))));
+            };
         }
-
-        [Fact]
-        public async Task LoadReturnsDeserializedEnvelope()
+        else
         {
-            var @event = EventEnvelope.Create("test", new TestEventRecord("hellos"));
-            @event.AddTestMetaData(streamName);
-            _ = await store.AppendToStreamAsync(streamName, 0, @event);
-            var stream = await store.LoadEventStreamAsync(streamName, 0);
-
-            Assert.Equal("hellos", ((TestEventRecord)stream.Events.First().Event).Message);
+            client = new StateTestClient();
+            store = new global::Dapr.EventStore.DaprEventStore(
+                new StateTestClient(),
+                NullLogger<global::Dapr.EventStore.DaprEventStore>.Instance);
         }
 
-        [Fact]
-        public async Task LoadReturnsDeserializedEnvelopeAsBaseClass()
-        {
-            var events = new[] { new GameCreated(Guid.NewGuid(), "tester", "test event", 5, DateTime.UtcNow) }
-                .Cast<EventRecord>()
-                .ToArray()
-                .ToEnvelopes("test")
-                .ForEach(e => e.AddTestMetaData(streamName))
-                .ToArray();
-            _ = await store.AppendToStreamAsync(streamName, 0, events);
-            var stream = await store.LoadEventStreamAsync(streamName, 0);
+        streamName = $"teststream-{Guid.NewGuid().ToString().Substring(0, 5)}";
 
-            Assert.Equal("tester", ((GameCreated)stream.Events.First().Event).PlayerId);
-        }
-
-        [Fact]
-        public void SerializeEnvelope()
-        {
-            var events = new[] { new GameCreated(Guid.NewGuid(), "tester", "test event", 5, DateTime.UtcNow) }
-                .Cast<EventRecord>()
-                .ToArray()
-                .ToEnvelopes("test")
-                .ForEach(e => e.AddTestMetaData(streamName))
-                .ToArray();
-
-            var opt = new JsonSerializerOptions().Tap(x => x.Converters.Add(new EventRecordConverter()));
-            var json = JsonSerializer.Serialize(events.First(), opt);
-            var element = JsonSerializer.Deserialize<object>(json);
-            var data = global::Dapr.EventStore.EventData.Create("GameCreated", element, 1);
-            var result = EventStore.ToEvent()(DaprEventStore.ToEventData(data), typeof(GameCreated), opt);
-
-            Assert.Equal("tester", ((GameCreated)result.Event).PlayerId);
-        }
-
-        public enum GameStatus
-        {
-            None = 0,
-            ReadyToStart = 10,
-            Started = 20,
-            Ended = 50
-        }
-
-        public record GameCreated(
-                 Guid GameId,
-                string PlayerId,
-                string Title,
-                int Rounds,
-                DateTime Created,
-                GameStatus Status = GameStatus.Started
-            ) : EventRecord;
+        var daprEventDataStore = new DaprEventStore(store);
+        this.store = new AdvancedEventStore(
+            daprEventDataStore,
+            options,
+            TypeResolver.FromMap(TypeResolver.GetEventsFromTypes(typeof(GameCreated), typeof(TestEventRecord))));
     }
+
+    [Fact]
+    public async Task LoadReturnsDeserializedEnvelope()
+    {
+        var @event = EventEnvelope.Create("test", new TestEventRecord("hellos"));
+        @event.AddTestMetaData(streamName);
+        _ = await store.AppendToStreamAsync(streamName, 0, @event);
+        var stream = await store.LoadEventStreamAsync(streamName, 0);
+
+        Assert.Equal("hellos", ((TestEventRecord)stream.Events.First().Event).Message);
+    }
+
+    [Fact]
+    public async Task LoadReturnsDeserializedEnvelopeAsBaseClass()
+    {
+        var events = new[] { new GameCreated(Guid.NewGuid(), "tester", "test event", 5, DateTime.UtcNow) }
+            .Cast<EventRecord>()
+            .ToArray()
+            .ToEnvelopes("test")
+            .ForEach(e => e.AddTestMetaData(streamName))
+            .ToArray();
+        _ = await store.AppendToStreamAsync(streamName, 0, events);
+        var stream = await store.LoadEventStreamAsync(streamName, 0);
+
+        Assert.Equal("tester", ((GameCreated)stream.Events.First().Event).PlayerId);
+    }
+
+    [Fact]
+    public void SerializeEnvelope()
+    {
+        var events = new[] { new GameCreated(Guid.NewGuid(), "tester", "test event", 5, DateTime.UtcNow) }
+            .Cast<EventRecord>()
+            .ToArray()
+            .ToEnvelopes("test")
+            .ForEach(e => e.AddTestMetaData(streamName))
+            .ToArray();
+
+        var opt = new JsonSerializerOptions().Tap(x => x.Converters.Add(new EventRecordConverter()));
+        var json = JsonSerializer.Serialize(events.First(), opt);
+        var element = JsonSerializer.Deserialize<object>(json);
+        var data = global::Dapr.EventStore.EventData.Create("GameCreated", element, 1);
+        var result = EventStore.ToEvent()(DaprEventStore.ToEventData(data), typeof(GameCreated), opt);
+
+        Assert.Equal("tester", ((GameCreated)result.Event).PlayerId);
+    }
+
+    public enum GameStatus
+    {
+        None = 0,
+        ReadyToStart = 10,
+        Started = 20,
+        Ended = 50
+    }
+
+    public record GameCreated(
+             Guid GameId,
+            string PlayerId,
+            string Title,
+            int Rounds,
+            DateTime Created,
+            GameStatus Status = GameStatus.Started
+        ) : EventRecord;
 }

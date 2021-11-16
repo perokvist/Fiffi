@@ -3,12 +3,11 @@
 // Licensed under the MIT License.
 // ------------------------------------------------------------
 
-namespace Dapr.Client
+namespace Dapr.Client;
+
+internal class Constants
 {
-    internal class Constants
-    {
-        public const string ContentTypeApplicationJson = "application/json";
-        public const string ContentTypeApplicationGrpc = "application/grpc";
-        public const string DaprApiTokenEnvironmentVariable = "DAPR_API_TOKEN";
-    }
+    public const string ContentTypeApplicationJson = "application/json";
+    public const string ContentTypeApplicationGrpc = "application/grpc";
+    public const string DaprApiTokenEnvironmentVariable = "DAPR_API_TOKEN";
 }

@@ -11,63 +11,62 @@ using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace Fiffi.CloudEvents.Tests
+namespace Fiffi.CloudEvents.Tests;
+
+public class ExtensionTests
 {
-    public class ExtensionTests
+    ITestOutputHelper helper;
+
+    public ExtensionTests(ITestOutputHelper helper)
     {
-        ITestOutputHelper helper;
+        this.helper = helper;
+    }
 
-        public ExtensionTests(ITestOutputHelper helper)
-        {
-            this.helper = helper;
-        }
+    [Fact]
+    public async Task WriteAndReadEventWithMetaExtensionAsync()
+    {
+        var e = new List<CloudEvent>();
+        await new InMemory.InMemoryEventStore()
+            .ExecuteAsync(
+                new TestCommand("test"),
+                "testStream",
+                () => new[] { new TestEventRecord("test") },
+                events =>
+                {
+                    e.AddRange(events.Select(x => x.ToCloudEvent()));
+                    return Task.CompletedTask;
+                });
 
-        [Fact]
-        public async Task WriteAndReadEventWithMetaExtensionAsync()
-        {
-            var e = new List<CloudEvent>();
-            await new InMemory.InMemoryEventStore()
-                .ExecuteAsync(
-                    new TestCommand("test"),
-                    "testStream",
-                    () => new[] { new TestEventRecord("test") },
-                    events =>
-                    {
-                        e.AddRange(events.Select(x => x.ToCloudEvent()));
-                        return Task.CompletedTask;
-                    });
+        var eventJson = await new CloudEventContent(e.First(), ContentMode.Structured, new JsonEventFormatter()).ReadAsStringAsync();
 
-            var eventJson = await new CloudEventContent(e.First(), ContentMode.Structured, new JsonEventFormatter()).ReadAsStringAsync();
-            
-            helper.WriteLine(eventJson);
+        helper.WriteLine(eventJson);
 
-            var stream = new MemoryStream(Encoding.ASCII.GetBytes(eventJson));
+        var stream = new MemoryStream(Encoding.ASCII.GetBytes(eventJson));
 
-            var readEvent = await new JsonEventFormatter().DecodeStructuredEventAsync(stream, Enumerable.Empty<ICloudEventExtension>());
-            var readEventJson = await new CloudEventContent(readEvent, ContentMode.Structured, new JsonEventFormatter()).ReadAsStringAsync();
+        var readEvent = await new JsonEventFormatter().DecodeStructuredEventAsync(stream, Enumerable.Empty<ICloudEventExtension>());
+        var readEventJson = await new CloudEventContent(readEvent, ContentMode.Structured, new JsonEventFormatter()).ReadAsStringAsync();
 
-            Assert.Equal(eventJson, readEventJson);
-        }
+        Assert.Equal(eventJson, readEventJson);
+    }
 
-        [Fact(Skip = "debug")]
-        public async Task SerializeCompare()
-        {
-            var e = EventEnvelope.Create("test", new TestEventRecord("hey"));
-            e.Meta.AddTypeInfo(e);
-            e.Meta.AddMetaData(new EventMetaData(new(), new(), new(), "testStream", "a", 0, "test", 0));
-            var eventJson = await new CloudEventContent(e.ToCloudEvent(), ContentMode.Structured, new JsonEventFormatter()).ReadAsStringAsync();
-            var json = JsonSerializer.Serialize<object>(e.ToCloudEvent());
-            Assert.Equal(eventJson, json);
-        }
+    [Fact(Skip = "debug")]
+    public async Task SerializeCompare()
+    {
+        var e = EventEnvelope.Create("test", new TestEventRecord("hey"));
+        e.Meta.AddTypeInfo(e);
+        e.Meta.AddMetaData(new EventMetaData(new(), new(), new(), "testStream", "a", 0, "test", 0));
+        var eventJson = await new CloudEventContent(e.ToCloudEvent(), ContentMode.Structured, new JsonEventFormatter()).ReadAsStringAsync();
+        var json = JsonSerializer.Serialize<object>(e.ToCloudEvent());
+        Assert.Equal(eventJson, json);
+    }
 
-        [Fact(Skip = "debug")]
-        public void ToMap()
-        {
-            var e = EventEnvelope.Create("test", new TestEventRecord("hey"));
-            e.Meta.AddTypeInfo(e);
-            e.Meta.AddMetaData(new EventMetaData(new(), new(), new(), "testStream", "a", 0, "test", 0));
-            var ce = e.ToCloudEvent();
-            var map = ce.ToJson().ToMap();
-        }
+    [Fact(Skip = "debug")]
+    public void ToMap()
+    {
+        var e = EventEnvelope.Create("test", new TestEventRecord("hey"));
+        e.Meta.AddTypeInfo(e);
+        e.Meta.AddMetaData(new EventMetaData(new(), new(), new(), "testStream", "a", 0, "test", 0));
+        var ce = e.ToCloudEvent();
+        var map = ce.ToJson().ToMap();
     }
 }

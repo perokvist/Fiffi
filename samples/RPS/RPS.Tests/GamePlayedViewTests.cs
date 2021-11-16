@@ -2,21 +2,21 @@
 using System;
 using Xunit;
 
-namespace RPS.Tests
+namespace RPS.Tests;
+
+public class GamePlayedViewTests
 {
-    public class GamePlayedViewTests
+    [Fact]
+    public void IntegrationEvent()
     {
-        [Fact]
-        public void IntegrationEvent()
-        {
-            var gamePlayedEvent = GameEvents(Guid.NewGuid(), "test", "alex@rpsgame.com", "lisa@rpsgame.com")
-                .Apply(new GamePlayed(), GamePlayed.Apply);
+        var gamePlayedEvent = GameEvents(Guid.NewGuid(), "test", "alex@rpsgame.com", "lisa@rpsgame.com")
+            .Apply(new GamePlayed(), GamePlayed.Apply);
 
-            Assert.Equal("lisa@rpsgame.com", gamePlayedEvent.Winner);
-        }
+        Assert.Equal("lisa@rpsgame.com", gamePlayedEvent.Winner);
+    }
 
-        public static EventRecord[] GameEvents(Guid gameId, string title, string losingPlayer, string winningPlayer)
-            => new EventRecord[] {
+    public static EventRecord[] GameEvents(Guid gameId, string title, string losingPlayer, string winningPlayer)
+        => new EventRecord[] {
                 new GameCreated(gameId, losingPlayer, title, 1, DateTime.UtcNow),
                 new GameStarted(gameId, winningPlayer),
                 new RoundStarted(gameId, 1),
@@ -28,7 +28,6 @@ namespace RPS.Tests
                 new HandShown(gameId, winningPlayer, Hand.Paper),
                 new RoundEnded(gameId, winningPlayer, losingPlayer, 2),
                 new GameEnded(gameId)
-    };
+};
 
-    }
 }

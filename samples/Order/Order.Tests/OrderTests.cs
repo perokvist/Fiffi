@@ -11,33 +11,34 @@ using Warehouse;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace Order.Tests
+namespace Order.Tests;
+
+public class OrderTests
 {
-    public class OrderTests
+    private readonly ITestOutputHelper testOutput;
+
+    public OrderTests(ITestOutputHelper testOutput)
     {
-        private readonly ITestOutputHelper testOutput;
+        this.testOutput = testOutput;
+    }
 
-        public OrderTests(ITestOutputHelper testOutput)
+    [Fact]
+    [System.Obsolete]
+    public async Task FlowAsync()
+    {
+        var context = TestContextBuilder.Create<InMemoryEventStore, SalesModule>(
+            SalesModule.Initialize,
+            PaymentModule.Initialize,
+            WarehouseModule.Initialize,
+            ShippingModule.Initialize
+            );
+
+        await context.WhenAsync(new Sales.PlaceOrder());
+
+        context.Then((events, table) =>
         {
-            this.testOutput = testOutput;
-        }
-
-        [Fact]
-        public async Task FlowAsync()
-        {
-            var context = TestContextBuilder.Create<InMemoryEventStore, SalesModule>(
-                SalesModule.Initialize, 
-                PaymentModule.Initialize,
-                WarehouseModule.Initialize,
-                ShippingModule.Initialize
-                );
-
-            await context.WhenAsync(new Sales.PlaceOrder());
-
-            context.Then((events, table) => {
-                testOutput.WriteLine(table);
-                Assert.True(events.AsEnvelopes().Happened<OrderCompleted>());
-            });
-        }
+            testOutput.WriteLine(table);
+            Assert.True(events.AsEnvelopes().Happened<OrderCompleted>());
+        });
     }
 }

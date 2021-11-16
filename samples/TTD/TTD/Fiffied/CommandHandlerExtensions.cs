@@ -4,16 +4,16 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace TTD.Fiffied
-{
-    public static class CommandHandlerExtensions
-    {
-        public static EventRecord[] Handle(this Transport t, PickUp command, Route[] routes)
-        {
-            var route = routes.GetCargoRoute(t.Kind, t.Location, command.Cargo.First().Destination);
+namespace TTD.Fiffied;
 
-            return new[]
-            {
+public static class CommandHandlerExtensions
+{
+    public static EventRecord[] Handle(this Transport t, PickUp command, Route[] routes)
+    {
+        var route = routes.GetCargoRoute(t.Kind, t.Location, command.Cargo.First().Destination);
+
+        return new[]
+        {
                 new Depareted
                 {
                     Cargo = command.Cargo,
@@ -25,10 +25,10 @@ namespace TTD.Fiffied
                     ETA = command.Time + route.Length.Hours
                 }
             };
-        }
+    }
 
-        public static EventRecord[] Handle(this Transport t, Unload command)
-         => new[] {
+    public static EventRecord[] Handle(this Transport t, Unload command)
+     => new[] {
              new Arrived {
              Cargo = t.Cargo,
              Kind = t.Kind,
@@ -36,30 +36,30 @@ namespace TTD.Fiffied
              Time = command.Time,
              TransportId = t.TransportId
              }
-         };
+     };
 
-        public static EventRecord[] Handle(this Transport t, Return command, Route[] routes)
+    public static EventRecord[] Handle(this Transport t, Return command, Route[] routes)
+    {
+        if (t.Location == Location.Factory)
         {
-            if (t.Location == Location.Factory)
-            {
-                return new[]
-                {
-                    new TransportReady(t.TransportId, t.Kind, t.Location, command.Time)
-                };
-            }
-
-            if (t.Location == Location.Port && t.Kind == Kind.Ship)
-            {
-                return new[]
-                {
-                    new TransportReady(t.TransportId, t.Kind, t.Location, command.Time)
-                };
-            }
-
-            var route = routes.GetReturnRoute(t.Kind, t.Location);
-
             return new[]
             {
+                    new TransportReady(t.TransportId, t.Kind, t.Location, command.Time)
+                };
+        }
+
+        if (t.Location == Location.Port && t.Kind == Kind.Ship)
+        {
+            return new[]
+            {
+                    new TransportReady(t.TransportId, t.Kind, t.Location, command.Time)
+                };
+        }
+
+        var route = routes.GetReturnRoute(t.Kind, t.Location);
+
+        return new[]
+        {
                 new Depareted
                 {
                     Cargo = Array.Empty<Cargo>(),
@@ -72,6 +72,5 @@ namespace TTD.Fiffied
                 }
             };
 
-        }
     }
 }
