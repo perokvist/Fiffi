@@ -6,53 +6,52 @@ using System.Reflection;
 using Fiffi;
 using System.Diagnostics.CodeAnalysis;
 
-namespace Fiffi.CloudEvents
+namespace Fiffi.CloudEvents;
+
+public class EventMetaDataExtension : ICloudEventExtension
 {
-    public class EventMetaDataExtension : ICloudEventExtension
+    Dictionary<string, string?> attributes = new();
+    readonly string[] names = typeof(EventMetaData).GetProperties().Select(x => x.Name.ToLower()).ToArray();
+
+    public EventMetaData MetaData
     {
-        Dictionary<string, string?> attributes = new();
-        readonly string[] names = typeof(EventMetaData).GetProperties().Select(x => x.Name.ToLower()).ToArray();
+        get => attributes.GetEventMetaData();
+        set => attributes.AddMetaData(value);
+    }
 
-        public EventMetaData MetaData
-        {
-            get => attributes.GetEventMetaData();
-            set => attributes.AddMetaData(value);
-        }
+    public void Attach(CloudEvent cloudEvent)
+    {
+        var eventAttributes = cloudEvent.GetAttributes();
 
-        public void Attach(CloudEvent cloudEvent)
-        {
-            var eventAttributes = cloudEvent.GetAttributes();
-            
-            if (attributes == eventAttributes)
-                return;
+        if (attributes == eventAttributes)
+            return;
 
-            attributes.ForEach(kv => eventAttributes[kv.Key] = kv.Value);
+        attributes.ForEach(kv => eventAttributes[kv.Key] = kv.Value);
 
-            attributes = eventAttributes.ToDictionary(kv => kv.Key, kv => kv.Value?.ToString());
-        }
+        attributes = eventAttributes.ToDictionary(kv => kv.Key, kv => kv.Value?.ToString());
+    }
 
-        public Type? GetAttributeType(string name)
-        {
-            if (!names.Contains(name))
-                return null;
+    public Type? GetAttributeType(string name)
+    {
+        if (!names.Contains(name))
+            return null;
 
-            return typeof(string); 
-        }
+        return typeof(string);
+    }
 
-        public bool ValidateAndNormalize(string key, ref dynamic value)
-        {
-            if (!attributes.ContainsKey(key))
-                return false;
+    public bool ValidateAndNormalize(string key, ref dynamic value)
+    {
+        if (!attributes.ContainsKey(key))
+            return false;
 
-            var type = typeof(string);
-      
-            if (value == null)
-                return false;
+        var type = typeof(string);
 
-            if (value.GetType().Equals(type))
-                return true;
+        if (value == null)
+            return false;
 
-            throw new InvalidOperationException($"Ivalid type for {key}");
-        }
+        if (value.GetType().Equals(type))
+            return true;
+
+        throw new InvalidOperationException($"Ivalid type for {key}");
     }
 }

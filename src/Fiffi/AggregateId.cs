@@ -1,42 +1,42 @@
 ﻿using System;
 
-namespace Fiffi
+namespace Fiffi;
+
+public struct AggregateId : IAggregateId
 {
-	public struct AggregateId : IAggregateId
-	{
-		public AggregateId(string aggregateId)
-		{
-			Id = aggregateId;
-		}
+    public AggregateId(string aggregateId)
+    {
+        Id = aggregateId;
+    }
 
-		public AggregateId(Guid aggregateId)
-		{
-			Id = aggregateId.ToString();
-		}
+    public AggregateId(Guid aggregateId)
+    {
+        Id = aggregateId.ToString();
+    }
 
-		public int CompareTo(IAggregateId other) => string.Compare(Id, other.Id, StringComparison.Ordinal);
+    public int CompareTo(IAggregateId other) => string.Compare(Id, other.Id, StringComparison.Ordinal);
 
-		public string Id { get; }
+    public string Id { get; }
 
-		public override string ToString() => Id;
+    public override string ToString() => Id;
 
-		public int CompareTo(object obj) {
-			if (obj == null)
-				return 1;
+    public int CompareTo(object obj)
+    {
+        if (obj == null)
+            return 1;
 
-			if (obj is IAggregateId)
-				return CompareTo((IAggregateId)obj);
+        if (obj is IAggregateId)
+            return CompareTo((IAggregateId)obj);
 
-			throw new InvalidOperationException("Can't compare with non IAggregateId");
-		}
+        throw new InvalidOperationException("Can't compare with non IAggregateId");
+    }
 
-		public static implicit operator AggregateId(string instance) => new AggregateId(instance);
+    public static implicit operator AggregateId(string instance) => new AggregateId(instance);
 
-		public static implicit operator AggregateId(Guid instance) => new AggregateId(instance);
+    public static implicit operator AggregateId(Guid instance) => new AggregateId(instance);
 
-	}
-	public interface IAggregateId : IComparable<IAggregateId>, IComparable
-	{
-		string Id { get; }
-	}
+}
+public interface IAggregateId : IComparable<IAggregateId>, IComparable
+{
+    string Id { get; }
 }

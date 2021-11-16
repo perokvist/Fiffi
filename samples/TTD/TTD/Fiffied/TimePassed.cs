@@ -1,10 +1,9 @@
 ﻿using Fiffi;
 using System.Collections.Generic;
 
-namespace TTD.Fiffied
+namespace TTD.Fiffied;
+
+public record TimePassed : EventRecord
 {
-    public record TimePassed : EventRecord
-    {
-        public int Time { get; internal set; }
-    }
+    public int Time { get; internal set; }
 }

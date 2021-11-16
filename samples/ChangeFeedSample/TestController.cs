@@ -3,32 +3,31 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
-namespace ChangeFeedSample
+namespace ChangeFeedSample;
+
+public class TestController : Controller
 {
-    public class TestController : Controller
+    private readonly SampleModule module;
+    private readonly ILogger<TestController> logger;
+
+    public TestController(SampleModule module, ILogger<TestController> logger)
     {
-        private readonly SampleModule module;
-        private readonly ILogger<TestController> logger;
+        this.module = module;
+        this.logger = logger;
+    }
 
-        public TestController(SampleModule module, ILogger<TestController> logger)
+    [HttpPost]
+    public async Task<IActionResult> Index()
+    {
+        try
         {
-            this.module = module;
-            this.logger = logger;
+            await this.module.DispatchAsync(new Fiffi.Testing.TestCommand(Guid.NewGuid()));
         }
-
-        [HttpPost]
-        public async Task<IActionResult> Index()
+        catch (Exception ex)
         {
-            try
-            {
-                await this.module.DispatchAsync(new Fiffi.Testing.TestCommand(Guid.NewGuid()));
-            }
-            catch (Exception ex)
-            {
-                this.logger.LogError(ex, "Error dispatching command");
-                return StatusCode(500);
-            }
-            return Ok();
+            this.logger.LogError(ex, "Error dispatching command");
+            return StatusCode(500);
         }
+        return Ok();
     }
 }

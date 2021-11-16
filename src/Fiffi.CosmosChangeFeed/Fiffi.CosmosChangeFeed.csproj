@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFramework>net5.0</TargetFramework>
+		<TargetFramework>net6.0</TargetFramework>
 		<!--<RuntimeIdentifier>win7-x64</RuntimeIdentifier>-->
 		<VersionPrefix>0.2.0</VersionPrefix>
 		<VersionSuffix>alpha</VersionSuffix>

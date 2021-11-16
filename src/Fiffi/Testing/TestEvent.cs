@@ -1,23 +1,22 @@
 ﻿using System.Collections.Generic;
 
-namespace Fiffi.Testing
+namespace Fiffi.Testing;
+
+public class TestEvent : EventEnvelope<TestEventRecord>
 {
-    public class TestEvent : EventEnvelope<TestEventRecord>
+    public TestEvent(AggregateId id) : this(id.Id)
+    { }
+
+    public TestEvent(IAggregateId id) : this(id.Id)
+    { }
+
+    public TestEvent(string sourceId) : base(sourceId, new TestEventRecord("Test Message"))
     {
-        public TestEvent(AggregateId id) : this(id.Id)
-        { }
+        Message = "Test Message";
+    }
 
-        public TestEvent(IAggregateId id) : this(id.Id)
-        {}
+    public string Message { get; set; }
 
-        public TestEvent(string sourceId) : base(sourceId, new TestEventRecord("Test Message"))
-        {
-            Message = "Test Message";
-        }
-        
-        public string Message { get; set; }
+};
 
-    };
-
-    public record TestEventRecord(string Message) : EventRecord;
-}
+public record TestEventRecord(string Message) : EventRecord;

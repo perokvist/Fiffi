@@ -2,8 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Fiffi
-{
-	public interface IQuery<T>
-	{ }
-}
+namespace Fiffi;
+
+public interface IQuery<T>
+{ }
