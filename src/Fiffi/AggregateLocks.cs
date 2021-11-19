@@ -53,7 +53,7 @@ public class AggregateLocks
             {
                 if (!@lock.Semaphore.AvailableWaitHandle.WaitOne(timeout))
                     throw new TimeoutException();  //TODO timeoutHandler();
-                }
+            }
         });
 
     }

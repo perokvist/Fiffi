@@ -2,6 +2,7 @@
 
 # IDE0060: Remove unused parameter
 dotnet_code_quality_unused_parameters = non_public:suggestion
+dotnet_style_require_accessibility_modifiers=omit_if_default:silent
 
 [*.cs]
 csharp_style_namespace_declarations=file_scoped:warning
