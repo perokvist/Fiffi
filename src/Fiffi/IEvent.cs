@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json.Serialization;
-
-namespace Fiffi;
+﻿namespace Fiffi;
 
 public interface IEvent
 {

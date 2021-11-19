@@ -1,6 +1,4 @@
-﻿using System.Threading.Tasks;
-
-namespace Fiffi.Projections;
+﻿namespace Fiffi.Projections;
 
 public class Projector<T>
           where T : class, new()

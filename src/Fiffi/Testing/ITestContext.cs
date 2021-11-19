@@ -1,8 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
-using static Fiffi.Testing.TestContext;
-
-namespace Fiffi.Testing;
+﻿namespace Fiffi.Testing;
 
 public interface ITestContext
 {

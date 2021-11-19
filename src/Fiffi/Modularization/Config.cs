@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
-namespace Fiffi.Modularization;
+﻿namespace Fiffi.Modularization;
 
 public class Configuration<T>
     where T : Module

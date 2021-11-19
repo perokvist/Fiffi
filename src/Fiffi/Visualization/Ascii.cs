@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace Fiffi.Visualization;
+﻿namespace Fiffi.Visualization;
 
 public class AsciiTable
 {

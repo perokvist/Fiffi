@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-
-namespace Fiffi;
+﻿namespace Fiffi;
 
 public static class MetaExtensions
 {

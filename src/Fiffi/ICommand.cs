@@ -1,7 +1,4 @@
-﻿using Fiffi.Validation;
-using System;
-
-namespace Fiffi;
+﻿namespace Fiffi;
 
 public interface ICommand
 {

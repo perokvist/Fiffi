@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Fiffi;
+﻿namespace Fiffi;
 
 public struct AggregateId : IAggregateId
 {

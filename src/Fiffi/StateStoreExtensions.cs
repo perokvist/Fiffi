@@ -1,8 +1,4 @@
-﻿using System;
-using System.Linq;
-using System.Threading.Tasks;
-
-namespace Fiffi;
+﻿namespace Fiffi;
 
 public static class StateStoreExtensions
 {

@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace Fiffi.Testing;
+﻿namespace Fiffi.Testing;
 
 public record TestState
 {

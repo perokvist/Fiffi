@@ -1,7 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
-
-namespace Fiffi;
+﻿namespace Fiffi;
 
 public interface IAdvancedEventStore : IEventStore, IAdvancedEventStore<IEvent>
 {
