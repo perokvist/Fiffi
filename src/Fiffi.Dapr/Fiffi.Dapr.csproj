@@ -22,7 +22,8 @@
 	<ItemGroup>
 	  <PackageReference Include="StateStore.Dapr.EventStore" Version="1.5.0-alpha.2" />
 	  <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="6.0.0" />
-	</ItemGroup>
+    <PackageReference Include="System.Linq.Async" Version="5.1.0" />
+  </ItemGroup>
 
 	<ItemGroup>
 	  <ProjectReference Include="..\Fiffi\Fiffi.csproj" />
