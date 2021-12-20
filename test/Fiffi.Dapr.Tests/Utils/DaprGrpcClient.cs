@@ -291,8 +291,8 @@ internal class DaprClientGrpc : DaprClient
         {
             // Our code path for creating requests places these keys in the request properties. We don't want to fail
             // if they are not present.
-            request.Properties.TryGetValue(AppIdKey, out var appId);
-            request.Properties.TryGetValue(MethodNameKey, out var methodName);
+            request.Options.TryGetValue<string>(new(AppIdKey), out var appId);
+            request.Options.TryGetValue<string>(new(MethodNameKey), out var methodName);
 
             throw new InvocationException(
                 appId: appId as string,
@@ -315,8 +315,8 @@ internal class DaprClientGrpc : DaprClient
         {
             // Our code path for creating requests places these keys in the request properties. We don't want to fail
             // if they are not present.
-            request.Properties.TryGetValue(AppIdKey, out var appId);
-            request.Properties.TryGetValue(MethodNameKey, out var methodName);
+            request.Options.TryGetValue<string>(new(AppIdKey), out var appId);
+            request.Options.TryGetValue<string>(new (MethodNameKey), out var methodName);
 
             throw new InvocationException(
                 appId: appId as string,
@@ -339,8 +339,8 @@ internal class DaprClientGrpc : DaprClient
         {
             // Our code path for creating requests places these keys in the request properties. We don't want to fail
             // if they are not present.
-            request.Properties.TryGetValue(AppIdKey, out var appId);
-            request.Properties.TryGetValue(MethodNameKey, out var methodName);
+            request.Options.TryGetValue<string>(new(AppIdKey), out var appId);
+            request.Options.TryGetValue<string>(new(MethodNameKey), out var methodName);
 
             throw new InvocationException(
                 appId: appId as string,
@@ -357,8 +357,8 @@ internal class DaprClientGrpc : DaprClient
         {
             // Our code path for creating requests places these keys in the request properties. We don't want to fail
             // if they are not present.
-            request.Properties.TryGetValue(AppIdKey, out var appId);
-            request.Properties.TryGetValue(MethodNameKey, out var methodName);
+            request.Options.TryGetValue<string>(new(AppIdKey), out var appId);
+            request.Options.TryGetValue<string>(new(MethodNameKey), out var methodName);
 
             throw new InvocationException(
                 appId: appId as string,
@@ -368,8 +368,8 @@ internal class DaprClientGrpc : DaprClient
         }
         catch (JsonException ex)
         {
-            request.Properties.TryGetValue(AppIdKey, out var appId);
-            request.Properties.TryGetValue(MethodNameKey, out var methodName);
+            request.Options.TryGetValue<string>(new(AppIdKey), out var appId);
+            request.Options.TryGetValue<string>(new(MethodNameKey), out var methodName);
 
             throw new InvocationException(
                 appId: appId as string,
