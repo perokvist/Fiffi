@@ -39,7 +39,7 @@ public class ApplicationServiceTests
         var streamName = typeof(TestState).Name.AsStreamName(id).StreamName;
         var arrangeVersion = await store.AppendToStreamAsync(streamName, 0, new IEvent[] { new AggregateId(id).Pipe(x => new TestEvent(x).AddTestMetaData<string>(x)) });
 
-        await ApplicationService.ExecuteAsync<TestState>
+        await ApplicationService.Execute<TestState>
            (store, new TestCommand(id),
            state => new EventRecord[] { new TestEventRecord("test") },
            e => Task.CompletedTask,

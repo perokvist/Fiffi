@@ -7,47 +7,6 @@ public static partial class ApplicationService
      where TState : class, new()
         => ExecuteAsync(() => stateManager.GetAsync<TState>(command.AggregateId), (state, version, evts) => stateManager.SaveAsync(command.AggregateId, state, version, evts), command, typeof(TState).Name.AsStreamName(command.AggregateId), f, pub);
 
-    public static Task ExecuteAsync<TState>(this IEventStore store,
-    ICommand command,
-    Func<TState, EventRecord[]> action,
-    Func<IEvent[], Task> pub,
-    ISnapshotStore snapshotStore,
-    Func<TState, long> getVersion,
-    Func<long, TState, TState> setVersion)
-    where TState : class, new()
-    => ExecuteAsync<TState>(store, command, typeof(TState).Name.AsStreamName(command.AggregateId), action, pub, snapshotStore, getVersion, setVersion);
-
-
-    public static Task ExecuteAsync<TState>(this IEventStore store,
-      ICommand command,
-      (string aggregateName, string streamName) naming,
-      Func<TState, EventRecord[]> action,
-      Func<IEvent[], Task> pub,
-      ISnapshotStore snapshotStore,
-      Func<TState, long> getVersion,
-      Func<long, TState, TState> setVersion)
-      where TState : class, new()
-      => ExecuteAsync(
-          async () =>
-          {
-              var state = await snapshotStore.Get<TState>($"{naming.streamName}|snapshot");
-              var (events, version) = await store.LoadEventStreamAsync(naming.streamName, new StreamVersion(getVersion(state), Mode.Exclusive));
-              return (events.Select(e => e.Event).Apply(state), version);
-          },
-          async (newState, version, events) =>
-          {
-              if (events.Any())
-              {
-                  var newVersion = await store.AppendToStreamAsync(naming.streamName, version, events);
-                  await snapshotStore.Apply<TState>($"{naming.streamName}|snapshot", s =>
-                  {
-                      return setVersion(newVersion, newState);
-                  });
-              }
-          },
-          command, naming, action, pub
-      );
-
     public static Task ExecuteAsync<TState>(
       Func<Task<(TState, long)>> getState,
       Func<TState, long, IEvent[], Task> saveState,

@@ -7,12 +7,12 @@ namespace Fiffi;
 public delegate Task EventDecider<T>(IEventStore<T> store, string streamName, long fromVersion,
     Func<(IEnumerable<T> events, long version), Task<T[]>> f, Func<T[], Task> pub);
 
-public delegate Task StateDecider<TState>(IEventStore<IEvent> store, string streamName, IAggregateId aggregateId,
+public delegate Task StateDecider<TState>(IEventStore<IEvent> store, string streamName, ICommand command,
     Func<TState, Task<EventRecord[]>> f, Func<IEvent[], Task> pub);
 
 public delegate StateDecider<TState> StateDeciderBuilder<TState, TEnv>(EventDecider<TEnv> eventDecider);
 
-public delegate TEnvelope[] EnvelopeCreator<T, TEnvelope>(IAggregateId sourceId, long basedOnVersion, T[] events);
+public delegate TEnvelope[] EnvelopeCreator<T, TEnvelope>(ICommand command, (string aggregateName, string streamName) naming, long basedOnVersion, T[] events);
 
 
 public static partial class ApplicationService
@@ -66,51 +66,101 @@ public static partial class ApplicationService
             },
             None(command), pub);
 
+    public static Task Execute<TState>(this IEventStore store,
+   ICommand command,
+   Func<TState, EventRecord[]> action,
+   Func<IEvent[], Task> pub,
+   ISnapshotStore snapshotStore,
+   Func<TState, long> getVersion,
+   Func<long, TState, TState> setVersion)
+   where TState : class, new()
+   => Execute<TState>(store, command, typeof(TState).Name.AsStreamName(command.AggregateId), action, pub, snapshotStore, getVersion, setVersion);
+
+    public static Task Execute<TState>(this IEventStore store,
+   ICommand command,
+   (string aggregateName, string streamName) naming,
+   Func<TState, EventRecord[]> action,
+   Func<IEvent[], Task> pub,
+   ISnapshotStore snapshotStore,
+   Func<TState, long> getVersion,
+   Func<long, TState, TState> setVersion)
+   where TState : class, new()
+    {
+        var exec = Build(CreateEnvelope(),
+                   (state, events) => events.Apply(state),
+                   snapshotStore,
+                   getVersion, setVersion)(ExecuteAsync);
+        return exec(store, naming.streamName, command, state => Task.FromResult(action(state)), pub);
+    }
 
     public static StateDeciderBuilder<TState, IEvent> Execute<TState>(
         EnvelopeCreator<EventRecord, IEvent> envelopeCreator,
         Func<EventRecord[], TState> evolve)
-        => eventDecider => async (store, streamName, aggregateId, f, pub) =>
+        => eventDecider => async (store, streamName, command, f, pub) =>
         {
             await eventDecider(store, streamName, 0, async events =>
             {
-                var state = evolve(events.events.Select(x => x.Event).ToArray()); 
+                var state = evolve(events.events.Select(x => x.Event).ToArray());
                 var result = await f(state);
-                return envelopeCreator(aggregateId, events.version, result);
+                return envelopeCreator(command, (typeof(TState).Name.AsAggregateName(), streamName), events.version, result);
             }, pub);
         };
 
-    public static StateDeciderBuilder<TState, IEvent> Execute<TState>(
+    public static StateDeciderBuilder<TState, IEvent> Build<TState>(
         EnvelopeCreator<EventRecord, IEvent> envelopeCreator,
         Func<TState, EventRecord[], TState> evolve,
         ISnapshotStore snapshotStore,
         Func<TState, long> getVersion,
         Func<long, TState, TState> setVersion)
         where TState : class, new()
-        => eventDecider =>  async (store, streamName, aggregateId, f, pub) =>
-        {
-            var snapshot = await snapshotStore.Get<TState>(streamName);
-            var snapVersion = getVersion(snapshot);
-            await eventDecider(store, streamName, snapVersion, async events =>
-            {
-                var state = evolve(snapshot, events.events.Select(x => x.Event).ToArray());
-                var result = await f(state);
-                return envelopeCreator(aggregateId, events.version, result);
-            }, async events => { 
-                await snapshotStore.Apply<TState>(streamName, events);
-                await pub(events);
-            });
-        };
+        => eventDecider => async (store, streamName, command, f, pub) =>
+       {
+           var snapshot = await snapshotStore.Get<TState>(streamName);
+           var snapVersion = getVersion(snapshot);
+           var version = snapVersion;
+           TState state = default;
+           await eventDecider(store, streamName, snapVersion, async readResult =>
+           {
+               version = readResult.version;
+               state = evolve(snapshot, readResult.events.Select(x => x.Event).ToArray());
+               var result = await f(state);
+               return envelopeCreator(command, (typeof(TState).Name.AsAggregateName(), streamName), readResult.version, result);
+           }, async events =>
+           {
+               //TODO add versionto pub ?
+               var newState = evolve(state, events.Select(x => x.Event).ToArray());
+               await snapshotStore.Apply<TState>($"{streamName}|snapshot", s =>
+                   setVersion(version + events.Length, newState)
+               );
+               await pub(events);
+           });
+       };
 
     public static EventDecider<TEnv> Intercept<TEnv>(Func<TEnv[], TEnv[]> intercept, EventDecider<TEnv> eventDecider)
        => (store, streamName, fromVersion, f, pub) =>
          eventDecider(store, streamName, fromVersion,
-             async events => {
-                 var filtered = intercept(events.events.ToArray());
-                 return await f((filtered, events.version));
-             }, 
+             async readResult =>
+             {
+                 var filtered = intercept(readResult.events.ToArray());
+                 return await f((filtered, readResult.version));
+             },
              pub);
- 
+
+    public static EventDecider<TEnv> WithMeta<TEnv>(
+        ICommand command,
+        (string aggregateName, string streamName) naming,
+        EnvelopeCreator<TEnv, TEnv> meta,
+        EventDecider<TEnv> eventDecider)
+      => (store, streamName, fromVersion, f, pub) =>
+        eventDecider(store, streamName, fromVersion,
+            async readResult =>
+            {
+                var newEvents = await f(readResult);
+                var r = meta(command, naming, readResult.version, newEvents);
+                return r;
+            },
+            pub);
+
     public static Task ExecuteAsync<T>(this IEventStore<T> store,
     string streamName,
     Func<(IEnumerable<T> events, long version), Task<T[]>> action,
