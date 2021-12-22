@@ -4,16 +4,17 @@ using System.Data;
 
 namespace Fiffi;
 
-public delegate Task EventDecider<T>(IEventStore<T> store, string streamName, long fromVersion,
+public delegate Task EventAppService<T>(IEventStore<T> store, string streamName, long fromVersion,
     Func<(IEnumerable<T> events, long version), Task<T[]>> f, Func<T[], Task> pub);
 
-public delegate Task StateDecider<TState>(IEventStore<IEvent> store, string streamName, ICommand command,
+public delegate Task StateAppService<TState>(IEventStore<IEvent> store, string streamName, ICommand command,
     Func<TState, Task<EventRecord[]>> f, Func<IEvent[], Task> pub);
 
-public delegate StateDecider<TState> StateDeciderBuilder<TState, TEnv>(EventDecider<TEnv> eventDecider);
+public delegate StateAppService<TState> StateAppServiceBuilder<TState, TEnv>(EventAppService<TEnv> eventDecider);
 
 public delegate TEnvelope[] EnvelopeCreator<T, TEnvelope>(ICommand command, (string aggregateName, string streamName) naming, long basedOnVersion, T[] events);
 
+public delegate TState Evolve<TState>(TState initialState, EventRecord[] events);
 
 public static partial class ApplicationService
 {
@@ -66,7 +67,7 @@ public static partial class ApplicationService
             },
             None(command), pub);
 
-    public static Task Execute<TState>(this IEventStore store,
+    public static Task ExecuteAsync<TState>(this IEventStore store,
    ICommand command,
    Func<TState, EventRecord[]> action,
    Func<IEvent[], Task> pub,
@@ -74,9 +75,9 @@ public static partial class ApplicationService
    Func<TState, long> getVersion,
    Func<long, TState, TState> setVersion)
    where TState : class, new()
-   => Execute<TState>(store, command, typeof(TState).Name.AsStreamName(command.AggregateId), action, pub, snapshotStore, getVersion, setVersion);
+   => ExecuteAsync<TState>(store, command, typeof(TState).Name.AsStreamName(command.AggregateId), action, pub, snapshotStore, getVersion, setVersion);
 
-    public static Task Execute<TState>(this IEventStore store,
+    public static Task ExecuteAsync<TState>(this IEventStore store,
    ICommand command,
    (string aggregateName, string streamName) naming,
    Func<TState, EventRecord[]> action,
@@ -93,7 +94,7 @@ public static partial class ApplicationService
         return exec(store, naming.streamName, command, state => Task.FromResult(action(state)), pub);
     }
 
-    public static StateDeciderBuilder<TState, IEvent> Execute<TState>(
+    public static StateAppServiceBuilder<TState, IEvent> Execute<TState>(
         EnvelopeCreator<EventRecord, IEvent> envelopeCreator,
         Func<EventRecord[], TState> evolve)
         => eventDecider => async (store, streamName, command, f, pub) =>
@@ -106,7 +107,7 @@ public static partial class ApplicationService
             }, pub);
         };
 
-    public static StateDeciderBuilder<TState, IEvent> Build<TState>(
+    public static StateAppServiceBuilder<TState, IEvent> Build<TState>(
         EnvelopeCreator<EventRecord, IEvent> envelopeCreator,
         Func<TState, EventRecord[], TState> evolve,
         ISnapshotStore snapshotStore,
@@ -136,7 +137,7 @@ public static partial class ApplicationService
            });
        };
 
-    public static EventDecider<TEnv> Intercept<TEnv>(Func<TEnv[], TEnv[]> intercept, EventDecider<TEnv> eventDecider)
+    public static EventAppService<TEnv> Intercept<TEnv>(Func<TEnv[], TEnv[]> intercept, EventAppService<TEnv> eventDecider)
        => (store, streamName, fromVersion, f, pub) =>
          eventDecider(store, streamName, fromVersion,
              async readResult =>
@@ -146,11 +147,11 @@ public static partial class ApplicationService
              },
              pub);
 
-    public static EventDecider<TEnv> WithMeta<TEnv>(
+    public static EventAppService<TEnv> WithMeta<TEnv>(
         ICommand command,
         (string aggregateName, string streamName) naming,
         EnvelopeCreator<TEnv, TEnv> meta,
-        EventDecider<TEnv> eventDecider)
+        EventAppService<TEnv> eventDecider)
       => (store, streamName, fromVersion, f, pub) =>
         eventDecider(store, streamName, fromVersion,
             async readResult =>

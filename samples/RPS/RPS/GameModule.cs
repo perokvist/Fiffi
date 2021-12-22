@@ -24,7 +24,7 @@ public class GameModule : Module
         .Commands(
             Commands.Validate<ICommand>(),
             Commands.GuaranteeCorrelation<ICommand>(),
-            cmd => store.Execute<GameState>(cmd, state =>
+            cmd => store.ExecuteAsync<GameState>(cmd, state =>
                     Game.Handle(cmd, state),
                     async events =>
                     {
