@@ -6,6 +6,8 @@ public record TestState
 
     public TestState When(IEvent @event) => this.Tap(x => x.Applied.Add(@event.Event));
     public long Version { get; set; }
+    
+    public DateTime Created { get; set; }
 
     public List<EventRecord> Applied { get; internal set; } = new();
 }

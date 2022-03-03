@@ -1,4 +1,5 @@
 ﻿using Google.Cloud.Firestore;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -11,6 +12,7 @@ namespace Fiffi.FireStore
         private readonly FirestoreDb store;
 
         public string StoreCollection { get; set; } = "eventstore";
+        public string TenantSplitter { get; set; } = "__";
 
         public FireStoreEventStore(FirestoreDb store)
         {
@@ -18,9 +20,28 @@ namespace Fiffi.FireStore
         }
 
         public Task<long> AppendToStreamAsync(string streamName, long version, params EventData[] events)
+        {
+            if (!streamName.Contains(TenantSplitter))
+                return AppendToStream(streamName, version, events);
+
+            var parts = streamName.Split(TenantSplitter);
+            var tenantName = parts.First();
+            var streamKey = parts.Skip(1).First();
+            store.RunTransactionAsync(async tx =>
+            {
+                var headRef = store.Document($"{StoreCollection}/{tenantName}");
+                var head = await headRef.GetSnapshotAsync();
+                if (!head.Exists)
+                {
+                    await headRef.CreateAsync(new Dictionary<string, object> { { "streams", new object() } });
+                }
+            });
+            return AppendToStream($"streams/{streamKey}", version, events);
+        }
+
+        public Task<long> AppendToStream(string streamName, long version, params EventData[] events)
             => store.RunTransactionAsync<long>(async tx =>
             {
-               
                 var headRef = store.Document($"{StoreCollection}/{streamName}");
                 var head = await headRef.GetSnapshotAsync();
                 long headVersion = 0;
@@ -74,13 +95,20 @@ namespace Fiffi.FireStore
                 .OrderBy(x => x.Version)
                 .ToArray();
 
-            return (events, events.LastOrDefault()?.Version ?? headVersion); 
+            return (events, events.LastOrDefault()?.Version ?? headVersion);
         }
 
-        public async Task Category(string categoryName)
+        public async Task<EventData[]> Category(string categoryName)
         {
             var eventStoreDoc = await store.Collection(this.StoreCollection).GetSnapshotAsync();
-            eventStoreDoc.Documents.Where(x => x.Id.StartsWith(categoryName));
+            var snapShot = eventStoreDoc.Documents.Where(x => x.Id.StartsWith(categoryName));
+
+            var events = snapShot
+            .Select(x => x.ConvertTo<EventData>())
+            //.OrderBy(x => x.Version)
+            .ToArray();
+
+            return events;
         }
     }
 }

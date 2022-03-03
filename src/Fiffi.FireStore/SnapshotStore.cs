@@ -15,6 +15,8 @@ namespace Fiffi.FireStore
         private JsonSerializerOptions options;
 
         public string StoreCollection { get; set; } = "snapshots";
+        public Func<FirestoreDb, (string StoreCollection, string Key), Task<string>> DocumentPathProvider =
+            (store, x) => Task.FromResult($"{x.StoreCollection}/{x.Key}");
 
         public SnapshotStore(FirestoreDb store, JsonSerializerOptions options)
         {
@@ -33,23 +35,23 @@ namespace Fiffi.FireStore
                     return;
             }
 
-            var snapRef = store.Document($"{StoreCollection}/{key}");
+            var snapRef = store.Document(await DocumentPathProvider(store, (StoreCollection, key)));
             var snapMap = newSnap.ToMap(options);
             await snapRef.SetAsync(snapMap);
         }
 
         public async Task<T> Get<T>(string key) where T : class, new()
         {
-            var snapRef = store.Document($"{StoreCollection}/{key}");
+            var snapRef = store.Document(await DocumentPathProvider(store, (StoreCollection, key)));
             var snap = await snapRef
                 .GetSnapshotAsync();
 
-            if(!snap.Exists)
+            if (!snap.Exists)
                 return new T();
 
             var snapMap = snap.ConvertTo<Dictionary<string, object>>();
 
-            return snapMap.ToObject<T>();
+            return snapMap.ToObject<T>(this.options);
         }
     }
 }
