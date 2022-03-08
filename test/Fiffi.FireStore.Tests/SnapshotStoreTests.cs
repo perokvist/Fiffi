@@ -50,6 +50,7 @@ public class SnapshotStoreTests
     }
 
     [Fact]
+    [Trait("Category", "Integration")]
     public async Task ApplyWithSubCollectionKey()
     {
         snapshotStore.DocumentPathProvider = 
