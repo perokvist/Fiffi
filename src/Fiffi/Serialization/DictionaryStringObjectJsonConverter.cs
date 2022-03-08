@@ -129,6 +129,8 @@ public class DictionaryStringObjectJsonConverter : JsonConverter<Dictionary<stri
             case JsonTokenType.Null:
                 return null;
             case JsonTokenType.Number:
+                //if (reader.GetInt64().ToString().Length == 29)
+                //return DateTime.UnixEpoch.AddSeconds(reader.GetInt64());
                 if (reader.TryGetInt64(out var result))
                 {
                     return result;

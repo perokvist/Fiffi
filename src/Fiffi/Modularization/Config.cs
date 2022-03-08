@@ -42,7 +42,7 @@ public class Configuration<T>
     {
         if (!events.Any())
             return;
-        await Task.WhenAll(updates.Select(x => x(events)));
+        await Task.WhenAll(updates.Select(x => x(events))); //TODO config for grouping by source ?
         await Task.WhenAll(triggers.Select(t => t(events, (e, cmd) =>
         {
             if (cmd != null) return dispatch(Policy.Issue(e, () => cmd));

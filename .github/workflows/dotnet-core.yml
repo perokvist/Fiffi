@@ -25,4 +25,4 @@ jobs:
     - name: Build
       run: dotnet build Fiffi.sln --configuration Release --no-restore
     - name: Test
-      run: dotnet test Fiffi.sln --filter Category!=Integration --no-restore --verbosity normal
+      run: dotnet test Fiffi.sln --filter Category!=Integration --no-restore --verbosity normal --no-build -c Release

@@ -24,6 +24,7 @@ public class SnapshotStoreTests
         options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
             .Tap(x => x.Converters.Add(new DictionaryStringObjectJsonConverter()))
             .Tap(x => x.Converters.Add(new EventRecordConverter()))
+            .Tap(x => x.Converters.Add(new JsonTimestampConverter()))
             .Tap(x => x.PropertyNameCaseInsensitive = true);
 
         var b = new FirestoreDbBuilder
@@ -39,7 +40,29 @@ public class SnapshotStoreTests
     [Trait("Category", "Integration")]
     public async Task ApplySnapshotAsync()
     {
-        await snapshotStore.Apply<TestState>($"test-{Guid.NewGuid()}", current => current with { Version = 99 });
+        var key = $"test-{Guid.NewGuid()}";
+        await snapshotStore.Apply<TestState>
+            (key, current => current with { Version = 99, Created = DateTime.UtcNow });
+
+        var snap = await snapshotStore.Get<TestState>(key);
+
+        Assert.Equal(99, snap.Version);
     }
 
+    [Fact]
+    [Trait("Category", "Integration")]
+    public async Task ApplyWithSubCollectionKey()
+    {
+        snapshotStore.DocumentPathProvider = 
+            DocumentPathProviders.SubCollection();
+
+        var fullPath = new Uri($"/clients/EvilCorp/messages/{Guid.NewGuid()}", UriKind.Relative);
+        var key = fullPath.ToString();
+        await snapshotStore.Apply<TestState>
+            (key, current => current with { Version = 99, Created = DateTime.UtcNow });
+
+        var snap = await snapshotStore.Get<TestState>(key);
+
+        Assert.Equal(99, snap.Version);
+    }
 }
