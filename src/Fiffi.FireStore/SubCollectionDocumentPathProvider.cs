@@ -9,6 +9,11 @@ public static class DocumentPathProviders
     public static Func<FirestoreDb, (string StoreCollection, string Key, bool WriteOperation), Task<string>> SubCollection()
         => async (s ,x ) => {
 
+            var defaultPath = $"{x.StoreCollection}/{x.Key}";
+
+            if (!x.Key.Contains('/'))
+                return defaultPath;
+
             if(!x.WriteOperation)
                 return x.Key.Trim('/');
 

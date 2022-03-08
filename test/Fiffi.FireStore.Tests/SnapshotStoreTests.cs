@@ -65,4 +65,39 @@ public class SnapshotStoreTests
 
         Assert.Equal(99, snap.Version);
     }
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    public async Task ApplyWithSubCollectionSnapshotConvensionKey()
+    {
+        snapshotStore.DocumentPathProvider =
+            DocumentPathProviders.SubCollection();
+
+        var fullPath = new Uri($"/clients/EvilCorp/messages/{Guid.NewGuid()}|snapshot", UriKind.Relative);
+        var key = fullPath.ToString();
+
+        await snapshotStore.Apply<TestState>
+            (key, current => current with { Version = 99, Created = DateTime.UtcNow });
+
+        var snap = await snapshotStore.Get<TestState>(key);
+
+        Assert.Equal(99, snap.Version);
+    }
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    public async Task ApplyWithSubCollectionSnapshotConvensionKeyNonePath()
+    {
+        snapshotStore.DocumentPathProvider =
+            DocumentPathProviders.SubCollection();
+
+        var key = $"testname-{Guid.NewGuid()}";
+
+        await snapshotStore.Apply<TestState>
+            (key, current => current with { Version = 99, Created = DateTime.UtcNow });
+
+        var snap = await snapshotStore.Get<TestState>(key);
+
+        Assert.Equal(99, snap.Version);
+    }
 }

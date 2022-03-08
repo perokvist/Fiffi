@@ -25,7 +25,7 @@ public class Configuration<T>
             }
             catch (Exception ex)
             {
-                throw new Exception($"Error handeling {c.GetType().Name} - {c.AggregateId}", ex);
+                throw new Exception($"Error handling {c.GetType().Name} - {c.AggregateId}", ex);
             }
         }));
 
