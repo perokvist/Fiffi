@@ -6,8 +6,12 @@ using System.Threading.Tasks;
 namespace Fiffi.FireStore;
 public static class DocumentPathProviders
 {
-    public static Func<FirestoreDb, (string StoreCollection, string Key), Task<string>> SubCollection()
+    public static Func<FirestoreDb, (string StoreCollection, string Key, bool WriteOperation), Task<string>> SubCollection()
         => async (s ,x ) => {
+
+            if(!x.WriteOperation)
+                return x.Key.Trim('/');
+
             if (!Uri.TryCreate(x.Key, UriKind.Relative, out var urlKey))
                 return x.Key;
             if (urlKey is null)

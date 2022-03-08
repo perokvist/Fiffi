@@ -20,9 +20,10 @@ public class EventStoreTests
         Environment.SetEnvironmentVariable("FIRESTORE_EMULATOR_HOST", "localhost:8080");
 
         options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
-            .Tap(x => x.Converters.Add(new DictionaryStringObjectJsonConverter()))
-            .Tap(x => x.Converters.Add(new EventRecordConverter()))
-            .Tap(x => x.PropertyNameCaseInsensitive = true);
+                 .Tap(x => x.Converters.Add(new DictionaryStringObjectJsonConverter()))
+                 .Tap(x => x.Converters.Add(new EventRecordConverter()))
+                 .Tap(x => x.Converters.Add(new JsonTimestampConverter()))
+                 .Tap(x => x.PropertyNameCaseInsensitive = true);
 
         var b = new FirestoreDbBuilder
         {
@@ -57,7 +58,6 @@ public class EventStoreTests
         await store.Document("testing/per").SetAsync(new Dictionary<string, object> { { "version", "0" } });
         await store.Collection("testing/per/events").AddAsync(e.Data);
     }
-
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -112,6 +112,34 @@ public class EventStoreTests
         var resolver = TypeResolver.FromMap(TypeResolver.GetEventsFromTypes(typeof(TestEventRecord)));
         var eventStore = new EventStore(new FireStoreEventStore(store), options, resolver);
         var streamName = $"test-stream-{Guid.NewGuid()}";
+
+        var events = new[] { new TestEventRecord("testing") }
+        .Cast<EventRecord>()
+        .ToArray()
+        .ToEnvelopes("test")
+        .ForEach(e => e.AddTestMetaData(streamName))
+        .ToArray();
+
+        await eventStore.AppendToStreamAsync(streamName, 0, events);
+
+        var r = await eventStore.LoadEventStreamAsync(streamName, 0);
+
+        Assert.Equal(1, r.Version);
+        Assert.Equal("testing", ((TestEventRecord)r.Events.First().Event).Message);
+    }
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    public async Task AppendAndLoadSubCollectionEnvelopesAsync()
+    {
+        var resolver = TypeResolver.FromMap(TypeResolver.GetEventsFromTypes(typeof(TestEventRecord)));
+        var fireStoreEventStore = new FireStoreEventStore(store)
+        {
+            DocumentPathProvider = DocumentPathProviders.SubCollection()
+        };
+        var eventStore = new EventStore(fireStoreEventStore, options, resolver);
+        
+        var streamName = $"/clients/testclient/eventstore/test-{Guid.NewGuid()}";
 
         var events = new[] { new TestEventRecord("testing") }
         .Cast<EventRecord>()
