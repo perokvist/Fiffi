@@ -20,10 +20,7 @@ public class EventStoreTests
         Environment.SetEnvironmentVariable("FIRESTORE_EMULATOR_HOST", "localhost:8080");
 
         options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
-                 .Tap(x => x.Converters.Add(new DictionaryStringObjectJsonConverter()))
-                 .Tap(x => x.Converters.Add(new EventRecordConverter()))
-                 .Tap(x => x.Converters.Add(new JsonTimestampConverter()))
-                 .Tap(x => x.PropertyNameCaseInsensitive = true);
+                 .Tap(x => x.AddConverters());
 
         var b = new FirestoreDbBuilder
         {
@@ -138,7 +135,7 @@ public class EventStoreTests
             DocumentPathProvider = DocumentPathProviders.SubCollection()
         };
         var eventStore = new EventStore(fireStoreEventStore, options, resolver);
-        
+
         var streamName = $"/clients/testclient/eventstore/test-{Guid.NewGuid()}";
 
         var events = new[] { new TestEventRecord("testing") }
@@ -155,4 +152,45 @@ public class EventStoreTests
         Assert.Equal(1, r.Version);
         Assert.Equal("testing", ((TestEventRecord)r.Events.First().Event).Message);
     }
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    public async Task AppendAndLoadEnvelopesComplexAsync()
+    {
+        var resolver = TypeResolver.FromMap(TypeResolver.GetEventsFromTypes(typeof(ComplexEvent)));
+        var eventStore = new EventStore(new FireStoreEventStore(store), options, resolver);
+        var streamName = $"test-stream-{Guid.NewGuid()}";
+
+        var events = new[] {
+            new ComplexEvent(Guid.NewGuid(), "testing",
+            Location.Kitchen, true, DateTime.UtcNow, Array.Empty<Uri>()
+            )
+        }
+        .Cast<EventRecord>()
+        .ToArray()
+        .ToEnvelopes("test")
+        .ForEach(e => e.AddTestMetaData(streamName))
+        .ToArray();
+
+        await eventStore.AppendToStreamAsync(streamName, 0, events);
+
+        var r = await eventStore.LoadEventStreamAsync(streamName, 0);
+
+        Assert.Equal(1, r.Version);
+        Assert.Equal("testing", ((ComplexEvent)r.Events.First().Event).Description);
+    }
+
 }
+public record ComplexEvent(Guid EventId = default, string Description = "",
+    Location Location = Location.None, bool KeyApproved = false,
+    DateTime Requested = default,
+    Uri[] Images = default) : ComplexBase(EventId);
+
+public record ComplexBase(Guid Id) : EventRecord;
+
+public enum Location
+{
+    None,
+    Kitchen
+}
+

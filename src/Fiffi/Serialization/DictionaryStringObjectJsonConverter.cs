@@ -1,10 +1,21 @@
 ﻿using System.Text.Json.Serialization;
+using ExternalWriter = System.Func<System.Text.Json.Utf8JsonWriter, object, bool>;
 
 namespace Fiffi.Serialization;
 
 //https://raw.githubusercontent.com/joseftw/JOS.SystemTextJsonDictionaryStringObjectJsonConverter/develop/src/JOS.SystemTextJsonDictionaryObjectModelBinder/DictionaryStringObjectJsonConverterCustomWrite.cs
 public class DictionaryStringObjectJsonConverter : JsonConverter<Dictionary<string, object>>
 {
+    readonly ExternalWriter externalTypesWriter;
+
+    public DictionaryStringObjectJsonConverter() : this((w, o) => false)
+    { }
+
+    public DictionaryStringObjectJsonConverter(ExternalWriter writer)
+    {
+        this.externalTypesWriter = writer;
+    }
+
     public override Dictionary<string, object> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         if (reader.TokenType != JsonTokenType.StartObject)
@@ -46,13 +57,13 @@ public class DictionaryStringObjectJsonConverter : JsonConverter<Dictionary<stri
 
         foreach (var key in value.Keys)
         {
-            HandleValue(writer, key, value[key]);
+            HandleValue(writer, key, value[key], externalTypesWriter);
         }
 
         writer.WriteEndObject();
     }
 
-    private static void HandleValue(Utf8JsonWriter writer, string key, object objectValue)
+    private static void HandleValue(Utf8JsonWriter writer, string key, object objectValue, ExternalWriter externalWriter)
     {
         if (key != null)
         {
@@ -89,7 +100,7 @@ public class DictionaryStringObjectJsonConverter : JsonConverter<Dictionary<stri
                 writer.WriteStartObject();
                 foreach (var item in dict)
                 {
-                    HandleValue(writer, item.Key, item.Value);
+                    HandleValue(writer, item.Key, item.Value, externalWriter);
                 }
                 writer.WriteEndObject();
                 break;
@@ -97,19 +108,20 @@ public class DictionaryStringObjectJsonConverter : JsonConverter<Dictionary<stri
                 writer.WriteStartArray();
                 foreach (var item in array)
                 {
-                    HandleValue(writer, item);
+                    HandleValue(writer, item, externalWriter);
                 }
                 writer.WriteEndArray();
                 break;
             default:
-                writer.WriteNullValue();
+                if (!externalWriter(writer, objectValue))
+                    writer.WriteNullValue();
                 break;
         }
     }
 
-    private static void HandleValue(Utf8JsonWriter writer, object value)
+    private static void HandleValue(Utf8JsonWriter writer, object value, ExternalWriter externalWriter)
     {
-        HandleValue(writer, null, value);
+        HandleValue(writer, null, value, externalWriter);
     }
 
     private object ExtractValue(ref Utf8JsonReader reader, JsonSerializerOptions options)
@@ -129,8 +141,6 @@ public class DictionaryStringObjectJsonConverter : JsonConverter<Dictionary<stri
             case JsonTokenType.Null:
                 return null;
             case JsonTokenType.Number:
-                //if (reader.GetInt64().ToString().Length == 29)
-                //return DateTime.UnixEpoch.AddSeconds(reader.GetInt64());
                 if (reader.TryGetInt64(out var result))
                 {
                     return result;

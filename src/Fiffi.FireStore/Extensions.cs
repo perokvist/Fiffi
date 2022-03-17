@@ -1,7 +1,7 @@
-﻿using Google.Cloud.Firestore;
+﻿using Fiffi.Serialization;
+using Google.Cloud.Firestore;
 using Microsoft.Extensions.DependencyInjection;
 using System;
-using System.Collections.Generic;
 using System.Text.Json;
 
 namespace Fiffi.FireStore;
@@ -29,9 +29,35 @@ public static class Extensions
                    }
                }
                .Build())
+               .Configure<JsonSerializerOptions>(opt => opt.AddConverters())
                .AddSingleton<IEventStore<EventData>, FireStoreEventStore>(sp => new FireStoreEventStore(sp.GetRequiredService<FirestoreDb>()).Tap(x => x.StoreCollection = storeCollection))
                .AddSingleton<IEventStore, EventStore>()
                .AddSingleton<ISnapshotStore>(sp => new SnapshotStore(
                    sp.GetRequiredService<FirestoreDb>(),
                    sp.GetRequiredService<JsonSerializerOptions>()));
+
+    public static JsonSerializerOptions AddConverters(this JsonSerializerOptions options)
+    {
+        options.Converters.Add(new JsonTimestampConverter());
+        options.Converters.Add(new EventRecordConverter());
+        options.Converters.Add(new DictionaryStringObjectJsonConverter(
+                     (writer, o) =>
+                     {
+                         return o switch
+                         {
+                             Timestamp t => writer.Pipe(x =>
+                             {
+                                 x.WriteStringValue(t.ToDateTime());
+                                 return true;
+                             }),
+                             _ => false
+                         };
+                     }
+                     ));
+        return options;
+    }
+
 }
+
+
+
