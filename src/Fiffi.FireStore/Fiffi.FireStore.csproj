@@ -4,7 +4,7 @@
     <TargetFramework>net6.0</TargetFramework>
     <Platform>x64</Platform>
     <PlatformTarget>x64</PlatformTarget>
-    <VersionPrefix>0.1.6</VersionPrefix>
+    <VersionPrefix>0.1.7</VersionPrefix>
     <VersionSuffix>beta</VersionSuffix>
     <PackageId>Fiffi.FireStore</PackageId>
     <Title>Fiffi.FireStore</Title>

@@ -7,9 +7,16 @@ using System.Text.Json;
 namespace Fiffi.FireStore;
 public static class Extensions
 {
+    public static IServiceCollection AddEventStore(this IServiceCollection services,
+       string projectId,
+       string storeCollection = "eventstore",
+       bool emulatorOnly = false,
+       int port = 8080)
+        => services.AddEventStore(projectId, c => { }, storeCollection, emulatorOnly, port);
 
     public static IServiceCollection AddEventStore(this IServiceCollection services,
        string projectId,
+       Action<ConverterRegistry> converters, 
        string storeCollection = "eventstore",
        bool emulatorOnly = false,
        int port = 8080) =>
@@ -26,7 +33,7 @@ public static class Extensions
                    ConverterRegistry = new ConverterRegistry
                    {
                             new EventDataConverter()
-                   }
+                   }.Tap(converters)
                }
                .Build())
                .Configure<JsonSerializerOptions>(opt => opt.AddConverters())
