@@ -38,6 +38,9 @@ public class Configuration<T>
     public Configuration<T> Query<TQuery, TResult>(Func<TQuery, Task<TResult>> f)
      => this.Tap(x => x.queries.Register(f));
 
+    public Configuration<T> QueryStream<TQuery, TResult>(Func<TQuery, IAsyncEnumerable<TResult>> f)
+     => this.Tap(x => x.queries.Register(f));
+
     public virtual T Create(IEventStore store) => f(dispatch, async events =>
     {
         if (!events.Any())
