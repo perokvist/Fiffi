@@ -37,11 +37,14 @@ public static class Extensions
                }
                .Build())
                .Configure<JsonSerializerOptions>(opt => opt.AddConverters())
-               .AddSingleton<IEventStore<EventData>, FireStoreEventStore>(sp => 
+               .AddSingleton(sp => 
                     new FireStoreEventStore(sp.GetRequiredService<FirestoreDb>())
                     .Tap(x => x.StoreCollection = storeCollection)
                     .Tap(x => x.DocumentPathProvider = DocumentPathProviders.SubCollection()))
+               .AddSingleton<IEventStore<EventData>>(sp => sp.GetRequiredService<FireStoreEventStore>())
+               .AddSingleton<IAdvancedEventStore<EventData>>(sp => sp.GetRequiredService<FireStoreEventStore>())
                .AddSingleton<IEventStore, EventStore>()
+               .AddSingleton<IAdvancedEventStore, AdvancedEventStore>()
                .AddSingleton<ISnapshotStore>(sp => new SnapshotStore(
                    sp.GetRequiredService<FirestoreDb>(),
                    sp.GetRequiredService<JsonSerializerOptions>())

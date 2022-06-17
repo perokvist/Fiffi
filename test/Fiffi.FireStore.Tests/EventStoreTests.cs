@@ -104,6 +104,54 @@ public class EventStoreTests
 
     [Fact]
     [Trait("Category", "Integration")]
+    public async Task AppendAndLoadEventsInOrderAsync()
+    {
+        var eventStore = new FireStoreEventStore(store);
+        var streamName = $"test-stream-{Guid.NewGuid()}";
+
+        var env = EventEnvelope.Create("sourceId", new TestEventRecord("testing"));
+        var covert = Serialization.Extensions.AsMap();
+        var map = covert(env, options);
+
+        await eventStore.AppendToStreamAsync(streamName, 0,
+            new EventData(Guid.NewGuid().ToString(), "testEvent", map));
+
+        await eventStore.AppendToStreamAsync(streamName, 1,
+            new EventData(Guid.NewGuid().ToString(), "testEvent 2", map));
+
+        var r = await eventStore.LoadEventStreamAsync(streamName, 0);
+
+        Assert.Equal(2, r.Version);
+        Assert.Equal(1, r.Events.First().Version);
+        Assert.Equal(2, r.Events.Last().Version);
+    }
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    public async Task AppendAndLoadEventsAsAsync()
+    {
+        var eventStore = new FireStoreEventStore(store);
+        var streamName = $"test-stream-{Guid.NewGuid()}";
+
+        var env = EventEnvelope.Create("sourceId", new TestEventRecord("testing"));
+        var covert = Serialization.Extensions.AsMap();
+        var map = covert(env, options);
+
+        await eventStore.AppendToStreamAsync(streamName, 0,
+            new EventData(Guid.NewGuid().ToString(), "testEvent", map));
+
+        await eventStore.AppendToStreamAsync(streamName, 1,
+            new EventData(Guid.NewGuid().ToString(), "testEvent 2", map));
+
+        var r = await eventStore.LoadEventStreamAsAsync(streamName, 0).ToListAsync();
+
+        Assert.Equal(2, r.Count());
+        Assert.Equal(1, r.First().Version);
+        Assert.Equal(2, r.Last().Version);
+    }
+
+    [Fact]
+    [Trait("Category", "Integration")]
     public async Task AppendAndLoadEnvelopesAsync()
     {
         var resolver = TypeResolver.FromMap(TypeResolver.GetEventsFromTypes(typeof(TestEventRecord)));

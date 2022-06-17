@@ -32,6 +32,9 @@ public abstract class Module
     public async Task<T> QueryAsync<T>(IQuery<T> q)
         => (T)await QueryDispatcher.HandleAsync(q);
 
+    public IAsyncEnumerable<T> QueryAsync<T>(IStreamQuery<T> q)
+        => (IAsyncEnumerable<T>)QueryDispatcher.HandleStreamAsync(q);
+
     public Task WhenAsync(params IEvent[] events) => Publish(events);
 
     internal Task OnStart(IEvent[] events) => onStart(events);
