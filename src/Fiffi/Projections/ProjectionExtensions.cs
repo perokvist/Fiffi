@@ -9,6 +9,9 @@ public static class ProjectionExtensions
 
     public static async Task<long> AppendToStreamAsync(this IEventStore store, string streamName, params IEvent[] events)
     {
+        if (store is IAdvancedEventStore AdvStore)
+            return await AdvStore.AppendToStreamAsync(streamName, events);
+
         var r = await store.LoadEventStreamAsync(streamName, 0); //TODO optimize :)
         return await store.AppendToStreamAsync(streamName, r.Version, events);
     }

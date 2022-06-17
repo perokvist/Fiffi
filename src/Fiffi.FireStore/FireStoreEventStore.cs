@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Fiffi.FireStore;
 
-public class FireStoreEventStore : IEventStore<EventData>
+public class FireStoreEventStore : IAdvancedEventStore<EventData>
 {
     private readonly FirestoreDb store;
 
@@ -21,7 +21,8 @@ public class FireStoreEventStore : IEventStore<EventData>
         this.store = store;
     }
 
-    public Task<long> AppendToStreamAsync(string streamName, long version, params EventData[] events)
+    public Task<long> AppendToStreamAsync(string streamName, long version, 
+        bool checkConcurreny = true, params EventData[] events)
         => store.RunTransactionAsync<long>(async tx =>
         {
             var headRef = store.Document(await DocumentPathProvider(store, (StoreCollection, streamName, true)));
@@ -32,7 +33,7 @@ public class FireStoreEventStore : IEventStore<EventData>
             else
                 await headRef.CreateAsync(new Dictionary<string, object> { { "version", 0 } });
 
-            if (headVersion != version)
+            if (checkConcurreny && headVersion != version)
                 throw new DBConcurrencyException($"stream head {streamName} have been updated. Expected {version}, streamversion {headVersion} ");
 
             if (!events.Any())
@@ -71,11 +72,11 @@ public class FireStoreEventStore : IEventStore<EventData>
         var snapShot = await store
             .Collection($"{path}/events")
             .WhereGreaterThanOrEqualTo(nameof(EventData.Version), version)
+            .OrderBy(nameof(EventData.Version))
             .GetSnapshotAsync();
 
         var events = snapShot
             .Select(x => x.ConvertTo<EventData>())
-            .OrderBy(x => x.Version)
             .ToArray();
 
         return (events, events.LastOrDefault()?.Version ?? headVersion);
@@ -93,4 +94,37 @@ public class FireStoreEventStore : IEventStore<EventData>
 
         return events;
     }
-}
+
+    public Task<long> AppendToStreamAsync(string streamName, params EventData[] events)
+        => AppendToStreamAsync(streamName, default, false, events);
+
+    public async IAsyncEnumerable<EventData> LoadEventStreamAsAsync(string streamName, long version)
+    {
+        var path = await DocumentPathProvider(store, (StoreCollection, streamName, false));
+        var headRef = store.Document(path);
+        var head = await headRef.GetSnapshotAsync();
+        if (!head.Exists)
+            yield break;
+
+        var headVersion = head.GetValue<long>("version");
+
+        if (headVersion == default)
+            yield break;
+        if (headVersion < version)
+            yield break;
+
+        var events = store
+            .Collection($"{path}/events")
+            .WhereGreaterThanOrEqualTo(nameof(EventData.Version), version)
+            .OrderBy(nameof(EventData.Version))
+            .StreamAsync()
+            .Select(x => x.ConvertTo<EventData>());
+
+        await foreach (var item in events)
+            yield return item;
+    }
+
+    public Task<long> AppendToStreamAsync(string streamName, long version, params EventData[] events)
+        => AppendToStreamAsync(streamName, version, true, events);
+
+} 
