@@ -25,12 +25,12 @@ public class GameModule : Module
             Commands.Validate<ICommand>(),
             Commands.GuaranteeCorrelation<ICommand>(),
             cmd => store.ExecuteAsync<GameState>(cmd, state =>
-                Game.Handle(cmd, state),
-                async events =>
-                {
-                    await snapshotStore.Apply<GamesView>(events.Select(e => e.Event).Apply);
-                    await pub(events);
-                }, snapshotStore, state => state.Version, (newVersion, state) => state.Pipe(x => x with { Version = newVersion })))
+                    Game.Handle(cmd, state),
+                    async events =>
+                    {
+                        await snapshotStore.Apply<GamesView>(events.Select(e => e.Event).Apply);
+                        await pub(events);
+                    }, snapshotStore, state => state.Version, (newVersion, state) => state.Pipe(x => x with { Version = newVersion })))
         .Updates(events => snapshotStore.Apply<GamesView>(events))
         .Updates(events => store.AppendToStreamAsync(Streams.All, events.ToArray()))
         .Triggers(async (events, d) =>

@@ -4,7 +4,7 @@ public static class ProjectionExtensions
 {
     public static Projector<T> Projector<T>(this IEventStore store)
       where T : class, new()
-      => new Projector<T>(store);
+      => new(store);
 
 
     public static async Task<long> AppendToStreamAsync(this IEventStore store, string streamName, params IEvent[] events)
@@ -24,7 +24,7 @@ public static class ProjectionExtensions
         where T : class, new()
     {
         var r = await store.LoadEventStreamAsync(streamName, 0);
-        var projection = r.Item1.Select(e => e.Event).Rehydrate<T>();
+        var projection = r.Events.Select(e => e.Event).Rehydrate<T>();
         return projection;
     }
 
@@ -32,7 +32,7 @@ public static class ProjectionExtensions
     where T : class
     {
         var r = await store.LoadEventStreamAsync(streamName, 0);
-        var projection = r.Item1.Select(e => e.Event).Apply(current, apply);
+        var projection = r.Events.Select(e => e.Event).Apply(current, apply);
         return projection;
     }
 
