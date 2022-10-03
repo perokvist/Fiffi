@@ -1,4 +1,5 @@
 ﻿using Fiffi.Serialization;
+using System;
 using System.Buffers;
 
 namespace Fiffi;
@@ -29,6 +30,16 @@ public class AdvancedEventStore : EventStore, IAdvancedEventStore
     public async IAsyncEnumerable<IEvent> LoadEventStreamAsAsync(string streamName, long version)
     {
         var events = store.LoadEventStreamAsAsync(streamName, version);
+        await foreach (var item in events)
+        {
+            yield return toEvent(item, typeResolver(item.EventName), jsonSerializerOptions)
+            .Tap(x => x.Meta.AddStoreMetaData(new EventStoreMetaData { EventVersion = item.Version, EventPosition = item.Version }));
+        }
+    }
+
+    public async IAsyncEnumerable<IEvent> LoadEventStreamAsAsync(string streamName, DateTime startDate, DateTime endDate)
+    {
+        var events = store.LoadEventStreamAsAsync(streamName, startDate, endDate);
         await foreach (var item in events)
         {
             yield return toEvent(item, typeResolver(item.EventName), jsonSerializerOptions)
@@ -89,7 +100,7 @@ public class EventStore : IEventStore
     }
 
     public static EventData ToEventData(IEvent e, Func<IEvent, object> f)
-        => new(e.EventId().ToString(), e.Event.GetType().Name, f(e));
+        => new(e.GetStreamName(), e.EventId().ToString(), e.Event.GetType().Name, f(e), DateTime.UtcNow);
 
     public static Func<EventData, Type, JsonSerializerOptions, IEvent> ToEvent()
     {
@@ -120,7 +131,14 @@ public static class EventDataExtensions
 
 }
 
-public record EventData(string EventId, string EventName, object Data, long Version = 0)
+public record EventData(
+    string EventStreamId,
+    string EventId,
+    string EventName,
+    object Data,
+    DateTime Created,
+    long Version = 0)
+
 {
-    public static EventData Create(string EventName, object Data, long Version = 0) => new(Guid.NewGuid().ToString(), EventName, Data, Version);
+    public static EventData Create(string EventStreamId, string EventName, object Data, long Version = 0) => new(EventStreamId, Guid.NewGuid().ToString(), EventName, Data, DateTime.UtcNow, Version);
 }

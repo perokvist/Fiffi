@@ -2,8 +2,10 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using static Fiffi.Testing.TestContext;
 
 namespace Fiffi.FireStore;
 
@@ -21,7 +23,7 @@ public class FireStoreEventStore : IAdvancedEventStore<EventData>
         this.store = store;
     }
 
-    public Task<long> AppendToStreamAsync(string streamName, long version, 
+    public Task<long> AppendToStreamAsync(string streamName, long version,
         bool checkConcurreny = true, params EventData[] events)
         => store.RunTransactionAsync<long>(async tx =>
         {
@@ -40,7 +42,7 @@ public class FireStoreEventStore : IAdvancedEventStore<EventData>
                 return headVersion;
 
             var versionedEvents = events
-                            .Select((e, i) => new EventData(e.EventId, e.EventName, e.Data, headVersion + (i + 1)))
+                            .Select((e, i) => new EventData(e.EventStreamId, e.EventId, e.EventName, e.Data, e.Created, headVersion + (i + 1)))
                             .ToArray();
 
             foreach (var item in versionedEvents)
@@ -82,17 +84,25 @@ public class FireStoreEventStore : IAdvancedEventStore<EventData>
         return (events, events.LastOrDefault()?.Version ?? headVersion);
     }
 
-    public async Task<EventData[]> Category(string categoryName)
+    public async IAsyncEnumerable<EventData> LoadCategoryAsAsync(string categoryName, (string StreamName, bool ImplicitStream) options)
     {
-        var eventStoreDoc = await store.Collection(this.StoreCollection).GetSnapshotAsync();
-        var snapShot = eventStoreDoc.Documents.Where(x => x.Id.StartsWith(categoryName));
-
-        var events = snapShot
-        .Select(x => x.ConvertTo<EventData>())
-        //.OrderBy(x => x.Version)
-        .ToArray();
-
-        return events;
+        var task = options.ImplicitStream switch
+        {
+            true => Task.FromResult(StoreCollection),
+            _ => DocumentPathProvider(store, (StoreCollection, options.StreamName, false))
+        };
+        var path = await task;
+  
+        var eventStoreDoc = await store
+            .Collection(path)
+            .GetSnapshotAsync();
+        var filtered = eventStoreDoc
+            .Documents
+            .Where(x => x.GetValue<string>(nameof(EventData.EventStreamId)).StartsWith(categoryName, StringComparison.InvariantCultureIgnoreCase))
+            .Select(x => x.ConvertTo<EventData>())
+            .ToAsyncEnumerable();
+        await foreach (var item in filtered)
+            yield return item;
     }
 
     public Task<long> AppendToStreamAsync(string streamName, params EventData[] events)
@@ -127,4 +137,19 @@ public class FireStoreEventStore : IAdvancedEventStore<EventData>
     public Task<long> AppendToStreamAsync(string streamName, long version, params EventData[] events)
         => AppendToStreamAsync(streamName, version, true, events);
 
-} 
+    public async IAsyncEnumerable<EventData> LoadEventStreamAsAsync(string streamName, DateTime startDate, DateTime endDate)
+    {
+        var path = await DocumentPathProvider(store, (StoreCollection, streamName, false));
+
+        var events = store
+                .Collection($"{path}/events")
+                .WhereGreaterThanOrEqualTo(nameof(EventData.Created), startDate)
+                .WhereLessThanOrEqualTo(nameof(EventData.Created), endDate)
+                .OrderBy(nameof(EventData.Version))
+                .StreamAsync()
+                .Select(x => x.ConvertTo<EventData>());
+
+        await foreach (var item in events)
+            yield return item;
+    }
+}
