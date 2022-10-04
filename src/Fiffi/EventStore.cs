@@ -37,9 +37,9 @@ public class AdvancedEventStore : EventStore, IAdvancedEventStore
         }
     }
 
-    public async IAsyncEnumerable<IEvent> LoadEventStreamAsAsync(string streamName, DateTime startDate, DateTime endDate)
+    public async IAsyncEnumerable<IEvent> LoadEventStreamAsAsync(string streamName, params IStreamFilter[] filters)
     {
-        var events = store.LoadEventStreamAsAsync(streamName, startDate, endDate);
+        var events = store.LoadEventStreamAsAsync(streamName, filters);
         await foreach (var item in events)
         {
             yield return toEvent(item, typeResolver(item.EventName), jsonSerializerOptions)

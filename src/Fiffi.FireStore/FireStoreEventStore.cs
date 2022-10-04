@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using static Fiffi.Testing.TestContext;
+using static Google.Cloud.Firestore.V1.StructuredQuery.Types;
 
 namespace Fiffi.FireStore;
 
@@ -71,30 +72,14 @@ public class FireStoreEventStore : IAdvancedEventStore<EventData>
         if (headVersion < version)
             return (Enumerable.Empty<EventData>(), headVersion);
 
-        var snapShot = await store
-            .Collection($"{path}/events")
-            .WhereGreaterThanOrEqualTo(nameof(EventData.Version), version)
-            .OrderBy(nameof(EventData.Version))
-            .GetSnapshotAsync();
-
-        var events = snapShot
-            .Select(x => x.ConvertTo<EventData>())
-            .ToArray();
-
-        return (events, events.LastOrDefault()?.Version ?? headVersion);
+        var e = LoadEventStreamAsAsync(streamName, version);
+        return (e.ToEnumerable(), headVersion);
     }
 
-    public async IAsyncEnumerable<EventData> LoadCategoryAsAsync(string categoryName, (string StreamName, bool ImplicitStream) options)
+    public async IAsyncEnumerable<EventData> LoadCategoryAsAsync(string categoryName)
     {
-        var task = options.ImplicitStream switch
-        {
-            true => Task.FromResult(StoreCollection),
-            _ => DocumentPathProvider(store, (StoreCollection, options.StreamName, false))
-        };
-        var path = await task;
-  
         var eventStoreDoc = await store
-            .Collection(path)
+            .Collection(StoreCollection)
             .GetSnapshotAsync();
         var filtered = eventStoreDoc
             .Documents
@@ -137,17 +122,17 @@ public class FireStoreEventStore : IAdvancedEventStore<EventData>
     public Task<long> AppendToStreamAsync(string streamName, long version, params EventData[] events)
         => AppendToStreamAsync(streamName, version, true, events);
 
-    public async IAsyncEnumerable<EventData> LoadEventStreamAsAsync(string streamName, DateTime startDate, DateTime endDate)
+    public async IAsyncEnumerable<EventData> LoadEventStreamAsAsync(string streamName, params IStreamFilter[] filters)
     {
         var path = await DocumentPathProvider(store, (StoreCollection, streamName, false));
 
         var events = store
                 .Collection($"{path}/events")
-                .WhereGreaterThanOrEqualTo(nameof(EventData.Created), startDate)
-                .WhereLessThanOrEqualTo(nameof(EventData.Created), endDate)
+                .ApplyFilters(filters)
                 .OrderBy(nameof(EventData.Version))
                 .StreamAsync()
                 .Select(x => x.ConvertTo<EventData>());
+
 
         await foreach (var item in events)
             yield return item;

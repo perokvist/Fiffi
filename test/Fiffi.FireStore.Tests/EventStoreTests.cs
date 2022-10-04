@@ -25,7 +25,7 @@ public class EventStoreTests
         var b = new FirestoreDbBuilder
         {
             EmulatorDetection = Google.Api.Gax.EmulatorDetection.EmulatorOnly,
-            ProjectId = "dummy-project",
+            ProjectId = "demo-project",
             ConverterRegistry = new ConverterRegistry
                 {
                     new EventDataConverter()
@@ -50,7 +50,7 @@ public class EventStoreTests
     [Trait("Category", "Integration")]
     public async Task WriteAsync()
     {
-        var e = new EventData("test", "testEvent", new Dictionary<string, object> { { "testprop", "message" } });
+        var e = new EventData("test-stream","test", "testEvent", new Dictionary<string, object> { { "testprop", "message" } }, DateTime.UtcNow);
 
         await store.Document("testing/per").SetAsync(new Dictionary<string, object> { { "version", "0" } });
         await store.Collection("testing/per/events").AddAsync(e.Data);
@@ -65,7 +65,7 @@ public class EventStoreTests
         var streamName = $"test-stream-{Guid.NewGuid()}";
 
         await eventStore.AppendToStreamAsync(streamName, 0,
-            new EventData(Guid.NewGuid().ToString(), "testEvent", new Dictionary<string, object> { { "eventprop", "test" } }));
+            new EventData(streamName, Guid.NewGuid().ToString(), "testEvent", new Dictionary<string, object> { { "eventprop", "test" } }, DateTime.UtcNow));
     }
 
     [Fact]
@@ -76,7 +76,7 @@ public class EventStoreTests
         var streamName = $"test-stream-{Guid.NewGuid()}";
 
         await eventStore.AppendToStreamAsync(streamName, 0,
-            new EventData(Guid.NewGuid().ToString(), "testEvent", new Dictionary<string, object> { { "eventprop", "test" } }));
+            new EventData(streamName, Guid.NewGuid().ToString(), "testEvent", new Dictionary<string, object> { { "eventprop", "test" } }, DateTime.UtcNow));
 
         var r = await eventStore.LoadEventStreamAsync(streamName, 0);
 
@@ -95,7 +95,7 @@ public class EventStoreTests
         var map = covert(env, options);
 
         await eventStore.AppendToStreamAsync(streamName, 0,
-            new EventData(Guid.NewGuid().ToString(), "testEvent", map));
+            new EventData(streamName, Guid.NewGuid().ToString(), "testEvent", map, DateTime.UtcNow));
 
         var r = await eventStore.LoadEventStreamAsync(streamName, 0);
 
@@ -114,10 +114,10 @@ public class EventStoreTests
         var map = covert(env, options);
 
         await eventStore.AppendToStreamAsync(streamName, 0,
-            new EventData(Guid.NewGuid().ToString(), "testEvent", map));
+            new EventData(streamName, Guid.NewGuid().ToString(), "testEvent", map, DateTime.UtcNow));
 
         await eventStore.AppendToStreamAsync(streamName, 1,
-            new EventData(Guid.NewGuid().ToString(), "testEvent 2", map));
+            new EventData(streamName, Guid.NewGuid().ToString(), "testEvent 2", map, DateTime.UtcNow));
 
         var r = await eventStore.LoadEventStreamAsync(streamName, 0);
 
@@ -138,10 +138,10 @@ public class EventStoreTests
         var map = covert(env, options);
 
         await eventStore.AppendToStreamAsync(streamName, 0,
-            new EventData(Guid.NewGuid().ToString(), "testEvent", map));
+            new EventData(streamName, Guid.NewGuid().ToString(), "testEvent", map, DateTime.UtcNow));
 
         await eventStore.AppendToStreamAsync(streamName, 1,
-            new EventData(Guid.NewGuid().ToString(), "testEvent 2", map));
+            new EventData(streamName, Guid.NewGuid().ToString(), "testEvent 2", map, DateTime.UtcNow));
 
         var r = await eventStore.LoadEventStreamAsAsync(streamName, 0).ToListAsync();
 

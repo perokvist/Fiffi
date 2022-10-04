@@ -42,14 +42,9 @@ namespace Fiffi.Dapr
             => new(eventData.EventId, eventData.EventName, eventData.Data, eventData.Version);
 
         public static EventData ToEventData(global::Dapr.EventStore.EventData eventData)
-         => new("", eventData.EventId, eventData.EventName, eventData.Data, DateTime.MinValue ,eventData.Version);
+         => new("", eventData.EventId, eventData.EventName, eventData.Data, DateTime.MinValue, eventData.Version);
 
-        public IAsyncEnumerable<EventData> LoadEventStreamAsAsync(string streamName, DateTime startDate, DateTime endDate)
-        {
-            throw new NotImplementedException();
-        }
-
-        public IAsyncEnumerable<EventData> LoadCategoryAsAsync(string categoryName)
+        public IAsyncEnumerable<EventData> LoadEventStreamAsAsync(string streamName, params IStreamFilter[] filters)
         {
             throw new NotImplementedException();
         }
