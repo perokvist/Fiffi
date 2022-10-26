@@ -231,6 +231,7 @@ public class EventStoreTests
     }
 
     [Fact]
+    [Trait("Category", "Integration")]
     public async Task CategoryFilter()
     {
         var eventStore = new FireStoreEventStore(store) as IAdvancedEventStore<EventData>;
@@ -258,6 +259,7 @@ public class EventStoreTests
     }
 
     [Fact]
+    [Trait("Category", "Integration")]
     public async Task DateFilter()
     {
         var eventStore = new FireStoreEventStore(store) as IAdvancedEventStore<EventData>;
