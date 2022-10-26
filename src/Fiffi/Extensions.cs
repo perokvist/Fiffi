@@ -46,11 +46,10 @@ public static class Extensions
     public static TState Apply<TState>(this IEnumerable<EventRecord> events, TState currentState, Func<TState, EventRecord, TState> apply) where TState : class
      => events.Aggregate(currentState, apply);
 
-
     public static IEvent[] Filter(this IEnumerable<IEvent> events, params Type[] include)
-        => events
-        .Where(x => include.Any(t => t.Equals(x.Event.GetType())))
-        .ToArray();
+    => events
+    .Where(x => include.Any(t => t.Equals(x.Event.GetType())))
+    .ToArray();
 
     public static void Guard<T>(this Action<Func<T, bool>> f, Func<T, bool> guard)
         => f(guard);
@@ -97,11 +96,11 @@ public static class Extensions
             _ => throw new NotImplementedException($"{version.mode} not supported")
         });
 
-    public static void LoadEventStreamAsAsync(this IAdvancedEventStore<IEvent> store,
+    public static IAsyncEnumerable<IEvent> LoadEventStreamAsAsync(this IAdvancedEventStore<IEvent> store,
         string streamName, DateTime fromDate, DateTime endDate)
         => store.LoadEventStreamAsAsync(streamName, new DateStreamFilter(fromDate, endDate));
 
-    public static void LoadEventStreamAsAsync(this IAdvancedEventStore<IEvent> store,
+    public static IAsyncEnumerable<IEvent> LoadEventStreamAsAsync(this IAdvancedEventStore<IEvent> store,
         string streamName, string categoryName)
         => store.LoadEventStreamAsAsync(streamName, new CategoryStreamFilter(categoryName));
 
