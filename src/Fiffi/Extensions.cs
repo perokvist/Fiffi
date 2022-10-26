@@ -97,6 +97,15 @@ public static class Extensions
             _ => throw new NotImplementedException($"{version.mode} not supported")
         });
 
+    public static void LoadEventStreamAsAsync(this IAdvancedEventStore<IEvent> store,
+        string streamName, DateTime fromDate, DateTime endDate)
+        => store.LoadEventStreamAsAsync(streamName, new DateStreamFilter(fromDate, endDate));
+
+    public static void LoadEventStreamAsAsync(this IAdvancedEventStore<IEvent> store,
+        string streamName, string categoryName)
+        => store.LoadEventStreamAsAsync(streamName, new CategoryStreamFilter(categoryName));
+
+
     public record StreamVersion(long version, Mode mode = Mode.Inclusive);
 
     public enum Mode

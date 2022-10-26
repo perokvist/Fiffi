@@ -18,7 +18,7 @@ public static class FilterExtensions
      => filters.Aggregate(documents, (current, filter) =>
         filter switch
         {
-            CategoryWithinStreamFilter f => current.Category(f),
+            CategoryStreamFilter f => current.Category(f),
             _ => current
         });
 
@@ -27,7 +27,7 @@ public static class FilterExtensions
         .WhereGreaterThanOrEqualTo(nameof(EventData.Created), filter.StartDate)
         .WhereLessThanOrEqualTo(nameof(EventData.Created), filter.EndDate);
 
-    public static IEnumerable<DocumentSnapshot> Category(this IEnumerable<DocumentSnapshot> documents, CategoryWithinStreamFilter filter)
+    public static IEnumerable<DocumentSnapshot> Category(this IEnumerable<DocumentSnapshot> documents, CategoryStreamFilter filter)
         => documents
             .Where(x => x.GetValue<string>(nameof(EventData.EventStreamId)).StartsWith(filter.CategoryName, StringComparison.InvariantCultureIgnoreCase));
 

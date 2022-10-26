@@ -14,5 +14,5 @@ public interface IStreamFilter
 { };
 
 public record DateStreamFilter(DateTime StartDate, DateTime EndDate) : IStreamFilter;
-public record CategoryWithinStreamFilter(string StreamName, string CategoryName) : IStreamFilter;
+public record CategoryStreamFilter(string CategoryName) : IStreamFilter;
 

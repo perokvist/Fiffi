@@ -2,11 +2,8 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using static Fiffi.Testing.TestContext;
-using static Google.Cloud.Firestore.V1.StructuredQuery.Types;
 
 namespace Fiffi.FireStore;
 
@@ -76,20 +73,6 @@ public class FireStoreEventStore : IAdvancedEventStore<EventData>
         return (e.ToEnumerable(), headVersion);
     }
 
-    public async IAsyncEnumerable<EventData> LoadCategoryAsAsync(string categoryName)
-    {
-        var eventStoreDoc = await store
-            .Collection(StoreCollection)
-            .GetSnapshotAsync();
-        var filtered = eventStoreDoc
-            .Documents
-            .Where(x => x.GetValue<string>(nameof(EventData.EventStreamId)).StartsWith(categoryName, StringComparison.InvariantCultureIgnoreCase))
-            .Select(x => x.ConvertTo<EventData>())
-            .ToAsyncEnumerable();
-        await foreach (var item in filtered)
-            yield return item;
-    }
-
     public Task<long> AppendToStreamAsync(string streamName, params EventData[] events)
         => AppendToStreamAsync(streamName, default, false, events);
 
@@ -126,15 +109,16 @@ public class FireStoreEventStore : IAdvancedEventStore<EventData>
     {
         var path = await DocumentPathProvider(store, (StoreCollection, streamName, false));
 
-        var events = store
-                .Collection($"{path}/events")
-                .ApplyFilters(filters)
-                .OrderBy(nameof(EventData.Version))
-                .StreamAsync()
-                .Select(x => x.ConvertTo<EventData>());
-
-
-        await foreach (var item in events)
+        var eventStoreDoc = await store
+         .Collection($"{path}/events")
+         .ApplyFilters(filters)
+         .GetSnapshotAsync();
+        var filtered = eventStoreDoc
+            .Documents
+            .ApplyFilters(filters)
+            .Select(x => x.ConvertTo<EventData>())
+            .ToAsyncEnumerable();
+        await foreach (var item in filtered)
             yield return item;
     }
 }
