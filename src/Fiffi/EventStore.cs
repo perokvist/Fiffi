@@ -127,8 +127,6 @@ public static class EventDataExtensions
             T d => d,
             _ => throw new Exception($"Data was not of type {typeof(T).Name}")
         };
-
-
 }
 
 public record EventData(
@@ -141,4 +139,6 @@ public record EventData(
 
 {
     public static EventData Create(string EventStreamId, string EventName, object Data, long Version = 0) => new(EventStreamId, Guid.NewGuid().ToString(), EventName, Data, DateTime.UtcNow, Version);
+
+    public string CategoryName { get; } = EventStreamId.Split('-').First();
 }
