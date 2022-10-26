@@ -37,7 +37,7 @@ public static class Extensions
     }
 
     public static EventData ToEventData(this CloudEvent cloudEvent, string id)
-        => new(id, cloudEvent.Type, cloudEvent.ToMapData());
+        => new(cloudEvent.Subject, id, cloudEvent.Type, cloudEvent.ToMapData(), cloudEvent.Time.GetValueOrDefault());
 
     public static CloudEvent ToEvent(this EventData eventData, JsonSerializerOptions options)
         => eventData

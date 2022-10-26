@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
@@ -41,9 +42,11 @@ namespace Fiffi.Dapr
             => new(eventData.EventId, eventData.EventName, eventData.Data, eventData.Version);
 
         public static EventData ToEventData(global::Dapr.EventStore.EventData eventData)
-         => new(eventData.EventId, eventData.EventName, eventData.Data, eventData.Version);
+         => new("", eventData.EventId, eventData.EventName, eventData.Data, DateTime.MinValue, eventData.Version);
 
-
-
+        public IAsyncEnumerable<EventData> LoadEventStreamAsAsync(string streamName, params IStreamFilter[] filters)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

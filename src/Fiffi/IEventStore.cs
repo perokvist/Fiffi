@@ -2,8 +2,8 @@
 
 public interface IEventStore : IEventStore<IEvent>
 {
-    public async Task<IEnumerable<IEvent>> LoadEventsByCategory(string categoryName, long version, string allStream = "all")
-       => (await LoadEventStreamAsync(allStream, version)).Events
+    public async Task<IEnumerable<IEvent>> LoadEventsByCategory(string categoryName, string allStream = "all")
+       => (await LoadEventStreamAsync(allStream, 0)).Events
             .Where(x => x.Meta.GetEventMetaData().StreamName.StartsWith(categoryName));
 }
 

@@ -57,4 +57,9 @@ public class InMemoryEventStore : IAdvancedEventStore
         foreach (var e in events)
             yield return e;
     }
+
+    public IAsyncEnumerable<IEvent> LoadEventStreamAsAsync(string streamName, params IStreamFilter[] filters)
+    {
+        throw new NotImplementedException();
+    }
 }
