@@ -22,7 +22,7 @@ public class SnapshotStore : ISnapshotStore
         this.options = options;
     }
 
-    public async Task Apply<T>(string key, Func<T, T> f) where T : class, new()
+    public async Task Apply<T>(string key, T defaultValue, Func<T, T> f) where T : class
     {
         var snap = await Get<T>(key);
         var newSnap = f(snap);
@@ -38,14 +38,14 @@ public class SnapshotStore : ISnapshotStore
         await snapRef.SetAsync(snapMap);
     }
 
-    public async Task<T> Get<T>(string key) where T : class, new()
+    public async Task<T?> Get<T>(string key) where T : class
     {
         var snapRef = store.Document(await DocumentPathProvider(store, (StoreCollection, key, false)));
         var snap = await snapRef
             .GetSnapshotAsync();
 
         if (!snap.Exists)
-            return new T();
+            return null;
 
         var snapMap = snap.ConvertTo<Dictionary<string, object>>();
 

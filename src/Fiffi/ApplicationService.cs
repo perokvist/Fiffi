@@ -109,7 +109,7 @@ public static class ApplicationService
         => ExecuteAsync(
             async () =>
             {
-                var state = await snapshotStore.Get<TState>($"{naming.streamName}|snapshot");
+                var state = await snapshotStore.GetOrCreate<TState>($"{naming.streamName}|snapshot");
                 var (events, version) = await store.LoadEventStreamAsync(naming.streamName, new StreamVersion(getVersion(state), Mode.Exclusive));
                 return (events.Select(e => e.Event).Apply(state), version);
             },

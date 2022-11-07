@@ -22,20 +22,20 @@ namespace Fiffi.Dapr
             this.logger = logger;
         }
 
-        public async Task<T> Get<T>(string key)
-            where T : class, new()
+        public async Task<T?> Get<T>(string key)
+            where T : class
         {
             var meta = MetaProvider(key);
             var item = await client.GetStateAsync<T>(StoreName, key, metadata: meta);
             if (item == null)
-                return new T();
+                return null;
 
             return item;
         }
 
-        public Task Apply<T>(string key, Func<T, T> f)
-            where T : class, new()
-            => Apply<T>(key, f, () => new T());
+        public Task Apply<T>(string key, T defaultValue, Func<T, T> f)
+            where T : class
+            => Apply<T>(key, f, () => defaultValue);
 
         public async Task Apply<T>(string key, Func<T, T> f, Func<T> c)
         {
