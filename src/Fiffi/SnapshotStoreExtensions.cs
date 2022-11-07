@@ -6,7 +6,7 @@ public static class SnapshotStoreExtensions
         where T : class, new()
         => snapshotStore.GetOrCreate<T>(typeof(T).Name);
 
-    public static async Task<T?> GetOrCreate<T>(this ISnapshotStore snapshotStore, string key) where T : class, new()
+    public static async Task<T> GetOrCreate<T>(this ISnapshotStore snapshotStore, string key) where T : class, new()
     {
         var item = await snapshotStore.Get<T>(key);
         if (item == null)
