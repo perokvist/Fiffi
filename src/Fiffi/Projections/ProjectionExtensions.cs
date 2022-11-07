@@ -28,7 +28,8 @@ public static class ProjectionExtensions
         return projection;
     }
 
-    public static async Task<T> GetAsync<T>(this IEventStore store, string streamName, T current, Func<T, EventRecord, T> apply)
+    public static async Task<T> GetAsync<T>(this IEventStore store, string streamName, T current,
+        Func<T, EventRecord, T> apply)
     where T : class
     {
         var r = await store.LoadEventStreamAsync(streamName, 0);
