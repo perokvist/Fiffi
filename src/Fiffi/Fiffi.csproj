@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
-    <VersionPrefix>0.9.16</VersionPrefix>
+    <VersionPrefix>0.9.17</VersionPrefix>
     <VersionSuffix>beta</VersionSuffix>
     <PackageId>Fiffi</PackageId>
     <Title>Fiffi</Title>
