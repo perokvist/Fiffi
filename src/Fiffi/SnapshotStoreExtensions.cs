@@ -1,4 +1,6 @@
-﻿namespace Fiffi;
+﻿using Fiffi.Projections;
+
+namespace Fiffi;
 
 public static class SnapshotStoreExtensions
 {
@@ -61,4 +63,27 @@ public static class SnapshotStoreExtensions
 
         events.Apply(f);
     }
+
+    public static Task ApplyLazy<T>(this ISnapshotStore snapshotStore,
+     IEventStore store, IEnumerable<EventRecord> events,
+     string cacheKey, string streamName,
+     T initialValue,
+     Func<T, EventRecord, T> apply)
+     where T : class
+     => snapshotStore.Apply(cacheKey, events, apply,
+         () => store.GetAsync(streamName, initialValue, apply));
+
+    public static async Task<T> GetLazy<T>(this ISnapshotStore snapshotStore,
+        IEventStore store, string cacheKey, string streamName,
+        T initialValue, Func<T, EventRecord, T> apply)
+        where T : class
+    {
+        var item = await snapshotStore.Get<T>(cacheKey);
+        if (item == null)
+        {
+            item = await store.GetAsync(streamName, initialValue, apply);
+        }
+        return item;
+    }
+
 }
