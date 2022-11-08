@@ -59,8 +59,18 @@ public class InMemoryEventStore : IAdvancedEventStore
             yield return e;
     }
 
-    public IAsyncEnumerable<IEvent> LoadEventStreamAsAsync(string streamName, params IStreamFilter[] filters)
+    public async IAsyncEnumerable<IEvent> LoadEventStreamAsAsync(string streamName, params IStreamFilter[] filters)
     {
-        throw new NotImplementedException();
+        var (events, _) = await LoadEventStreamAsync(streamName, 0);
+
+        var filtered = filters.Aggregate(events, (e, filter) => filter switch
+        {
+            DateStreamFilter f => e.Where(x => x.OccuredAt() >= f.StartDate).Where(x => x.OccuredAt() <= f.EndDate),
+            CategoryStreamFilter f => e.Where(x => x.GetStreamName().StartsWith(f.CategoryName, StringComparison.InvariantCultureIgnoreCase)),
+            _ => e
+        });
+
+        foreach (var item in filtered)
+            yield return item;
     }
 }
