@@ -12,9 +12,11 @@ public class SnapshotStore : ISnapshotStore
     private readonly FirestoreDb store;
     private JsonSerializerOptions options;
 
+    public bool ImmutableSnapshots { get; set; } = true;
     public string StoreCollection { get; set; } = "snapshots";
     public Func<FirestoreDb, (string StoreCollection, string Key, bool WriteOperation), Task<string>> DocumentPathProvider =
         (store, x) => Task.FromResult($"{x.StoreCollection}/{x.Key}");
+
 
     public SnapshotStore(FirestoreDb store, JsonSerializerOptions options)
     {
@@ -24,10 +26,10 @@ public class SnapshotStore : ISnapshotStore
 
     public async Task Apply<T>(string key, T defaultValue, Func<T, T> f) where T : class
     {
-        var snap = await Get<T>(key);
+        var snap = await Get<T>(key) ?? defaultValue;
         var newSnap = f(snap);
 
-        if (snap is IEquatable<T>)
+        if (ImmutableSnapshots && snap is IEquatable<T>)
         {
             if (snap.Equals(newSnap))
                 return;

@@ -35,7 +35,7 @@ public static class SnapshotStoreExtensions
 
     public static Task Apply<T>(this ISnapshotStore snapshotStore, string key, IEnumerable<IEvent> events, Func<T, EventRecord, T> f)
     where T : class, new()
-        => snapshotStore.Apply<T>(key, v => events.Select(e => e.Event).Apply(v, f));
+        => snapshotStore.Apply<T>(key, state => events.Select(e => e.Event).Apply(state, f));
 
     public static async Task<T> Get<T>(this ISnapshotStore snapshotStore, string key, Func<T, bool> filter)
         where T : class, new()
@@ -48,7 +48,12 @@ public static class SnapshotStoreExtensions
 
     public static Task Apply<T>(this ISnapshotStore snapshotStore, string key, IEnumerable<EventRecord> events, Func<T, EventRecord, T> f)
         where T : class, new()
-        => snapshotStore.Apply<T>(key, v => events.Apply(v, f));
+        => snapshotStore.Apply<T>(key, state => events.Apply(state, f));
+
+    public static Task Apply<T>(this ISnapshotStore snapshotStore, string key, T initialValue,
+        IEnumerable<EventRecord> events, Func<T, EventRecord, T> f)
+        where T : class
+        => snapshotStore.Apply(key, initialValue, state => events.Apply(state, f));
 
     public static async Task Apply<T>(this ISnapshotStore snapshotStore,
     string key,
@@ -61,7 +66,7 @@ public static class SnapshotStoreExtensions
         if (item == null)
             item = await initialize();
 
-        events.Apply(f);
+        await snapshotStore.Apply(key, item, events, f);
     }
 
     public static Task ApplyLazy<T>(this ISnapshotStore snapshotStore,

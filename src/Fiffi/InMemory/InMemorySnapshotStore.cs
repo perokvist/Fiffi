@@ -11,14 +11,9 @@ public class InMemorySnapshotStore : ISnapshotStore
         var currentValue = (await Get<T>(key)) ?? defaultValue;
         var newValue = f(currentValue);
 
-        if (currentValue is IEquatable<T>)
-            if (currentValue.Equals(newValue))
-                return;
-
         store[key] = newValue;
     }
 
     public Task<T?> Get<T>(string key) where T : class
         => Task.FromResult(store.ContainsKey(key) ? (T)store[key] : null);
-    //=> Task.FromResult(store.ContainsKey(key) ? (T)store[key] ?? new T() : new T().Tap(x => store.Add(key, x)));
 }
