@@ -13,7 +13,7 @@ public class EventDataConverter : IFirestoreConverter<EventData>
                 d[nameof(EventData.EventId)] as string,
                 d[nameof(EventData.EventName)] as string,
                 d[nameof(EventData.Data)],
-                ((Timestamp)d[nameof(EventData.Created)]).ToDateTime(),
+                d.ContainsKey(nameof(EventData.Created)) ? ((Timestamp)d[nameof(EventData.Created)]).ToDateTime() : DateTime.MinValue,
                 Convert.ToInt64(d[nameof(EventData.Version)])),
             _ => throw new Exception($"object of unexpected type {value.GetType()}")
         };
