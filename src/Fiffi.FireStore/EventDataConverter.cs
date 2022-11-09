@@ -9,7 +9,7 @@ public class EventDataConverter : IFirestoreConverter<EventData>
         => value switch
         {
             IDictionary<string, object> d => new(
-                d[nameof(EventData.EventStreamId)] as string,
+                d.ContainsKey(nameof(EventData.EventStreamId)) ? d[nameof(EventData.EventStreamId)] as string : "unknown",
                 d[nameof(EventData.EventId)] as string,
                 d[nameof(EventData.EventName)] as string,
                 d[nameof(EventData.Data)],

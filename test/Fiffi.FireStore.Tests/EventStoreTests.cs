@@ -48,6 +48,7 @@ public class EventStoreTests
         Assert.Equal(0, r.Version);
     }
 
+
     [Fact]
     [Trait("Category", "Integration")]
     public async Task WriteAsync()
@@ -68,6 +69,50 @@ public class EventStoreTests
 
         await eventStore.AppendToStreamAsync(streamName, 0,
             new EventData(streamName, Guid.NewGuid().ToString(), "testEvent", new Dictionary<string, object> { { "eventprop", "test" } }, DateTime.UtcNow));
+    }
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    public async Task AppendWrappedAsync()
+    {
+        var jsonSerializerOptions =
+                            new JsonSerializerOptions().AddConverters()
+                           .Tap(x => x.PropertyNameCaseInsensitive = true);
+        
+        var eventStore = new EventStore(new FireStoreEventStore(store), jsonSerializerOptions, s => typeof(string));
+
+        var streamName = $"test-stream-{Guid.NewGuid()}";
+        var env = EventEnvelope
+            .Create("sourceId", new TestEventRecord("testing"))
+            .AddTestMetaData(streamName);
+
+        await eventStore.AppendToStreamAsync(streamName, 0, env);
+    }
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    public async Task AppendAndLoadWrappedAsync()
+    {
+        var jsonSerializerOptions =
+                            new JsonSerializerOptions().AddConverters()
+                           .Tap(x => x.PropertyNameCaseInsensitive = true);
+
+        var eventStore = new EventStore(
+            new FireStoreEventStore(store), 
+            jsonSerializerOptions, 
+            TypeResolver.FromMap(TypeResolver.GetEventsFromTypes(typeof(TestEventRecord))));
+
+        var streamName = $"test-stream-{Guid.NewGuid()}";
+        var env = EventEnvelope
+            .Create("sourceId", new TestEventRecord("testing"))
+            .AddTestMetaData(streamName);
+
+        await eventStore.AppendToStreamAsync(streamName, 0, env);
+
+        var r = await eventStore.LoadEventStreamAsync(streamName, 0);
+
+        Assert.Equal(1, r.Version);
+        Assert.IsType<TestEventRecord>(r.Events.First().Event);
     }
 
     [Fact]
