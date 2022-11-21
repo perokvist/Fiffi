@@ -25,7 +25,7 @@ public class AdvancedEventStore : EventStore, IAdvancedEventStore
     }
 
     public Task<long> AppendToStreamAsync(string streamName, params IEvent[] events)
-        => store.AppendToStreamAsync(streamName, events.Select(e => ToEventData(e, x => this.converter(x, jsonSerializerOptions))).ToArray());
+        => store.AppendToStreamAsync(streamName, events.Select(e => ToEventData(streamName, e, x => this.converter(x, jsonSerializerOptions))).ToArray());
 
     public async IAsyncEnumerable<IEvent> LoadEventStreamAsAsync(string streamName, long version)
     {
@@ -84,7 +84,7 @@ public class EventStore : IEventStore
      => store.AppendToStreamAsync(
          streamName,
          version,
-         events.Select(e => ToEventData(e, x => this.converter(x, jsonSerializerOptions))).ToArray());
+         events.Select(e => ToEventData(streamName, e, x => this.converter(x, jsonSerializerOptions))).ToArray());
 
     public async Task<(IEnumerable<IEvent> Events, long Version)> LoadEventStreamAsync(string streamName, long version)
     {
@@ -99,8 +99,8 @@ public class EventStore : IEventStore
         return result;
     }
 
-    public static EventData ToEventData(IEvent e, Func<IEvent, object> f)
-        => new(e.GetStreamName(), e.EventId().ToString(), e.Event.GetType().Name, f(e), DateTime.UtcNow);
+    public static EventData ToEventData(string streamName, IEvent e, Func<IEvent, object> f)
+        => new(streamName, e.EventId().ToString(), e.Event.GetType().Name, f(e), DateTime.UtcNow);
 
     public static Func<EventData, Type, JsonSerializerOptions, IEvent> ToEvent()
     {

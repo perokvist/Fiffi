@@ -44,4 +44,22 @@ public class TestContextBuilder
                 await Task.WhenAll(additionalModules.Select(x => x.OnStart(events)));
             }, module.DispatchAsync, q, module.QueryAsync, allWhens);
         });
+
+    public static (ITestContext, TModule) CreateWithModule<TPersitance, TModule>(
+       Func<TPersitance> creator,
+       Func<TPersitance, Func<IEvent[], Task>, TModule> f,
+       params Func<TPersitance, Func<IEvent[], Task>, Module>[] additional)
+       where TPersitance : class, IEventStore
+       where TModule : Module
+    {
+        TModule module = null;
+        var ctx = Create(creator,
+            (store, pub) =>
+            {
+                module = f(store, pub);
+                return module;
+            },
+        additional);
+        return (ctx, module);
+    }
 }

@@ -40,7 +40,7 @@ public static class Extensions
                .AddSingleton(sp => 
                     new FireStoreEventStore(sp.GetRequiredService<FirestoreDb>())
                     .Tap(x => x.StoreCollection = storeCollection)
-                    .Tap(x => x.DocumentPathProvider = DocumentPathProviders.SubCollection()))
+                    .Tap(x => x.DocumentPathProvider = DocumentPathProviders.SubCollectionByPartition()))
                .AddSingleton<IEventStore<EventData>>(sp => sp.GetRequiredService<FireStoreEventStore>())
                .AddSingleton<IAdvancedEventStore<EventData>>(sp => sp.GetRequiredService<FireStoreEventStore>())
                .AddSingleton<IEventStore, EventStore>()
@@ -49,7 +49,7 @@ public static class Extensions
                    sp.GetRequiredService<FirestoreDb>(),
                    sp.GetRequiredService<JsonSerializerOptions>())
                {
-                   DocumentPathProvider = DocumentPathProviders.SubCollection()
+                   DocumentPathProvider = DocumentPathProviders.SubCollectionByPartition()
                });
 
     public static JsonSerializerOptions AddConverters(this JsonSerializerOptions options)

@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Text.Json;
 using System.Threading.Tasks;
+using static Fiffi.FireStore.DocumentPathProviders;
 
 namespace Fiffi.FireStore;
 
@@ -14,9 +15,8 @@ public class SnapshotStore : ISnapshotStore
 
     public bool ImmutableSnapshots { get; set; } = true;
     public string StoreCollection { get; set; } = "snapshots";
-    public Func<FirestoreDb, (string StoreCollection, string Key, bool WriteOperation), Task<string>> DocumentPathProvider =
-        (store, x) => Task.FromResult($"{x.StoreCollection}/{x.Key}");
 
+    public Func<FirestoreDb, StreamContext, Task<StreamPaths>> DocumentPathProvider = All();
 
     public SnapshotStore(FirestoreDb store, JsonSerializerOptions options)
     {
@@ -35,14 +35,15 @@ public class SnapshotStore : ISnapshotStore
                 return;
         }
 
-        var snapRef = store.Document(await DocumentPathProvider(store, (StoreCollection, key, true)));
+        var snapRef = store.Document((await DocumentPathProvider(store, new(StoreCollection, key, true))).SnapPath);
         var snapMap = newSnap.ToMap(options);
         await snapRef.SetAsync(snapMap);
     }
 
     public async Task<T?> Get<T>(string key) where T : class
     {
-        var snapRef = store.Document(await DocumentPathProvider(store, (StoreCollection, key, false)));
+        var path = await DocumentPathProvider(store, new(StoreCollection, key, false));
+        var snapRef = store.Document(path.SnapPath);
         var snap = await snapRef
             .GetSnapshotAsync();
 

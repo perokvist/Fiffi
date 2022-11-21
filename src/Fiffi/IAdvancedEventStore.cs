@@ -15,4 +15,6 @@ public interface IStreamFilter
 
 public record DateStreamFilter(DateTime StartDate, DateTime EndDate) : IStreamFilter;
 public record CategoryStreamFilter(string CategoryName) : IStreamFilter;
+public record CategoryMetaDataStreamFilter(string CategoryName, bool LowerCasePath = false) : IStreamFilter;
+
 
