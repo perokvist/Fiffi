@@ -276,6 +276,7 @@ public class FireStoreEventStoreTests
     }
 
     [Fact]
+    [Trait("Category", "Integration")]
     public async Task CategoryFilterAllProvider()
     {
         var eventStore = new FireStoreEventStore(store) { DocumentPathProvider = All() };
@@ -303,6 +304,7 @@ public class FireStoreEventStoreTests
     }
 
     [Fact]
+    [Trait("Category", "Integration")]
     public async Task CategoryFilterSubProvider()
     {
         var resolver = TypeResolver.FromMap(TypeResolver.GetEventsFromTypes(typeof(TestEventRecord)));
@@ -338,6 +340,7 @@ public class FireStoreEventStoreTests
     }
 
     [Fact]
+    [Trait("Category", "Integration")]
     public async Task AppendEventWithMetaDataHasOwnStreamId()
     {
         var resolver = TypeResolver.FromMap(TypeResolver.GetEventsFromTypes(typeof(TestEventRecord)));
