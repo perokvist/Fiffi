@@ -3,11 +3,12 @@ using Fiffi.Testing;
 using Google.Cloud.Firestore;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Xunit;
+using static Fiffi.FireStore.DocumentPathProviders;
+using PathProvider = System.Func<Google.Cloud.Firestore.FirestoreDb, Fiffi.FireStore.DocumentPathProviders.StreamContext, System.Threading.Tasks.Task<Fiffi.FireStore.DocumentPathProviders.StreamPaths>>;
+
 
 namespace Fiffi.FireStore.Tests;
 
@@ -15,7 +16,6 @@ public class SnapshotStoreTests
 {
     private FirestoreDb store;
     private readonly JsonSerializerOptions options;
-    private SnapshotStore snapshotStore;
 
     public SnapshotStoreTests()
     {
@@ -30,16 +30,33 @@ public class SnapshotStoreTests
         var b = new FirestoreDbBuilder
         {
             EmulatorDetection = Google.Api.Gax.EmulatorDetection.EmulatorOnly,
-            ProjectId = "dummy-project"
+            ProjectId = "demo-project"
         };
         store = b.Build();
-        snapshotStore = new SnapshotStore(store, options);
     }
 
-    [Fact]
+    public static PathProvider Test() =>
+        async (store, ctx) =>
+        {
+            var modCtx = ctx with { Key = $"Clients/TestClient/eventstore/{ctx.Key}" };
+            return await SubCollectionAll()(store, modCtx);
+        };
+
+    public static IEnumerable<object[]> GetProviders()
+        => new List<object[]>
+        {
+            new object[] { All() },
+            new object[] { SubCollectionByPartition() },
+            new object[] { Test() }
+        };
+
+    [Theory]
     [Trait("Category", "Integration")]
-    public async Task ApplySnapshotAsync()
+    [MemberData(nameof(GetProviders))]
+    public async Task ApplySnapshotAsync(PathProvider p)
     {
+        var snapshotStore = new SnapshotStore(store, options) { DocumentPathProvider = p };
+
         var key = $"test-{Guid.NewGuid()}";
         await snapshotStore.Apply<TestState>
             (key, current => current with { Version = 99, Created = DateTime.UtcNow });
@@ -53,10 +70,9 @@ public class SnapshotStoreTests
     [Trait("Category", "Integration")]
     public async Task ApplyWithSubCollectionKey()
     {
-        snapshotStore.DocumentPathProvider = 
-            DocumentPathProviders.SubCollection();
+        var snapshotStore = new SnapshotStore(store, options) { DocumentPathProvider = SubCollectionByPartition() };
 
-        var fullPath = new Uri($"/clients/EvilCorp/messages/{Guid.NewGuid()}", UriKind.Relative);
+        var fullPath = new Uri($"/Clients/EvilCorp/messages/{Guid.NewGuid()}", UriKind.Relative);
         var key = fullPath.ToString();
         await snapshotStore.Apply<TestState>
             (key, current => current with { Version = 99, Created = DateTime.UtcNow });
@@ -70,10 +86,9 @@ public class SnapshotStoreTests
     [Trait("Category", "Integration")]
     public async Task ApplyWithSubCollectionSnapshotConvensionKey()
     {
-        snapshotStore.DocumentPathProvider =
-            DocumentPathProviders.SubCollection();
+        var snapshotStore = new SnapshotStore(store, options) { DocumentPathProvider = SubCollectionByPartition() };
 
-        var fullPath = new Uri($"/clients/EvilCorp/messages/{Guid.NewGuid()}|snapshot", UriKind.Relative);
+        var fullPath = new Uri($"/Clients/EvilCorp/messages/{Guid.NewGuid()}|snapshot", UriKind.Relative);
         var key = fullPath.ToString();
 
         await snapshotStore.Apply<TestState>
@@ -84,12 +99,12 @@ public class SnapshotStoreTests
         Assert.Equal(99, snap.Version);
     }
 
-    [Fact]
+    [Theory]
     [Trait("Category", "Integration")]
-    public async Task ApplyWithSubCollectionSnapshotConvensionKeyNonePath()
+    [MemberData(nameof(GetProviders))]
+    public async Task ApplyWithSubCollectionSnapshotConvensionKeyNonePath(PathProvider p)
     {
-        snapshotStore.DocumentPathProvider =
-            DocumentPathProviders.SubCollection();
+        var snapshotStore = new SnapshotStore(store, options) { DocumentPathProvider = p };
 
         var key = $"testname-{Guid.NewGuid()}";
 

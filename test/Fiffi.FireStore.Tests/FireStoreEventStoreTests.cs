@@ -1,23 +1,22 @@
-using Fiffi.Serialization;
 using Fiffi.Testing;
 using Google.Cloud.Firestore;
-using Grpc.Net.Client.Balancer;
+using Grpc.Core;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Xunit;
-using static Fiffi.Testing.TestContext;
-
+using static Fiffi.FireStore.DocumentPathProviders;
+using PathProvider = System.Func<Google.Cloud.Firestore.FirestoreDb, Fiffi.FireStore.DocumentPathProviders.StreamContext, System.Threading.Tasks.Task<Fiffi.FireStore.DocumentPathProviders.StreamPaths>>;
 namespace Fiffi.FireStore.Tests;
 
-public class EventStoreTests
+public class FireStoreEventStoreTests
 {
     private FirestoreDb store;
     private readonly JsonSerializerOptions options;
 
-    public EventStoreTests()
+    public FireStoreEventStoreTests()
     {
         Environment.SetEnvironmentVariable("FIRESTORE_EMULATOR_HOST", "localhost:8080");
 
@@ -36,11 +35,29 @@ public class EventStoreTests
         store = b.Build();
     }
 
-    [Fact]
+
+    public static PathProvider Test() =>
+     async (store, ctx) =>
+     {
+         var modCtx = ctx with { Key = $"Clients/TestClient/eventstore/{ctx.Key}" };
+         return await SubCollectionAll()(store, modCtx);
+     };
+
+    public static IEnumerable<object[]> GetProviders()
+        => new List<object[]>
+        {
+            new object[] { All() },
+            new object[] { SubCollectionByPartition() },
+            new object[] { Test() }
+
+        };
+
+    [Theory]
     [Trait("Category", "Integration")]
-    public async Task LoadEventFromBlankAsync()
+    [MemberData(nameof(GetProviders))]
+    public async Task LoadEventFromBlankAsync(PathProvider p)
     {
-        var eventStore = new FireStoreEventStore(store);
+        var eventStore = new FireStoreEventStore(store) { DocumentPathProvider = p };
         var streamName = $"test-stream-{Guid.NewGuid()}";
         var r = await eventStore.LoadEventStreamAsync(streamName, 0);
 
@@ -59,11 +76,12 @@ public class EventStoreTests
         await store.Collection("testing/per/events").AddAsync(e.Data);
     }
 
-    [Fact]
+    [Theory]
     [Trait("Category", "Integration")]
-    public async Task AppendAsync()
+    [MemberData(nameof(GetProviders))]
+    public async Task AppendAsync(PathProvider p)
     {
-        var eventStore = new FireStoreEventStore(store);
+        var eventStore = new FireStoreEventStore(store) { DocumentPathProvider = p };
 
         var streamName = $"test-stream-{Guid.NewGuid()}";
 
@@ -71,15 +89,16 @@ public class EventStoreTests
             new EventData(streamName, Guid.NewGuid().ToString(), "testEvent", new Dictionary<string, object> { { "eventprop", "test" } }, DateTime.UtcNow));
     }
 
-    [Fact]
+    [Theory]
     [Trait("Category", "Integration")]
-    public async Task AppendWrappedAsync()
+    [MemberData(nameof(GetProviders))]
+    public async Task AppendWrappedAsync(PathProvider p)
     {
         var jsonSerializerOptions =
                             new JsonSerializerOptions().AddConverters()
                            .Tap(x => x.PropertyNameCaseInsensitive = true);
-        
-        var eventStore = new EventStore(new FireStoreEventStore(store), jsonSerializerOptions, s => typeof(string));
+
+        var eventStore = new EventStore(new FireStoreEventStore(store) { DocumentPathProvider = p }, jsonSerializerOptions, s => typeof(string));
 
         var streamName = $"test-stream-{Guid.NewGuid()}";
         var env = EventEnvelope
@@ -89,17 +108,18 @@ public class EventStoreTests
         await eventStore.AppendToStreamAsync(streamName, 0, env);
     }
 
-    [Fact]
+    [Theory]
     [Trait("Category", "Integration")]
-    public async Task AppendAndLoadWrappedAsync()
+    [MemberData(nameof(GetProviders))]
+    public async Task AppendAndLoadWrappedAsync(PathProvider p)
     {
         var jsonSerializerOptions =
                             new JsonSerializerOptions().AddConverters()
                            .Tap(x => x.PropertyNameCaseInsensitive = true);
 
         var eventStore = new EventStore(
-            new FireStoreEventStore(store), 
-            jsonSerializerOptions, 
+            new FireStoreEventStore(store) { DocumentPathProvider = p },
+            jsonSerializerOptions,
             TypeResolver.FromMap(TypeResolver.GetEventsFromTypes(typeof(TestEventRecord))));
 
         var streamName = $"test-stream-{Guid.NewGuid()}";
@@ -115,11 +135,13 @@ public class EventStoreTests
         Assert.IsType<TestEventRecord>(r.Events.First().Event);
     }
 
-    [Fact]
+    [Theory]
     [Trait("Category", "Integration")]
-    public async Task AppendAndLoadAsync()
+    [MemberData(nameof(GetProviders))]
+    public async Task AppendAndLoadAsync(PathProvider p)
     {
-        var eventStore = new FireStoreEventStore(store);
+        var eventStore = new FireStoreEventStore(store) { DocumentPathProvider = p };
+
         var streamName = $"test-stream-{Guid.NewGuid()}";
 
         await eventStore.AppendToStreamAsync(streamName, 0,
@@ -130,11 +152,12 @@ public class EventStoreTests
         Assert.Equal(1, r.Version);
     }
 
-    [Fact]
+    [Theory]
     [Trait("Category", "Integration")]
-    public async Task AppendAndLoadEventAsync()
+    [MemberData(nameof(GetProviders))]
+    public async Task AppendAndLoadEventAsync(PathProvider p)
     {
-        var eventStore = new FireStoreEventStore(store);
+        var eventStore = new FireStoreEventStore(store) { DocumentPathProvider = p };
         var streamName = $"test-stream-{Guid.NewGuid()}";
 
         var env = EventEnvelope.Create("sourceId", new TestEventRecord("testing"));
@@ -149,11 +172,12 @@ public class EventStoreTests
         Assert.Equal(1, r.Version);
     }
 
-    [Fact]
+    [Theory]
     [Trait("Category", "Integration")]
-    public async Task AppendAndLoadEventsInOrderAsync()
+    [MemberData(nameof(GetProviders))]
+    public async Task AppendAndLoadEventsInOrderAsync(PathProvider p)
     {
-        var eventStore = new FireStoreEventStore(store);
+        var eventStore = new FireStoreEventStore(store) { DocumentPathProvider = p };
         var streamName = $"test-stream-{Guid.NewGuid()}";
 
         var env = EventEnvelope.Create("sourceId", new TestEventRecord("testing"));
@@ -173,11 +197,13 @@ public class EventStoreTests
         Assert.Equal(2, r.Events.Last().Version);
     }
 
-    [Fact]
+    [Theory]
     [Trait("Category", "Integration")]
-    public async Task AppendAndLoadEventsAsAsync()
+    [MemberData(nameof(GetProviders))]
+    public async Task AppendAndLoadEventsAsAsync(PathProvider p)
     {
-        var eventStore = new FireStoreEventStore(store);
+        var eventStore = new FireStoreEventStore(store) { DocumentPathProvider = p };
+
         var streamName = $"test-stream-{Guid.NewGuid()}";
 
         var env = EventEnvelope.Create("sourceId", new TestEventRecord("testing"));
@@ -197,12 +223,13 @@ public class EventStoreTests
         Assert.Equal(2, r.Last().Version);
     }
 
-    [Fact]
+    [Theory]
     [Trait("Category", "Integration")]
-    public async Task AppendAndLoadEnvelopesAsync()
+    [MemberData(nameof(GetProviders))]
+    public async Task AppendAndLoadEnvelopesAsync(PathProvider p)
     {
         var resolver = TypeResolver.FromMap(TypeResolver.GetEventsFromTypes(typeof(TestEventRecord)));
-        var eventStore = new EventStore(new FireStoreEventStore(store), options, resolver);
+        var eventStore = new EventStore(new FireStoreEventStore(store) { DocumentPathProvider = p }, options, resolver);
         var streamName = $"test-stream-{Guid.NewGuid()}";
 
         var events = new[] { new TestEventRecord("testing") }
@@ -220,40 +247,13 @@ public class EventStoreTests
         Assert.Equal("testing", ((TestEventRecord)r.Events.First().Event).Message);
     }
 
-    [Fact]
+    [Theory]
     [Trait("Category", "Integration")]
-    public async Task AppendAndLoadSubCollectionEnvelopesAsync()
-    {
-        var resolver = TypeResolver.FromMap(TypeResolver.GetEventsFromTypes(typeof(TestEventRecord)));
-        var fireStoreEventStore = new FireStoreEventStore(store)
-        {
-            DocumentPathProvider = DocumentPathProviders.SubCollection()
-        };
-        var eventStore = new EventStore(fireStoreEventStore, options, resolver);
-
-        var streamName = $"/clients/testclient/eventstore/test-{Guid.NewGuid()}";
-
-        var events = new[] { new TestEventRecord("testing") }
-        .Cast<EventRecord>()
-        .ToArray()
-        .ToEnvelopes("test")
-        .ForEach(e => e.AddTestMetaData(streamName))
-        .ToArray();
-
-        await eventStore.AppendToStreamAsync(streamName, 0, events);
-
-        var r = await eventStore.LoadEventStreamAsync(streamName, 0);
-
-        Assert.Equal(1, r.Version);
-        Assert.Equal("testing", ((TestEventRecord)r.Events.First().Event).Message);
-    }
-
-    [Fact]
-    [Trait("Category", "Integration")]
-    public async Task AppendAndLoadEnvelopesComplexAsync()
+    [MemberData(nameof(GetProviders))]
+    public async Task AppendAndLoadEnvelopesComplexAsync(PathProvider p)
     {
         var resolver = TypeResolver.FromMap(TypeResolver.GetEventsFromTypes(typeof(ComplexEvent)));
-        var eventStore = new EventStore(new FireStoreEventStore(store), options, resolver);
+        var eventStore = new EventStore(new FireStoreEventStore(store) { DocumentPathProvider = p }, options, resolver);
         var streamName = $"test-stream-{Guid.NewGuid()}";
 
         var events = new[] {
@@ -277,27 +277,27 @@ public class EventStoreTests
 
     [Fact]
     [Trait("Category", "Integration")]
-    public async Task CategoryFilter()
+    public async Task CategoryFilterAllProvider()
     {
-        var eventStore = new FireStoreEventStore(store) as IAdvancedEventStore<EventData>;
+        var eventStore = new FireStoreEventStore(store) { DocumentPathProvider = All() };
 
         var streamName = "foo-";
-        var allStream = "allCategoryTest";
+        var writeStream = $"some-stream-{Guid.NewGuid()}";
 
-        await eventStore.AppendToStreamAsync(allStream, 0,
+        await eventStore.AppendToStreamAsync(writeStream, 0,
             new EventData($"{streamName}88", Guid.NewGuid().ToString(), "testEvent",
                 new Dictionary<string, object> { { "eventprop", "test" } }, DateTime.UtcNow));
 
-        await eventStore.AppendToStreamAsync(allStream, 1,
+        await eventStore.AppendToStreamAsync(writeStream, 1,
          new EventData($"{streamName}99", Guid.NewGuid().ToString(), "testEvent",
              new Dictionary<string, object> { { "eventprop", "test" } }, DateTime.UtcNow));
 
-        await eventStore.AppendToStreamAsync(allStream, 2,
+        await eventStore.AppendToStreamAsync(writeStream, 2,
          new EventData($"baz-01", Guid.NewGuid().ToString(), "testEvent",
              new Dictionary<string, object> { { "eventprop", "test" } }, DateTime.UtcNow));
 
         var r = eventStore.LoadEventStreamAsAsync(
-            allStream, new CategoryStreamFilter("foo"));
+            "$all", new CategoryStreamFilter("foo"));
 
         Assert.Equal(2, await r.CountAsync());
         Assert.All(await r.ToArrayAsync(), x => Assert.StartsWith("foo", x.EventStreamId));
@@ -305,41 +305,133 @@ public class EventStoreTests
 
     [Fact]
     [Trait("Category", "Integration")]
-    public async Task DateFilter()
+    public async Task CategoryFilterSubProvider()
     {
-        var eventStore = new FireStoreEventStore(store) as IAdvancedEventStore<EventData>;
+        var resolver = TypeResolver.FromMap(TypeResolver.GetEventsFromTypes(typeof(TestEventRecord)));
+        var eventStore = new AdvancedEventStore(new FireStoreEventStore(store) { DocumentPathProvider = SubCollectionByPartition() }, options, resolver);
 
-        var allStream = "allDateTest";
+        var streamName = $"category-stream-{Guid.NewGuid()}";
 
-        await eventStore.AppendToStreamAsync(allStream, 0,
-            new EventData(allStream, Guid.NewGuid().ToString(), "testEvent",
+        var categoryEvents = Enumerable.Range(0, 2)
+        .Select(x => new TestEventRecord("testing"))
+        .Cast<EventRecord>()
+        .ToArray()
+        .ToEnvelopes("test")
+        .ForEach(e => e.AddTestMetaData(streamName))
+        .ToArray();
+
+        var streamName2 = $"baz-stream-{Guid.NewGuid()}";
+
+        var categoryEvents2 = Enumerable.Range(0, 1)
+        .Select(x => new TestEventRecord("testing"))
+        .Cast<EventRecord>()
+        .ToArray()
+        .ToEnvelopes("test")
+        .ForEach(e => e.AddTestMetaData(streamName2))
+        .ToArray();
+
+        var eventsToAppend = categoryEvents.Concat(categoryEvents2).ToArray();
+        await eventStore.AppendToStreamAsync("all2", 0, eventsToAppend);
+
+        var r = eventStore.LoadEventStreamAsAsync("all2", new CategoryMetaDataStreamFilter("category"));
+
+        Assert.Equal(2, await r.CountAsync());
+        Assert.All(await r.ToArrayAsync(), x => Assert.StartsWith("category", x.GetStreamName()));
+    }
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    public async Task AppendEventWithMetaDataHasOwnStreamId()
+    {
+        var resolver = TypeResolver.FromMap(TypeResolver.GetEventsFromTypes(typeof(TestEventRecord)));
+        var innerStore = new FireStoreEventStore(store) { DocumentPathProvider = SubCollectionByPartition() };
+        var eventStore = new AdvancedEventStore(innerStore, options, resolver);
+
+        var streamName = $"category-stream-{Guid.NewGuid()}";
+
+        var events = Enumerable.Range(0, 2)
+        .Select(x => new TestEventRecord("testing"))
+        .Cast<EventRecord>()
+        .ToArray()
+        .ToEnvelopes("test")
+        .ForEach(e => e.AddTestMetaData(streamName))
+        .ToArray();
+
+        await eventStore.AppendToStreamAsync("all", 0, events);
+
+        var r = innerStore.LoadEventStreamAsAsync("all", 0);
+
+        Assert.Equal(2, await r.CountAsync());
+        Assert.All(await r.ToArrayAsync(), x => Assert.Equal("all", x.EventStreamId));
+    }
+
+    [Theory]
+    [Trait("Category", "Integration")]
+    [MemberData(nameof(GetProviders))]
+    public async Task DateFilter(PathProvider p)
+    {
+        var eventStore = new FireStoreEventStore(store) { DocumentPathProvider = p } as IAdvancedEventStore<EventData>;
+
+        var stream = $"Test-{Guid.NewGuid()}";
+
+        await eventStore.AppendToStreamAsync(stream, 0,
+            new EventData(stream, Guid.NewGuid().ToString(), "testEvent",
                 new Dictionary<string, object> { { "eventprop", "test" } }, DateTime.UtcNow.AddDays(-5)));
 
-        await eventStore.AppendToStreamAsync(allStream, 1,
-         new EventData(allStream, Guid.NewGuid().ToString(), "testEvent",
+        await eventStore.AppendToStreamAsync(stream, 1,
+         new EventData(stream, Guid.NewGuid().ToString(), "testEvent",
              new Dictionary<string, object> { { "eventprop", "test" } }, DateTime.UtcNow));
 
-        await eventStore.AppendToStreamAsync(allStream, 2,
-         new EventData(allStream, Guid.NewGuid().ToString(), "testEvent",
+        await eventStore.AppendToStreamAsync(stream, 2,
+         new EventData(stream, Guid.NewGuid().ToString(), "testEvent",
              new Dictionary<string, object> { { "eventprop", "test" } }, DateTime.UtcNow));
 
         var r = eventStore.LoadEventStreamAsAsync(
-            allStream, new DateStreamFilter(DateTime.UtcNow.AddDays(-3), DateTime.UtcNow));
+            stream, new DateStreamFilter(DateTime.UtcNow.AddDays(-3), DateTime.UtcNow));
 
         Assert.Equal(2, await r.CountAsync());
     }
 
-}
-public record ComplexEvent(Guid EventId = default, string Description = "",
+    [Fact]
+    [Trait("Category", "Integration")]
+    public async Task AppendAndLoadSubCollectionEnvelopesAsync()
+    {
+        var resolver = TypeResolver.FromMap(TypeResolver.GetEventsFromTypes(typeof(TestEventRecord)));
+        var fireStoreEventStore = new FireStoreEventStore(store)
+        {
+            DocumentPathProvider = DocumentPathProviders.SubCollectionByPartition()
+        };
+        var eventStore = new EventStore(fireStoreEventStore, options, resolver);
+
+        var streamName = $"/clients/testclient/eventstore/test-{Guid.NewGuid()}";
+
+        var events = new[] { new TestEventRecord("testing") }
+        .Cast<EventRecord>()
+        .ToArray()
+        .ToEnvelopes("test")
+        .ForEach(e => e.AddTestMetaData(streamName))
+        .ToArray();
+
+        await eventStore.AppendToStreamAsync(streamName, 0, events);
+
+        var r = await eventStore.LoadEventStreamAsync(streamName, 0);
+
+        Assert.Equal(1, r.Version);
+        Assert.Equal("testing", ((TestEventRecord)r.Events.First().Event).Message);
+    }
+
+    public record ComplexEvent(Guid EventId = default, string Description = "",
     Location Location = Location.None, bool KeyApproved = false,
     DateTime Requested = default,
     Uri[] Images = default) : ComplexBase(EventId);
 
-public record ComplexBase(Guid Id) : EventRecord;
+    public record ComplexBase(Guid Id) : EventRecord;
 
-public enum Location
-{
-    None,
-    Kitchen
+    public enum Location
+    {
+        None,
+        Kitchen
+    }
+
 }
 
