@@ -3,6 +3,7 @@ using Google.Cloud.Firestore;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Text.Json;
+using PathProvider = System.Func<Google.Cloud.Firestore.FirestoreDb, Fiffi.FireStore.DocumentPathProviders.StreamContext, System.Threading.Tasks.Task<Fiffi.FireStore.DocumentPathProviders.StreamPaths>>;
 
 namespace Fiffi.FireStore;
 public static class Extensions
@@ -15,8 +16,17 @@ public static class Extensions
         => services.AddEventStore(projectId, c => { }, storeCollection, emulatorOnly, port);
 
     public static IServiceCollection AddEventStore(this IServiceCollection services,
+    string projectId,
+    Action<ConverterRegistry> converters,
+    string storeCollection = "eventstore",
+    bool emulatorOnly = false,
+    int port = 8080) => AddEventStore(services, projectId, converters,
+        DocumentPathProviders.SubCollectionAll(), storeCollection, emulatorOnly, port);
+
+    public static IServiceCollection AddEventStore(this IServiceCollection services,
        string projectId,
-       Action<ConverterRegistry> converters, 
+       Action<ConverterRegistry> converters,
+       PathProvider pathProvider,
        string storeCollection = "eventstore",
        bool emulatorOnly = false,
        int port = 8080) =>
@@ -40,7 +50,7 @@ public static class Extensions
                .AddSingleton(sp => 
                     new FireStoreEventStore(sp.GetRequiredService<FirestoreDb>())
                     .Tap(x => x.StoreCollection = storeCollection)
-                    .Tap(x => x.DocumentPathProvider = DocumentPathProviders.SubCollectionByPartition()))
+                    .Tap(x => x.DocumentPathProvider = pathProvider))
                .AddSingleton<IEventStore<EventData>>(sp => sp.GetRequiredService<FireStoreEventStore>())
                .AddSingleton<IAdvancedEventStore<EventData>>(sp => sp.GetRequiredService<FireStoreEventStore>())
                .AddSingleton<IEventStore, EventStore>()
@@ -49,7 +59,7 @@ public static class Extensions
                    sp.GetRequiredService<FirestoreDb>(),
                    sp.GetRequiredService<JsonSerializerOptions>())
                {
-                   DocumentPathProvider = DocumentPathProviders.SubCollectionByPartition()
+                   DocumentPathProvider = pathProvider
                });
 
     public static JsonSerializerOptions AddConverters(this JsonSerializerOptions options)

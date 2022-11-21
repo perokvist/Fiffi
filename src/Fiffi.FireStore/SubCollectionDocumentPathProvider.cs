@@ -23,7 +23,7 @@ public static Func<FirestoreDb, StreamContext, Task<StreamPaths>> SubCollectionA
          async (store, ctx) =>
          {
              var old = await SubCollectionWithCreate()(store, (ctx.StoreCollection, ctx.Key, ctx.Writeoperation));
-             return new StreamPaths(old, $"{old}/events", old.SnapshotSufix());
+             return new StreamPaths(old, $"{old}/events", old);
          };
 
 
