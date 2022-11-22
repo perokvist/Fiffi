@@ -1,16 +1,45 @@
 ﻿using Fiffi.InMemory;
 using Fiffi.Testing;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Xunit;
 
 namespace Fiffi.Tests;
-
 public class ApplicationServiceTests
 {
+    [Fact]
+    public async Task SnapshotUpdatedAsync()
+    {
+        var store = new InMemoryEventStore();
+        var snap = new InMemorySnapshotStore();
+        await store.ExecuteAsync(new TestCommand(new AggregateId("test")), "streamName",
+            new TestState(), TestState.Apply, state => new[] { new TestEventRecord("test") } ,
+            events => Task.CompletedTask, snap,
+            state => state.Version, (v, state) => state.Tap(x => x.Version = v));
+
+        var s = await snap.Get<TestState>($"streamName|snapshot");
+
+        Assert.Equal(1, s.Version);
+        Assert.Single(s.Applied);
+    }
+
+    [Fact]
+    public async Task AppendAndLoadAsync()
+    {
+        var store = new InMemoryEventStore();
+        await store.ExecuteAsync(new TestCommand(new AggregateId("test")), "streamName",
+            new TestState(), TestState.Apply, state => new[] { new TestEventRecord("test") },
+            events => Task.CompletedTask);
+
+        var stream = await store.LoadEventStreamAsync("streamName", 0);
+
+        var er = stream.Events.Select(x => x.Event).OfType<TestEventRecord>().First();
+        var e = stream.Events.First();
+
+        Assert.Equal("test", er.Message);
+        Assert.Equal("streamName", e.Meta.GetEventMetaData().StreamName);
+    }
 
     [Fact]
     public async Task ReadWriteAsync()

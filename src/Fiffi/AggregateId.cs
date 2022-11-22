@@ -1,6 +1,6 @@
 ﻿namespace Fiffi;
 
-public struct AggregateId : IAggregateId
+public readonly record struct AggregateId : IAggregateId
 {
     public AggregateId(string aggregateId)
     {
