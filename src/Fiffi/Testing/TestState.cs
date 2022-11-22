@@ -1,4 +1,6 @@
-﻿namespace Fiffi.Testing;
+﻿using System.Collections.Immutable;
+
+namespace Fiffi.Testing;
 
 public record TestState
 {
@@ -10,4 +12,7 @@ public record TestState
     public DateTime Created { get; set; }
 
     public List<EventRecord> Applied { get; internal set; } = new();
+
+    public static TestState Apply(TestState state, EventRecord @event)
+        => state with { Applied = state.Pipe(x => x.Applied.ToImmutableList().Add(@event).ToList()) };
 }

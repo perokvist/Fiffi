@@ -8,11 +8,19 @@ public static class SnapshotStoreExtensions
         where T : class, new()
         => snapshotStore.GetOrCreate<T>(typeof(T).Name);
 
-    public static async Task<T> GetOrCreate<T>(this ISnapshotStore snapshotStore, string key) where T : class, new()
+
+
+    public static Task<T> GetOrCreate<T>(this ISnapshotStore snapshotStore, string key) where T : class, new()
+        => GetOrCreate(snapshotStore, key, () => new T());
+
+    public static async Task<T> GetOrCreate<T>(
+        this ISnapshotStore snapshotStore,
+        string key,
+        Func<T> factory) where T : class
     {
         var item = await snapshotStore.Get<T>(key);
         if (item == null)
-            return new T();
+            return factory();
 
         return item;
     }
