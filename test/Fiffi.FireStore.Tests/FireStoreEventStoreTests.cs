@@ -40,14 +40,15 @@ public class FireStoreEventStoreTests
      async (store, ctx) =>
      {
          var modCtx = ctx with { Key = $"Clients/TestClient/eventstore/{ctx.Key}" };
-         return await SubCollectionAll()(store, modCtx);
+         var r = await SubCollectionAll()(store, modCtx);
+         return r;
      };
 
     public static IEnumerable<object[]> GetProviders()
         => new List<object[]>
         {
-            new object[] { All() },
-            new object[] { SubCollectionByPartition() },
+            //new object[] { All() },
+            //new object[] { SubCollectionByPartition() },
             new object[] { Test() }
 
         };
@@ -64,7 +65,6 @@ public class FireStoreEventStoreTests
         Assert.Empty(r.Events);
         Assert.Equal(0, r.Version);
     }
-
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -305,6 +305,35 @@ public class FireStoreEventStoreTests
 
     [Fact]
     [Trait("Category", "Integration")]
+    public async Task CategoryFilterWithInStreamAllProvider()
+    {
+        var eventStore = new FireStoreEventStore(store) { DocumentPathProvider = All() };
+
+        var streamName = $"foo-{Guid.NewGuid()}";
+        var writeStream = $"some-stream-{Guid.NewGuid()}";
+
+        await eventStore.AppendToStreamAsync(writeStream, 0,
+            new EventData($"{streamName}88", Guid.NewGuid().ToString(), "testEvent",
+                new Dictionary<string, object> { { "eventprop", "test" } }, DateTime.UtcNow));
+
+        await eventStore.AppendToStreamAsync(writeStream, 1,
+         new EventData($"{streamName}99", Guid.NewGuid().ToString(), "testEvent",
+             new Dictionary<string, object> { { "eventprop", "test" } }, DateTime.UtcNow));
+
+        await eventStore.AppendToStreamAsync(writeStream, 2,
+         new EventData($"baz-01", Guid.NewGuid().ToString(), "testEvent",
+             new Dictionary<string, object> { { "eventprop", "test" } }, DateTime.UtcNow));
+
+        var r = eventStore.LoadEventStreamAsAsync(
+            $"{streamName}88", new CategoryStreamFilter("foo"));
+
+        Assert.Equal(1, await r.CountAsync());
+        Assert.All(await r.ToArrayAsync(), x => Assert.StartsWith("foo", x.EventStreamId));
+    }
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
     public async Task CategoryFilterSubProvider()
     {
         var resolver = TypeResolver.FromMap(TypeResolver.GetEventsFromTypes(typeof(TestEventRecord)));
@@ -390,6 +419,34 @@ public class FireStoreEventStoreTests
             stream, new DateStreamFilter(DateTime.UtcNow.AddDays(-3), DateTime.UtcNow));
 
         Assert.Equal(2, await r.CountAsync());
+    }
+
+    [Theory]
+    [Trait("Category", "Integration")]
+    [MemberData(nameof(GetProviders))]
+    public async Task DateFilterWithInStream(PathProvider p)
+    {
+        var eventStore = new FireStoreEventStore(store) { DocumentPathProvider = p } as IAdvancedEventStore<EventData>;
+
+        var stream = $"Test-{Guid.NewGuid()}";
+        var anotherStream = $"Test-{Guid.NewGuid()}";
+
+        await eventStore.AppendToStreamAsync(stream, 0,
+            new EventData(stream, Guid.NewGuid().ToString(), "testEvent",   
+                new Dictionary<string, object> { { "eventprop", "test" } }, DateTime.UtcNow.AddDays(-20)));
+
+        await eventStore.AppendToStreamAsync(anotherStream, 0,
+            new EventData(anotherStream, Guid.NewGuid().ToString(), "testEvent2",
+                new Dictionary<string, object> { { "eventprop", "test2" } }, DateTime.UtcNow.AddDays(-20)));
+
+        var streamResult = eventStore.LoadEventStreamAsAsync(
+            stream, new DateStreamFilter(DateTime.UtcNow.AddDays(-25), DateTime.UtcNow.AddDays(-15)));
+
+        var allResult = eventStore.LoadEventStreamAsAsync(
+            "$all", new DateStreamFilter(DateTime.UtcNow.AddDays(-25), DateTime.UtcNow.AddDays(-15)));
+
+        Assert.Equal(1, await streamResult.CountAsync());
+        Assert.Equal(2, await allResult.CountAsync());
     }
 
     [Fact]

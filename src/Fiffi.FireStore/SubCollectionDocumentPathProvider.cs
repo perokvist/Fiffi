@@ -19,12 +19,13 @@ public static class DocumentPathProviders
     public static string SnapshotSufix(this string key)
         => key.Pipe(x => x.EndsWith("|snapshot") ? x : $"{x}|snapshot");
 
-public static Func<FirestoreDb, StreamContext, Task<StreamPaths>> SubCollectionAll() =>
-         async (store, ctx) =>
-         {
-             var old = await SubCollectionWithCreate()(store, (ctx.StoreCollection, ctx.Key, ctx.Writeoperation));
-             return new StreamPaths(old, $"{old}/events", old);
-         };
+    public static Func<FirestoreDb, StreamContext, Task<StreamPaths>> SubCollectionAll() =>
+             async (store, ctx) =>
+             {
+                 var streamPath = await SubCollectionWithCreate()(store, (ctx.StoreCollection, ctx.Key, ctx.Writeoperation));
+                 var withoutStreamDocument = streamPath.Remove(streamPath.LastIndexOf("/"));
+                 return new StreamPaths($"{streamPath}|head", withoutStreamDocument, $"{streamPath.SnapshotSufix()}");
+             };
 
 
     public static Func<FirestoreDb, StreamContext, Task<StreamPaths>>
