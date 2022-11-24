@@ -47,8 +47,8 @@ public class FireStoreEventStoreTests
     public static IEnumerable<object[]> GetProviders()
         => new List<object[]>
         {
-            //new object[] { All() },
-            //new object[] { SubCollectionByPartition() },
+            new object[] { All() },
+            new object[] { SubCollectionByPartition() },
             new object[] { Test() }
 
         };
@@ -281,7 +281,8 @@ public class FireStoreEventStoreTests
     {
         var eventStore = new FireStoreEventStore(store) { DocumentPathProvider = All() };
 
-        var streamName = "foo-";
+        var category = $"foo{Guid.NewGuid()}";
+        var streamName = $"{category}-";
         var writeStream = $"some-stream-{Guid.NewGuid()}";
 
         await eventStore.AppendToStreamAsync(writeStream, 0,
@@ -297,10 +298,10 @@ public class FireStoreEventStoreTests
              new Dictionary<string, object> { { "eventprop", "test" } }, DateTime.UtcNow));
 
         var r = eventStore.LoadEventStreamAsAsync(
-            "$all", new CategoryStreamFilter("foo"));
+            "$all", new CategoryStreamFilter(category));
 
         Assert.Equal(2, await r.CountAsync());
-        Assert.All(await r.ToArrayAsync(), x => Assert.StartsWith("foo", x.EventStreamId));
+        Assert.All(await r.ToArrayAsync(), x => Assert.StartsWith(category, x.EventStreamId));
     }
 
     [Fact]
@@ -442,12 +443,32 @@ public class FireStoreEventStoreTests
         var streamResult = eventStore.LoadEventStreamAsAsync(
             stream, new DateStreamFilter(DateTime.UtcNow.AddDays(-25), DateTime.UtcNow.AddDays(-15)));
 
-        var allResult = eventStore.LoadEventStreamAsAsync(
-            "$all", new DateStreamFilter(DateTime.UtcNow.AddDays(-25), DateTime.UtcNow.AddDays(-15)));
-
         Assert.Equal(1, await streamResult.CountAsync());
+    }
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    public async Task DateFilterWithInStreamAll()
+    {
+        var eventStore = new FireStoreEventStore(store) { DocumentPathProvider = Test() } as IAdvancedEventStore<EventData>;
+
+        var stream = $"Test-{Guid.NewGuid()}";
+        var anotherStream = $"Test-{Guid.NewGuid()}";
+
+        await eventStore.AppendToStreamAsync(stream, 0,
+            new EventData(stream, Guid.NewGuid().ToString(), "testEvent",
+                new Dictionary<string, object> { { "eventprop", "test" } }, DateTime.UtcNow.AddDays(-40)));
+
+        await eventStore.AppendToStreamAsync(anotherStream, 0,
+            new EventData(anotherStream, Guid.NewGuid().ToString(), "testEvent2",
+                new Dictionary<string, object> { { "eventprop", "test2" } }, DateTime.UtcNow.AddDays(-40)));
+
+        var allResult = eventStore.LoadEventStreamAsAsync(
+            "$all", new DateStreamFilter(DateTime.UtcNow.AddDays(-45), DateTime.UtcNow.AddDays(-30)));
+
         Assert.Equal(2, await allResult.CountAsync());
     }
+
 
     [Fact]
     [Trait("Category", "Integration")]

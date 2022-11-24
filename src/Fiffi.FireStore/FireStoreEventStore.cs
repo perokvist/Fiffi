@@ -116,9 +116,9 @@ public class FireStoreEventStore : IAdvancedEventStore<EventData>
 
         var eventStoreDoc = await store
          .Collection(ctx.StreamPath)
-         .Pipe(x => streamName switch
+         .Pipe(x => streamName.EndsWith("$all") switch
              {
-                 "$all" => x,
+                 true => x,
                  _ => x.WhereEqualTo(nameof(EventData.EventStreamId), streamName)
              })
          .ApplyFilters(filters)
