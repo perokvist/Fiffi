@@ -61,18 +61,22 @@ public class FireStoreEventStore : IAdvancedEventStore<EventData>
     {
         var ctx = await DocumentPathProvider(store, new(StoreCollection, streamName, true));
 
-        var headRef = store.Document(ctx.HeaderPath);
-        var head = await headRef.GetSnapshotAsync();
-        if (!head.Exists)
-            return (Enumerable.Empty<EventData>(), 0);
+        var headVersion = (long)0;
 
-        var headVersion = head.GetValue<long>("version");
+        if (!ctx.IsAllStream)
+        {
+            var headRef = store.Document(ctx.HeaderPath);
+            var head = await headRef.GetSnapshotAsync();
+            if (!head.Exists)
+                return (Enumerable.Empty<EventData>(), 0);
 
-        if (headVersion == default)
-            return (Enumerable.Empty<EventData>(), 0);
-        if (headVersion < version)
-            return (Enumerable.Empty<EventData>(), headVersion);
+            headVersion = head.GetValue<long>("version");
 
+            if (headVersion == default)
+                return (Enumerable.Empty<EventData>(), 0);
+            if (headVersion < version)
+                return (Enumerable.Empty<EventData>(), headVersion);
+        }
         var e = LoadEventStreamAsAsync(streamName, version);
         return (e.ToEnumerable(), headVersion);
     }
@@ -83,6 +87,13 @@ public class FireStoreEventStore : IAdvancedEventStore<EventData>
     public async IAsyncEnumerable<EventData> LoadEventStreamAsAsync(string streamName, long version)
     {
         var ctx = await DocumentPathProvider(store, new(StoreCollection, streamName, true));
+        if (ctx.IsAllStream)
+        {
+            await foreach (var item in LoadEventStreamAsAsync(streamName))
+                yield return item;
+            yield break;
+        }
+
         var headRef = store.Document(ctx.HeaderPath);
         var head = await headRef.GetSnapshotAsync();
         if (!head.Exists)
@@ -97,11 +108,7 @@ public class FireStoreEventStore : IAdvancedEventStore<EventData>
 
         var events = store
             .Collection(ctx.StreamPath)
-                   .Pipe(x => streamName.EndsWith("$all") switch
-                   {
-                       true => x,
-                       _ => x.WhereEqualTo(nameof(EventData.EventStreamId), streamName)
-                   })
+            .WhereEqualTo(nameof(EventData.EventStreamId), streamName)
             .WhereGreaterThanOrEqualTo(nameof(EventData.Version), version)
             .OrderBy(nameof(EventData.Version))
             .StreamAsync()
@@ -120,13 +127,17 @@ public class FireStoreEventStore : IAdvancedEventStore<EventData>
 
         var eventStoreDoc = await store
          .Collection(ctx.StreamPath)
-         .Pipe(x => streamName.EndsWith("$all") switch
+         .Pipe(x => ctx.IsAllStream switch
              {
                  true => x,
                  _ => x.WhereEqualTo(nameof(EventData.EventStreamId), streamName)
              })
+         .Pipe(x => filters.OfType<DateStreamFilter>().Any() switch
+             {
+                 true => x,
+                 _ => x.OrderBy(nameof(EventData.Version)),
+             })
          .ApplyFilters(filters)
-         .OrderBy(nameof(EventData.Created))
          .GetSnapshotAsync();
         var filtered = eventStoreDoc
             .Documents

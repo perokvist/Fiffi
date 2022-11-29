@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 namespace Fiffi.FireStore;
 public static class DocumentPathProviders
 {
-    public record StreamPaths(string HeaderPath, string StreamPath, string SnapPath);
+    public record StreamPaths(string HeaderPath, string StreamPath, string SnapPath, bool IsAllStream = false);
     public record StreamContext(string StoreCollection, string Key, bool Writeoperation);
 
     public static Func<FirestoreDb, StreamContext, Task<StreamPaths>> All() =>
@@ -14,7 +14,8 @@ public static class DocumentPathProviders
             Task.FromResult(new StreamPaths(
                 $"{context.StoreCollection}/{context.Key}|head",
                 $"{context.StoreCollection}",
-                $"{context.StoreCollection}/{context.Key.SnapshotSufix()}"));
+                $"{context.StoreCollection}/{context.Key.SnapshotSufix()}",
+                context.Key.Contains("$all")));
 
     public static string SnapshotSufix(this string key)
         => key.Pipe(x => x.EndsWith("|snapshot") ? x : $"{x}|snapshot");
@@ -23,8 +24,9 @@ public static class DocumentPathProviders
              async (store, ctx) =>
              {
                  var streamPath = await SubCollectionWithCreate()(store, (ctx.StoreCollection, ctx.Key, ctx.Writeoperation));
+                 var isAllStream = streamPath.Contains("$all");
                  var withoutStreamDocument = streamPath.Remove(streamPath.LastIndexOf("/"));
-                 return new StreamPaths($"{streamPath}|head", withoutStreamDocument, $"{streamPath.SnapshotSufix()}");
+                 return new StreamPaths($"{streamPath}|head", withoutStreamDocument, $"{streamPath.SnapshotSufix()}", isAllStream);
              };
 
 

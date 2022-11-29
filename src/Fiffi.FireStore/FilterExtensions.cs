@@ -26,7 +26,8 @@ public static class FilterExtensions
     public static Query Date(this Query q, DateStreamFilter filter)
      => q
         .WhereGreaterThanOrEqualTo(nameof(EventData.Created), filter.StartDate)
-        .WhereLessThanOrEqualTo(nameof(EventData.Created), filter.EndDate);
+        .WhereLessThanOrEqualTo(nameof(EventData.Created), filter.EndDate)
+        .OrderBy(nameof(EventData.Created));
 
     public static IEnumerable<DocumentSnapshot> Category(this IEnumerable<DocumentSnapshot> documents, CategoryStreamFilter filter)
         => documents

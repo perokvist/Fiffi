@@ -78,7 +78,7 @@ public static class SnapshotStoreExtensions
     }
 
     public static Task ApplyLazy<T>(this ISnapshotStore snapshotStore,
-     IEventStore store, IEnumerable<EventRecord> events,
+     IAdvancedEventStore store, IEnumerable<EventRecord> events,
      string cacheKey, string streamName,
      T initialValue,
      Func<T, EventRecord, T> apply)
@@ -87,7 +87,7 @@ public static class SnapshotStoreExtensions
          () => store.GetAsync(streamName, initialValue, apply));
 
     public static async Task<T> GetLazy<T>(this ISnapshotStore snapshotStore,
-        IEventStore store, string cacheKey, string streamName,
+        IAdvancedEventStore store, string cacheKey, string streamName,
         T initialValue, Func<T, EventRecord, T> apply)
         where T : class
     {

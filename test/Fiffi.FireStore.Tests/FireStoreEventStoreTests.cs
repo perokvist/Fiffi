@@ -172,6 +172,25 @@ public class FireStoreEventStoreTests
         Assert.Equal(1, r.Version);
     }
 
+    [Fact]
+    [Trait("Category", "Integration")]
+    public async Task AppendAndLoadAllEventAsync()
+    {
+        var eventStore = new FireStoreEventStore(store) { DocumentPathProvider = SubCollectionAll() };
+        var streamName = $"test-stream-{Guid.NewGuid()}";
+
+        var env = EventEnvelope.Create("sourceId", new TestEventRecord("testing"));
+        var covert = Serialization.Extensions.AsMap();
+        var map = covert(env, options);
+
+        await eventStore.AppendToStreamAsync(streamName, 0,
+            new EventData(streamName, Guid.NewGuid().ToString(), "testEvent", map, DateTime.UtcNow));
+
+        var r = await eventStore.LoadEventStreamAsync("$all", 0);
+
+        Assert.Single(r.Events);
+    }
+
     [Theory]
     [Trait("Category", "Integration")]
     [MemberData(nameof(GetProviders))]
