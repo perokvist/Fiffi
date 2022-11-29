@@ -446,7 +446,7 @@ public class FireStoreEventStoreTests
         Assert.Equal(1, await streamResult.CountAsync());
     }
 
-    [Fact]
+    [Fact(Skip = "clashes with other test data :O. Run on its own")]
     [Trait("Category", "Integration")]
     public async Task DateFilterWithInStreamAll()
     {

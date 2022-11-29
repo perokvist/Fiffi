@@ -97,7 +97,11 @@ public class FireStoreEventStore : IAdvancedEventStore<EventData>
 
         var events = store
             .Collection(ctx.StreamPath)
-            .WhereEqualTo(nameof(EventData.EventStreamId), streamName)
+                   .Pipe(x => streamName.EndsWith("$all") switch
+                   {
+                       true => x,
+                       _ => x.WhereEqualTo(nameof(EventData.EventStreamId), streamName)
+                   })
             .WhereGreaterThanOrEqualTo(nameof(EventData.Version), version)
             .OrderBy(nameof(EventData.Version))
             .StreamAsync()
