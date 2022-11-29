@@ -172,7 +172,7 @@ public class FireStoreEventStoreTests
         Assert.Equal(1, r.Version);
     }
 
-    [Fact]
+    [Fact(Skip = "Needs clean data")]
     [Trait("Category", "Integration")]
     public async Task AppendAndLoadAllEventAsync()
     {

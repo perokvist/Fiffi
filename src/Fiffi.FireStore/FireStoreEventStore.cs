@@ -141,6 +141,8 @@ public class FireStoreEventStore : IAdvancedEventStore<EventData>
          .GetSnapshotAsync();
         var filtered = eventStoreDoc
             .Documents
+            .Where(x => !x.Id.Contains("|head"))
+            .Where(x => !x.Id.Contains("|snapshot"))
             .ApplyFilters(filters)
             .Select(x => x.ConvertTo<EventData>())
             .ToAsyncEnumerable();
