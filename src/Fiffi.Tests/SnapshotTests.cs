@@ -20,7 +20,7 @@ public class SnapshotTests
         var e = new[] { new TestEventRecord("test"), new TestEventRecord("test2") };
         var key = "testCache";
 
-        await snap.ApplyLazy(store, e, key, "testStream", new TestProjection(0), 
+        await snap.ApplyOrInitialize(store, e, key, "testStream", new TestProjection(0), 
             (state, e) => state with { Count = state.Count+1 }
         );
 
