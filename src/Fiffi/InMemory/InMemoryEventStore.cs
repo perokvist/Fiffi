@@ -52,6 +52,7 @@ public class InMemoryEventStore : IAdvancedEventStore
         foreach (var item in store
             .Values
             .SelectMany(x => x)
+            .Distinct()
             .OrderBy(x => x.OccuredAtTicks()))
             yield return item;
     }

@@ -4,6 +4,7 @@ using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
+using static System.Formats.Asn1.AsnWriter;
 
 namespace Fiffi.Tests;
 
@@ -93,4 +94,45 @@ public class InMemoryEventStoreTests
 
         Assert.Equal(2, r);
     }
+
+    [Fact]
+    public async Task AllStreamConventionAsync()
+    {
+        var store = new InMemoryEventStore();
+
+        await store.AppendToStreamAsync("test", 0, new IEvent[] { new TestEvent("t").AddTestMetaData<string>(new AggregateId("t")) });
+        await store.AppendToStreamAsync("test2", 0, new IEvent[] { new TestEvent("t2").AddTestMetaData<string>(new AggregateId("t2")) });
+
+        var all = store.LoadEventStreamAsAsync("$all");
+
+        Assert.Equal(2, await all.CountAsync());
+    }
+
+    [Fact]
+    public async Task AllStreamConventionOneStreamAsync()
+    {
+        var store = new InMemoryEventStore();
+
+        await store.AppendToStreamAsync("test", 0, new IEvent[] { new TestEvent("t").AddTestMetaData<string>(new AggregateId("t")) });
+        await store.AppendToStreamAsync("test", 1, new IEvent[] { new TestEvent("t2").AddTestMetaData<string>(new AggregateId("t2")) });
+
+        var all = store.LoadEventStreamAsAsync("$all");
+
+        Assert.Equal(2, await all.CountAsync());
+    }
+
+
+    [Fact]
+    public async Task AllStreamConventionDistinctAsync()
+    {
+        var store = new InMemoryEventStore();
+        var e = new TestEvent("t").AddTestMetaData<string>(new AggregateId("t"));
+        await store.AppendToStreamAsync("test", 0, new IEvent[] { e });
+        await store.AppendToStreamAsync("test2", 0, new IEvent[] { e });
+
+        var all = store.LoadEventStreamAsAsync("$all");
+
+        Assert.Equal(1, await all.CountAsync());
+    }
+
 }
