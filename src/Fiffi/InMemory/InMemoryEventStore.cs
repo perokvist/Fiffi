@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Data;
+using static Fiffi.Testing.TestContext;
 
 namespace Fiffi.InMemory;
 
@@ -46,11 +47,19 @@ public class InMemoryEventStore : IAdvancedEventStore
 
         return newStream;
     }
+    public IEnumerable<IEvent> All()
+    {
+        foreach (var item in store
+            .Values
+            .SelectMany(x => x)
+            .OrderBy(x => x.OccuredAtTicks()))
+            yield return item;
+    }
 
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
     public async Task<(IEnumerable<IEvent> Events, long Version)> LoadEventStreamAsync(string streamName, long version) =>
 #pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
-            store.ContainsKey(streamName) ? (store[streamName].Where(x => x.Meta.GetEventStoreMetaData().EventVersion >= version).ToArray(), store[streamName].Last().Meta.GetEventStoreMetaData().EventVersion) : (Array.Empty<IEvent>(), 0);
+        streamName.ToLower().EndsWith("$all") ? (All(), All().Count()) : store.ContainsKey(streamName) ? (store[streamName].Where(x => x.Meta.GetEventStoreMetaData().EventVersion >= version).ToArray(), store[streamName].Last().Meta.GetEventStoreMetaData().EventVersion) : (Array.Empty<IEvent>(), 0);
 
     public async IAsyncEnumerable<IEvent> LoadEventStreamAsAsync(string streamName, long version)
     {
