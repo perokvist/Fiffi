@@ -517,6 +517,49 @@ public class FireStoreEventStoreTests
         Assert.Equal("testing", ((TestEventRecord)r.Events.First().Event).Message);
     }
 
+    [Fact(Skip = "clashes with other test data :O. Run on its own")]
+    [Trait("Category", "Integration")]
+    public async Task AllStreamIsolationAsync()
+    {
+        var resolver = TypeResolver.FromMap(TypeResolver.GetEventsFromTypes(typeof(TestEventRecord)));
+        var fireStoreEventStore = new FireStoreEventStore(store)
+        {
+            DocumentPathProvider = DocumentPathProviders.SubCollectionAll()
+        };
+        var eventStore = new EventStore(fireStoreEventStore, options, resolver);
+
+        var streamSufix = $"test -{Guid.NewGuid()}";
+        var streamName = $"/clients/testclient/eventstore/{streamSufix}";
+
+        var events = new[] { new TestEventRecord("testing") }
+        .Cast<EventRecord>()
+        .ToArray()
+        .ToEnvelopes("test")
+        .ForEach(e => e.AddTestMetaData(streamName))
+        .ToArray();
+
+        _ = await eventStore.AppendToStreamAsync(streamName, 0, events);
+
+        var allStream = "all";
+
+        var events2 = new[] { new TestEventRecord("testing2") }
+            .Cast<EventRecord>()
+            .ToArray()
+            .ToEnvelopes("test2")
+            .ForEach(e => e.AddTestMetaData(allStream))
+            .ToArray();
+
+        _ = await eventStore.AppendToStreamAsync(allStream, 0, events);
+
+        var s1 = await eventStore.LoadEventStreamAsync(streamName.Replace(streamSufix, "$all"), 0);
+        var s2 = await eventStore.LoadEventStreamAsync(allStream, 0);
+
+        Assert.Single(s1.Events);
+        Assert.Single(s2.Events);
+
+
+    }
+
     public record ComplexEvent(Guid EventId = default, string Description = "",
     Location Location = Location.None, bool KeyApproved = false,
     DateTime Requested = default,

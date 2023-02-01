@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using static RPS.GameState;
+using static RPS.State;
 
 namespace RPS;
 
@@ -172,6 +173,49 @@ public class CreateGame : IGameCommand
     Guid ICommand.CausationId { get; set; }
 }
 
+public static class State
+{
+    public static GameState Evolve(GameState state, EventRecord @event)
+     => @event switch
+     {
+         GameCreated e => state with
+         {
+             Status = GameStatus.ReadyToStart,
+             Id = e.GameId,
+             Players = (new(e.PlayerId, default), new(string.Empty, default)),
+             Rounds = e.Rounds
+         },
+         GameStarted e => state with
+         {
+             Status = GameStatus.Started,
+             Players = (state.Players.PlayerOne, new(e.PlayerId, default))
+         },
+         RoundStarted e => state with
+         {
+             Status = GameStatus.Started,
+             Round = e.Round
+         },
+         HandShown e => state with
+         {
+             Players = e.PlayerId switch
+             {
+                 string id when id == state.Players.PlayerOne.Id => new(state.Players.PlayerOne with { Hand = e.Hand }, state.Players.PlayerTwo),
+                 _ => new(state.Players.PlayerOne, state.Players.PlayerTwo with { Hand = e.Hand })
+             }
+         },
+         RoundTied => state with
+         {
+             Players = (state.Players.PlayerOne with { Hand = Hand.None }, state.Players.PlayerTwo with { Hand = Hand.None })
+             //TODO set all hand and status trough events
+         },
+         GameEnded => state with
+         {
+             Status = GameStatus.Ended
+         },
+         _ => state
+     };
+}
+
 public record GameState(
  Guid Id,
  (Player PlayerOne, Player PlayerTwo) Players,
@@ -183,45 +227,7 @@ public record GameState(
     public GameState() : this(Guid.NewGuid(), (default, default), 0, 0, GameStatus.None, 0)
     { }
 
-    public GameState When(EventRecord @event) =>
-           @event switch
-           {
-               GameCreated e => this with
-               {
-                   Status = GameStatus.ReadyToStart,
-                   Id = e.GameId,
-                   Players = (new(e.PlayerId, default), new(string.Empty, default)),
-                   Rounds = e.Rounds
-               },
-               GameStarted e => this with
-               {
-                   Status = GameStatus.Started,
-                   Players = (Players.PlayerOne, new(e.PlayerId, default))
-               },
-               RoundStarted e => this with
-               {
-                   Status = GameStatus.Started,
-                   Round = e.Round
-               },
-               HandShown e => this with
-               {
-                   Players = e.PlayerId switch
-                   {
-                       string id when id == Players.PlayerOne.Id => new(Players.PlayerOne with { Hand = e.Hand }, Players.PlayerTwo),
-                       _ => new(Players.PlayerOne, Players.PlayerTwo with { Hand = e.Hand })
-                   }
-               },
-               RoundTied => this with
-               {
-                   Players = (Players.PlayerOne with { Hand = Hand.None }, Players.PlayerTwo with { Hand = Hand.None })
-                       //TODO set all hand and status trough events
-                   },
-               GameEnded => this with
-               {
-                   Status = GameStatus.Ended
-               },
-               _ => this
-           };
+    public GameState When(EventRecord @event) => State.Evolve(this, @event);
 }
 
 public record Player(string Id, Hand Hand);
