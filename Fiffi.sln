@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.28803.452
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.33103.201
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fiffi", "src\Fiffi\Fiffi.csproj", "{A0A6A33E-CEAF-47EE-8236-E9431C7CAC54}"
 EndProject
@@ -60,9 +60,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fiffi.CloudEvents.Tests", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fiffi.Dapr.Tests", "test\Fiffi.Dapr.Tests\Fiffi.Dapr.Tests.csproj", "{F47E5529-D26B-4B5F-BD23-25AE2C6480CF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fiffi.FireStore", "src\Fiffi.FireStore\Fiffi.FireStore.csproj", "{561DA724-DBCB-4FCD-BD1F-6F080C936CD2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fiffi.FireStore", "src\Fiffi.FireStore\Fiffi.FireStore.csproj", "{561DA724-DBCB-4FCD-BD1F-6F080C936CD2}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fiffi.FireStore.Tests", "test\Fiffi.FireStore.Tests\Fiffi.FireStore.Tests.csproj", "{587649ED-74E5-4616-93F0-90DF79C22CB0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fiffi.Marten", "src\Fiffi.Marten\Fiffi.Marten.csproj", "{9526FB8E-41F3-42BC-94C8-DE5AD55594DD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -256,6 +258,14 @@ Global
 		{587649ED-74E5-4616-93F0-90DF79C22CB0}.Release|Any CPU.Build.0 = Release|Any CPU
 		{587649ED-74E5-4616-93F0-90DF79C22CB0}.Release|x64.ActiveCfg = Release|Any CPU
 		{587649ED-74E5-4616-93F0-90DF79C22CB0}.Release|x64.Build.0 = Release|Any CPU
+		{9526FB8E-41F3-42BC-94C8-DE5AD55594DD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9526FB8E-41F3-42BC-94C8-DE5AD55594DD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9526FB8E-41F3-42BC-94C8-DE5AD55594DD}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{9526FB8E-41F3-42BC-94C8-DE5AD55594DD}.Debug|x64.Build.0 = Debug|Any CPU
+		{9526FB8E-41F3-42BC-94C8-DE5AD55594DD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9526FB8E-41F3-42BC-94C8-DE5AD55594DD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9526FB8E-41F3-42BC-94C8-DE5AD55594DD}.Release|x64.ActiveCfg = Release|Any CPU
+		{9526FB8E-41F3-42BC-94C8-DE5AD55594DD}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
