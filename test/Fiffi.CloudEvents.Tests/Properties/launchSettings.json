@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "Fiffi.CloudEvents.Tests": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:64644;http://localhost:64645"
+    }
+  }
+}

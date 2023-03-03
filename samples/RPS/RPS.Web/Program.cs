@@ -1,6 +1,7 @@
 using System;
 using System.Text.Json;
 using System.Threading.Tasks;
+using System.Linq;
 
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -17,6 +18,7 @@ using Fiffi;
 using Fiffi.Dapr;
 using Fiffi.Serialization;
 using Fiffi.CosmosChangeFeed;
+using Fiffi.Modularization;
 
 namespace RPS.Web;
 
@@ -36,12 +38,16 @@ public class Program
                 webBuilder.ConfigureServices((ctx, services) =>
                     services
                         .Conditional(() => ctx.Configuration.GetValue<bool>("FIFFI_DAPR"),
-                        s => s.AddFiffiDapr("localcosmos").Tap(x => x.AddChangeFeed(ctx)),
-                        s => s.AddFiffiInMemory())
+                            s => s.AddFiffiDapr("localcosmos").Tap(x => x.AddChangeFeed(ctx)),
+                            s => s.AddFiffiInMemory())
                         .AddApplicationInsightsTelemetry()
                         .AddSingleton(JsonSerializerOptions)
                         .AddSingleton(TypeResolver.FromMap(TypeResolver.GetEventsInNamespace<GameCreated>()))
                         .AddModule(GameModule.Initialize)
+                        .Conditional(() => !string.IsNullOrEmpty(ctx.Configuration.GetValue<string>("DAPR_GRPC_PORT")),
+                            s => s.AddInMemoryEventSubscribers(sp => sp.GetRequiredService<BindingPublisher>().Publish, typeof(GameModule)),
+                            s => s.AddInMemoryEventSubscribers(typeof(GameModule)))
+                        .AddTransient<BindingPublisher>()
                         .AddSwaggerGen(c => c.SwaggerDoc("v1", new OpenApiInfo { Title = "RPS Game", Version = "v1" }))
                         .AddLogging(b => b.AddFilter<ApplicationInsightsLoggerProvider>("", LogLevel.Information))
                         .AddMvc()
@@ -93,15 +99,33 @@ public static class Extensions
     public static IServiceCollection AddFiffiInMemory(this IServiceCollection services)
         => services
            .AddSingleton<IAdvancedEventStore, Fiffi.InMemory.InMemoryEventStore>()
-           .AddTransient<ISnapshotStore, Fiffi.InMemory.InMemorySnapshotStore>()
-           .AddTransient<Func<IEvent[], Task>>(sp => events => sp.GetService<GameModule>().WhenAsync(events));
+           .AddTransient<ISnapshotStore, Fiffi.InMemory.InMemorySnapshotStore>();
+    //.AddTransient<Func<IEvent[], Task>>(sp => events => sp.GetService<GameModule>().WhenAsync(events));
 
     public static IServiceCollection AddFiffiDapr(this IServiceCollection services,
         string eventStoreStateStore)
     => services
-    .AddEventStore(eventStoreStateStore)
-    .AddSnapshotStore(eventStoreStateStore)
-    .AddIntegrationEventPublisher("in", "topic");
+    .AddDaprEventStore(eventStoreStateStore)
+    .AddDaprSnapshotStore(eventStoreStateStore)
+    .AddDaprPubSubIntegrationEventPublisher("in", "topic");
+
+    public static IServiceCollection AddInMemoryEventSubscribers(this IServiceCollection services,
+        params Type[] moduleTypes) => AddInMemoryEventSubscribers(services, sp => e => Task.CompletedTask, moduleTypes);
+
+    public static IServiceCollection AddInMemoryEventSubscribers(this IServiceCollection services,
+    Func<IServiceProvider, Func<IEvent[], Task>> pub,
+    params Type[] moduleTypes)
+    => services
+        .AddSingleton<Func<IEvent[], Task>>(sp => events =>
+        {
+            var modules = moduleTypes
+                .Select(t => sp.GetRequiredService(t))
+                .Cast<Module>();
+
+            return Task.WhenAll(modules
+                .Select(m => m.WhenAsync(events))
+                .Concat(new[] { pub(sp)(events) }));
+        });
 
     public static IServiceCollection AddChangeFeed(this IServiceCollection services, WebHostBuilderContext ctx)
         => services
@@ -109,7 +133,7 @@ public static class Extensions
                ctx.Configuration,
                opt =>
                { //TODO use dapr secrets + ext to map secrets -> opt | or via config ?
-                       opt.InstanceName = "RPS.Web";
+                   opt.InstanceName = "RPS.Web";
                    opt.ServiceUri = new System.Uri("https://localhost:8081");
                    opt.Key = "C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==";
                    opt.DatabaseName = "dapr";
