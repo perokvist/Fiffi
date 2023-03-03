@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "RPS.Web.Tests": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:64640;http://localhost:64641"
+    }
+  }
+}
