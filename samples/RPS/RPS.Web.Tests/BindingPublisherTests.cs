@@ -29,10 +29,10 @@ public class BindingPublisherTests
 
         (host, context) = Web.Program
             .CreateHostBuilder(Array.Empty<string>())
-            .CreateTestContextAndHostFromServices(services =>
+            .CreateFiffiTestContext(services =>
                     services //TODO fix meta provider and binding name i program (default is no meta data)
                     .Remove(services.SingleOrDefault(x => x.ImplementationType == typeof(ChangeFeedHostedService))),
-                    (s, sp, store, pub) => GameModule.Initialize(store, sp.GetRequiredService<ISnapshotStore>(), pub)
+                    GameModule.Initialize
             );
     }
 
