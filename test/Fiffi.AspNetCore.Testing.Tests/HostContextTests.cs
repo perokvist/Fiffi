@@ -30,7 +30,9 @@ public class HostContextTests
                 .AddInMemoryEventSubscribers()
                 )
                 .Configure(app => app.UseWelcomePage()))
-            .CreateFiffiTestContext(testServices => testServices.AddFiffiInMemory(), TestModule.Initialize);
+            .CreateFiffiTestContext(
+                testServices => testServices.AddFiffiInMemory(), 
+                TestModule.Initialize);
     }
 
     [Fact]

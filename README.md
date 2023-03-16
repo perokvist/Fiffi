@@ -104,7 +104,7 @@ public class TestModule : Module
 }
 ```
 
-### Creating a TestContext for integration tests
+### Creating a TestContext for integration tests using test extension
 
 Using the *TestModule* we use the *TestHost* and *TextContext*, constructed by an extension.
 
@@ -168,6 +168,27 @@ The GWT approach also lets us build a current state by a history of events, by b
     }
 ```
 > The *TestContext* will apply the history of events to the configured event store and projections, based on stream meta data and module configuration.
+
+### Creating a TestContext for integration tests using context builder
+
+If you don't need/want easy access to the *ServiceProvider* you could initiate the Host within the Creation of the subject module, illustrated by the RPS sample. 
+
+```
+ this.context = TestContextBuilder.Create<InMemoryEventStore, GameModule>((store, pub) =>
+        {
+            this.helper = outputHelper;
+            var module = GameModule.Initialize(store, new InMemorySnapshotStore(), pub);
+            hostBuilder = RPS.Web.Program.CreateHostBuilder(Array.Empty<string>())
+            .ConfigureWebHost(webHost => webHost
+            .UseTestServer()
+            .ConfigureTestServices(services =>
+                services
+                    .AddSingleton(module)
+                    .Remove(services.SingleOrDefault(x => x.ImplementationType == typeof(ChangeFeedHostedService)))
+            ));
+            return module;
+        });
+```
 
 ### Alternative way of authoring modules
 
