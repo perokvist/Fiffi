@@ -1,7 +1,6 @@
 ﻿using Fiffi.Modularization;
-using Fiffi.Testing;
 
-namespace Fiffi.AspNetCore.Testing.Tests;
+namespace Fiffi.Testing;
 
 public class TestModule : Module
 {
@@ -13,7 +12,7 @@ public class TestModule : Module
         .Commands(cmd => store.ExecuteAsync(cmd, "test", () => new[] { new TestEventRecord("test") }, pub))
         .Updates(events => snapshotStore.Apply("test", new TestView(0), events.Select(x => x.Event), Apply))
         .Triggers((events, dispatcher) => Task.CompletedTask)
-        .Query<TestQuery, TestView?>(q => snapshotStore.Get<TestView>("test"))
+        .Query<TestQuery, TestView>(q => snapshotStore.Get<TestView>("test"))
         .Create(store);
 
     public record TestView(int EventCount) : View;
@@ -22,5 +21,5 @@ public class TestModule : Module
         TestView snap,
         EventRecord @event) => snap with { EventCount = snap.EventCount + 1 };
 
-    public record TestQuery() : IQuery<TestView?>;
+    public record TestQuery() : IQuery<TestView>;
 }

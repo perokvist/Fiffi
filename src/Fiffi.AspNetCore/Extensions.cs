@@ -92,10 +92,3 @@ public class FiffiOptions
     public JsonSerializerOptions JsonSerializerOptions { get; set; } = new JsonSerializerOptions();
 }
 
-public record FiffiConfigurator(IServiceCollection Services);
-
-public static class FiffiConfiguratorExtensions
-{
-    public static void Foo(this FiffiConfigurator configurator)
-    { }
-}

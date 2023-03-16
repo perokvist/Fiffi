@@ -1,6 +1,6 @@
 ﻿using Fiffi.Modularization;
 using Fiffi.Testing;
-using static Fiffi.AspNetCore.Testing.Tests.TestModule;
+using static Fiffi.Testing.TestModule;
 
 namespace Fiffi.AspNetCore.Testing.Tests;
 
