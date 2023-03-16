@@ -20,6 +20,10 @@ jobs:
       run: dotnet pack src/Fiffi/Fiffi.csproj --configuration Release -o artifacts
     - name: Pack Firestore
       run: dotnet pack src/Fiffi.FireStore/Fiffi.FireStore.csproj --configuration Release -o artifacts
+    - name: Pack Fiffi.AspNetCore
+      run: dotnet pack src/Fiffi.AspNetCore/Fiffi.AspNetCore.csproj --configuration Release -o artifacts
+    - name: Pack Fiffi.AspNetCore.Testing
+      run: dotnet pack src/Fiffi.AspNetCore.Testing/Fiffi.AspNetCore.Testing.csproj --configuration Release -o artifacts
     - name: Publish artifact
       uses: actions/upload-artifact@master
       with:
