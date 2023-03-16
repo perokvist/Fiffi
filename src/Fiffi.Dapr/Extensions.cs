@@ -34,8 +34,8 @@ public static class Extensions
                 sp.GetRequiredService<DaprClient>(),
                 sp.GetRequiredService<ILogger<global::Dapr.EventStore.DaprEventStore>>())
                 .Tap(x => x.StoreName = storeName))
-                .AddSingleton<IAdvancedEventStore<EventData>, DaprEventStore>()
-                .AddSingleton<IAdvancedEventStore, AdvancedEventStore>();
+                .AddSingleton<IAdvancedEventStore<EventData>, DaprEventStore>();
+                //.AddSingleton<IAdvancedEventStore, AdvancedEventStore>();
 
     public static IServiceCollection AddDaprSnapshotStore(this IServiceCollection services,
         string storeName = "statestore", string viewPartition = "views") =>

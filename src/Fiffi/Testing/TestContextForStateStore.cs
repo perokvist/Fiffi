@@ -62,4 +62,9 @@ public class TestContextForStateStore : ITestContext
     }
 
     public void Then(Action<IEvent[]> f) => f(this.events);
+
+    public Task ThenAsync<T>(IQuery<T> q, Action<T> f) where T : class
+    {
+        throw new NotImplementedException();
+    }
 }

@@ -5,6 +5,10 @@ public class Configuration<T>
 {
     readonly Func<Func<ICommand, Task>, Func<IEvent[], Task>, QueryDispatcher, Func<IEvent[], Task>, T> f;
 
+    public Configuration(Func<Module.ModuleCore, T> f)
+        : this((d, p, q, s) => f(new(d, p, q, s)))
+    { }
+
     public Configuration(Func<Func<ICommand, Task>, Func<IEvent[], Task>, QueryDispatcher, Func<IEvent[], Task>, T> f)
     {
         this.f = f;

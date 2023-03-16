@@ -1,5 +1,4 @@
 ﻿using Fiffi.Serialization;
-using System;
 using System.Buffers;
 
 namespace Fiffi;

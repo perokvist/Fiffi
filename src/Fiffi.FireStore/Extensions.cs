@@ -53,8 +53,8 @@ public static class Extensions
                     .Tap(x => x.DocumentPathProvider = pathProvider))
                .AddSingleton<IEventStore<EventData>>(sp => sp.GetRequiredService<FireStoreEventStore>())
                .AddSingleton<IAdvancedEventStore<EventData>>(sp => sp.GetRequiredService<FireStoreEventStore>())
-               .AddSingleton<IEventStore, EventStore>()
-               .AddSingleton<IAdvancedEventStore, AdvancedEventStore>()
+               //.AddSingleton<IEventStore, AdvancedEventStore>()
+               //.AddSingleton<IAdvancedEventStore, AdvancedEventStore>()
                .AddSingleton<ISnapshotStore>(sp => new SnapshotStore(
                    sp.GetRequiredService<FirestoreDb>(),
                    sp.GetRequiredService<JsonSerializerOptions>())

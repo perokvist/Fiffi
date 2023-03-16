@@ -6,21 +6,17 @@ public class TestContextBuilder
 {
     public static ITestContext Create<TPersitance>(Func<TPersitance, Queue<IEvent>, ITestContext> f)
         where TPersitance : class, new()
-        => Create(() => new TPersitance(), f);
+         => Create(() => new TPersitance(), f);
 
     public static ITestContext Create<TPersitance>(Func<TPersitance> creator, Func<TPersitance, Queue<IEvent>, ITestContext> f)
         where TPersitance : class
-    {
-        var store = creator();
-        var q = new Queue<IEvent>();
-        return f(store, q);
-    }
+          => f(creator(), new Queue<IEvent>());
 
     public static ITestContext Create<TPersitance, TModule>(
         Func<TPersitance, Func<IEvent[], Task>, TModule> f,
         params Func<TPersitance, Func<IEvent[], Task>, Module>[] additional)
         where TPersitance : class, IEventStore, new()
-        where TModule : Module
+        where TModule : IModule
         => Create(() => new TPersitance(), f, additional);
 
     public static ITestContext Create<TPersitance, TModule>(
@@ -28,7 +24,7 @@ public class TestContextBuilder
         Func<TPersitance, Func<IEvent[], Task>, TModule> f,
         params Func<TPersitance, Func<IEvent[], Task>, Module>[] additional)
         where TPersitance : class, IEventStore
-        where TModule : Module
+        where TModule : IModule
         => Create(creator, (store, q) =>
         {
             var pub = q.AsPub();
@@ -42,7 +38,8 @@ public class TestContextBuilder
                 await a(store);
                 await module.OnStart(events);
                 await Task.WhenAll(additionalModules.Select(x => x.OnStart(events)));
-            }, module.DispatchAsync, q, module.QueryAsync, allWhens);
+            }, q, module, allWhens);
+
         });
 
     public static (ITestContext, TModule) CreateWithModule<TPersitance, TModule>(
@@ -54,8 +51,7 @@ public class TestContextBuilder
     {
         TModule module = null;
         var ctx = Create(creator,
-            (store, pub) =>
-            {
+            (store, pub) => {
                 module = f(store, pub);
                 return module;
             },
