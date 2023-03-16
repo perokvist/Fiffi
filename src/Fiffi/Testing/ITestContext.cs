@@ -3,8 +3,9 @@
 public interface ITestContext
 {
     void Given(params IEvent[] events);
-    void Then(Action<IEvent[]> f);
     Task WhenAsync(Func<Task> f);
     Task WhenAsync(ICommand command);
     Task WhenAsync(IEvent @event);
+    void Then(Action<IEvent[]> f);
+    Task ThenAsync<T>(IQuery<T> q, Action<T> f) where T : class;
 }

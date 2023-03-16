@@ -29,14 +29,10 @@ public class BindingPublisherTests
 
         (host, context) = Web.Program
             .CreateHostBuilder(Array.Empty<string>())
-            .CreateTestContextAndHostFromServices(services =>
-                    services
+            .CreateFiffiTestContext(services =>
+                    services //TODO fix meta provider and binding name i program (default is no meta data)
                     .Remove(services.SingleOrDefault(x => x.ImplementationType == typeof(ChangeFeedHostedService))),
-                    (sp, store, pub) => GameModule.Initialize(store, sp.GetRequiredService<ISnapshotStore>(), pub),
-                    sp => sp.GetRequiredService<BindingPublisher>()
-                    .Tap(x => x.MetaProvider = BindingPublisher.AzureProvider())
-                    .Tap(x => x.BindingName = "datastorage")
-                    .Publish
+                    GameModule.Initialize
             );
     }
 
