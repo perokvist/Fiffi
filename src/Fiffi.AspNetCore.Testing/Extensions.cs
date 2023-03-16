@@ -6,16 +6,25 @@ using Microsoft.Extensions.Hosting;
 
 namespace Fiffi.AspNetCore.Testing;
 
-public record TestRegistration(ITestContext Context, Module Module);
+public record TestRegistration(ITestContext Context, IModule Module);
 
 public static class Extensions
 {
-    public static (IHost, ITestContext) CreateTestContextAndHostFromServices<TModule>(
+
+    public static (IHost, ITestContext) CreateFiffiTestContext<TModule>(
+        this IHostBuilder hostBuilder,
+        Func<IAdvancedEventStore, ISnapshotStore, Func<IEvent[], Task>, TModule> f)
+        where TModule : class, IModule
+        => CreateFiffiTestContext<TModule>(hostBuilder, services => { },
+            (sp, store, snap, pub) => f(store, snap, pub));
+
+    public static (IHost, ITestContext) CreateFiffiTestContext<TModule>(
     this IHostBuilder hostBuilder,
     Action<IServiceCollection> testServices,
-    Func<IServiceProvider, IAdvancedEventStore, Func<IEvent[], Task>, TModule> f
-    ) where TModule : Module
-        => CreateTestContextAndHostFromServices(hostBuilder, testServices, f, sp => e => Task.CompletedTask);
+    Func<IAdvancedEventStore, ISnapshotStore, Func<IEvent[], Task>, TModule> f)
+    where TModule : class, IModule
+    => CreateFiffiTestContext<TModule>(hostBuilder, services => { },
+        (sp,store, snap, pub) => f(store, snap, pub));
 
     /// <summary>
     /// Create TestContext for integration tests
@@ -23,17 +32,15 @@ public static class Extensions
     /// <typeparam name="TModule"></typeparam>
     /// <param name="hostBuilder"></param>
     /// <param name="testServices"></param>
-    /// <param name="f"></param>
-    /// <param name="integrationPublisher"></param>
+    /// <param name="f">Intercept module resolving, making it possible to swap module implementation.</param>
     /// <remarks>Text context creation doesn't use registered event subscribers. The subject module subscribes trough the test spy. 
     /// Register additional publishers in test using integrationPublisher</remarks>
     /// <returns>Tuple of host and context</returns>
-    public static (IHost, ITestContext) CreateTestContextAndHostFromServices<TModule>(
+    public static (IHost, ITestContext) CreateFiffiTestContext<TModule>(
         this IHostBuilder hostBuilder,
         Action<IServiceCollection> testServices,
-        Func<IServiceProvider, IAdvancedEventStore, Func<IEvent[], Task>, TModule> f,
-        Func<IServiceProvider, Func<IEvent[], Task>> integrationPublisher
-        ) where TModule : Module
+        Func<IServiceProvider, IAdvancedEventStore, ISnapshotStore, Func<IEvent[], Task>, TModule> f
+        ) where TModule : class, IModule
     {
         var host = hostBuilder
         .ConfigureWebHost(webHost => webHost
@@ -42,18 +49,14 @@ public static class Extensions
                 .Tap(testServices)
                 .AddSingleton<TestRegistration>(sp =>
                 {
-                    TModule m = null;
+                    TModule? m = default;
                     var tc = TestContextBuilder.Create(
                         () => sp.GetRequiredService<IAdvancedEventStore>(),
-                        (store, pub) =>
-                        {
-                            var integrationPub = integrationPublisher(sp);
-                            m = f(sp, store, e => Task.WhenAll(pub(e), integrationPub(e)));
-                            return m;
-                        });
+                        (store, pub) =>f(sp, store, sp.GetRequiredService<ISnapshotStore>(), pub)
+                        );
                     return new(tc, m);
                 })
-                .AddSingleton(sp => (TModule)sp.GetRequiredService<TestRegistration>().Module)
+        .AddSingleton(sp => sp.GetRequiredService<TestRegistration>().Module)
         )
         .UseTestServer())
         .Build();

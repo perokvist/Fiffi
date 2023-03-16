@@ -5,7 +5,6 @@ using System;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Xunit;
-using static Fiffi.Testing.TestContext;
 
 namespace Fiffi.Dapr.Tests;
 public class BindingPublisherTests

@@ -18,7 +18,7 @@ public static class EventEnvelope
 {
     public static EventEnvelope<T> Create<T>(string sourceId, T @event)
         where T : EventRecord
-        => new EventEnvelope<T>(sourceId, @event);
+        => new(sourceId, @event);
 }
 
 public class EventEnvelope<T> : IEvent<T>

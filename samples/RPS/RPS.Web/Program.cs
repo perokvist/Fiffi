@@ -1,7 +1,4 @@
-using System;
 using System.Text.Json;
-using System.Threading.Tasks;
-using System.Linq;
 
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -18,7 +15,7 @@ using Fiffi;
 using Fiffi.Dapr;
 using Fiffi.Serialization;
 using Fiffi.CosmosChangeFeed;
-using Fiffi.Modularization;
+using Fiffi.AspNetCore;
 
 namespace RPS.Web;
 
@@ -37,17 +34,21 @@ public class Program
             .ConfigureWebHostDefaults(webBuilder =>
                 webBuilder.ConfigureServices((ctx, services) =>
                     services
-                        .Conditional(() => ctx.Configuration.GetValue<bool>("FIFFI_DAPR"),
-                            s => s.AddFiffiDapr("localcosmos").Tap(x => x.AddChangeFeed(ctx)),
+                        .Conditional(ctx.Configuration.FiffiDaprEnabled(),
+                            s => s
+                            .AddFiffi(opt => {
+                                opt.TypeResolver = TypeResolver.GetEventsInNamespace<GameCreated>();
+                                opt.JsonSerializerOptions = JsonSerializerOptions;
+                            })
+                            .AddTransient<BindingPublisher>()
+                            .AddDaprEventStore()
+                            .AddDaprSnapshotStore(), 
                             s => s.AddFiffiInMemory())
-                        .AddApplicationInsightsTelemetry()
-                        .AddSingleton(JsonSerializerOptions)
-                        .AddSingleton(TypeResolver.FromMap(TypeResolver.GetEventsInNamespace<GameCreated>()))
                         .AddModule(GameModule.Initialize)
-                        .Conditional(() => !string.IsNullOrEmpty(ctx.Configuration.GetValue<string>("DAPR_GRPC_PORT")),
-                            s => s.AddInMemoryEventSubscribers(sp => sp.GetRequiredService<BindingPublisher>().Publish, typeof(GameModule)),
-                            s => s.AddInMemoryEventSubscribers(typeof(GameModule)))
-                        .AddTransient<BindingPublisher>()
+                        .Conditional(ctx.Configuration.DaprEnabled(),
+                            s => s.AddInMemoryEventSubscribers(sp => sp.GetRequiredService<BindingPublisher>().Publish),
+                            s => s.AddInMemoryEventSubscribers())
+                        .AddApplicationInsightsTelemetry()
                         .AddSwaggerGen(c => c.SwaggerDoc("v1", new OpenApiInfo { Title = "RPS Game", Version = "v1" }))
                         .AddLogging(b => b.AddFilter<ApplicationInsightsLoggerProvider>("", LogLevel.Information))
                         .AddMvc()
@@ -80,52 +81,12 @@ public class Program
 
 public static class Extensions
 {
-    public static IServiceCollection Conditional(this IServiceCollection services,
-        Func<bool> condition,
-        Func<IServiceCollection, IServiceCollection> ifTrue,
-        Func<IServiceCollection, IServiceCollection> ifFalse)
-     => condition() ? ifTrue(services) : ifFalse(services);
-
-    public static IServiceCollection AddModule<T>(this IServiceCollection services,
-        Func<IAdvancedEventStore, ISnapshotStore, Func<IEvent[], Task>, T> f)
-        where T : class
-        => services.AddSingleton<T>(sp => f(
-                  sp.GetRequiredService<IAdvancedEventStore>(),
-                  sp.GetRequiredService<ISnapshotStore>(),
-                  sp.GetRequiredService<Func<IEvent[], Task>>()
-            ));
-
-
-    public static IServiceCollection AddFiffiInMemory(this IServiceCollection services)
-        => services
-           .AddSingleton<IAdvancedEventStore, Fiffi.InMemory.InMemoryEventStore>()
-           .AddTransient<ISnapshotStore, Fiffi.InMemory.InMemorySnapshotStore>();
-    //.AddTransient<Func<IEvent[], Task>>(sp => events => sp.GetService<GameModule>().WhenAsync(events));
-
     public static IServiceCollection AddFiffiDapr(this IServiceCollection services,
         string eventStoreStateStore)
     => services
     .AddDaprEventStore(eventStoreStateStore)
     .AddDaprSnapshotStore(eventStoreStateStore)
     .AddDaprPubSubIntegrationEventPublisher("in", "topic");
-
-    public static IServiceCollection AddInMemoryEventSubscribers(this IServiceCollection services,
-        params Type[] moduleTypes) => AddInMemoryEventSubscribers(services, sp => e => Task.CompletedTask, moduleTypes);
-
-    public static IServiceCollection AddInMemoryEventSubscribers(this IServiceCollection services,
-    Func<IServiceProvider, Func<IEvent[], Task>> pub,
-    params Type[] moduleTypes)
-    => services
-        .AddSingleton<Func<IEvent[], Task>>(sp => events =>
-        {
-            var modules = moduleTypes
-                .Select(t => sp.GetRequiredService(t))
-                .Cast<Module>();
-
-            return Task.WhenAll(modules
-                .Select(m => m.WhenAsync(events))
-                .Concat(new[] { pub(sp)(events) }));
-        });
 
     public static IServiceCollection AddChangeFeed(this IServiceCollection services, WebHostBuilderContext ctx)
         => services
