@@ -7,26 +7,25 @@ using System.Text.Json;
 namespace Fiffi.AspNetCore;
 public static class ServiceCollectionExtensions
 {
-    public static IServiceCollection AddModule<T>(this IServiceCollection services,
+    public static IServiceCollection AddFiffiModule<T>(this IServiceCollection services,
     Func<IAdvancedEventStore, ISnapshotStore, Func<IEvent[], Task>, T> f)
-    where T : Module
-        => AddModule<T>(services, sp => f);
+    where T : class, IModule
+        => AddFiffiModule<T>(services, sp => f);
 
-    public static IServiceCollection AddModule<T>(this IServiceCollection services,
+    public static IServiceCollection AddFiffiModule<T>(this IServiceCollection services,
         Func<IServiceProvider, Func<IAdvancedEventStore, ISnapshotStore, Func<IEvent[], Task>, T>> f)
-        where T : Module
+        where T : class, IModule
         => services
-        .AddSingleton<T>(sp => f(sp)(
-        sp.GetRequiredService<IAdvancedEventStore>(),
-        sp.GetRequiredService<ISnapshotStore>(),
-        sp.GetRequiredService<Func<IEvent[], Task>>()))
-        .AddSingleton<Module>(sp => sp.GetRequiredService<T>());
+            .AddFiffiModule(sp => f(sp)(
+                sp.GetRequiredService<IAdvancedEventStore>(),
+                sp.GetRequiredService<ISnapshotStore>(),
+                sp.GetRequiredService<Func<IEvent[], Task>>()));
 
-    public static IServiceCollection AddModule<T>(this IServiceCollection services, Func<T> f)
-    where T : Module
+    public static IServiceCollection AddFiffiModule<T>(this IServiceCollection services, Func<IServiceProvider, T> f)
+    where T : class, IModule
     => services
-        .AddSingleton(sp => f())
-        .AddSingleton<Module>(sp => sp.GetRequiredService<T>());
+        .AddSingleton(f)
+        .AddSingleton<IModule>(sp => sp.GetRequiredService<T>());
 
     public static IServiceCollection AddInMemoryEventSubscribers(this IServiceCollection services)
         => AddInMemoryEventSubscribers(services, sp => events => Task.CompletedTask);
@@ -36,7 +35,7 @@ public static class ServiceCollectionExtensions
         Func<IServiceProvider, Func<IEvent[], Task>> additionalPub)
         => services.AddSingleton<Func<IEvent[], Task>>(sp => events =>
             Task.WhenAll(
-                sp.GetRequiredService<IEnumerable<Module>>()
+                sp.GetRequiredService<IEnumerable<IModule>>()
                 .Select(m => m.WhenAsync(events))
                 .Concat(new[] { additionalPub(sp)(events) })
                 ));
@@ -57,7 +56,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddFiffiInMemory(this IServiceCollection services)
     => services
        .AddSingleton<IAdvancedEventStore, InMemory.InMemoryEventStore>()
-       .AddTransient<ISnapshotStore, InMemory.InMemorySnapshotStore>();
+       .AddSingleton<ISnapshotStore, InMemory.InMemorySnapshotStore>();
 
     public static IServiceCollection AddFiffi(this IServiceCollection services, Action<FiffiOptions> configure)
      => services
@@ -65,15 +64,6 @@ public static class ServiceCollectionExtensions
         .AddSingleton(sp => sp.GetRequiredService<IOptions<FiffiOptions>>().Value.JsonSerializerOptions)
         .AddSingleton(sp => sp.GetRequiredService<IOptions<FiffiOptions>>().Value.TypeResolver)
         .AddSingleton<IEventStore>(sp => sp.GetRequiredService<IAdvancedEventStore>());
-
-
-    public static IServiceCollection AddFiffiOptions(this IServiceCollection services,
-        JsonSerializerOptions jsonSerializerOptions,
-        Dictionary<string, Type> typeResolver
-        )
-        => services
-            .AddSingleton(jsonSerializerOptions)
-            .AddSingleton(TypeResolver.FromMap(typeResolver));
 }
 
 public static class ConfigurationExtensions
