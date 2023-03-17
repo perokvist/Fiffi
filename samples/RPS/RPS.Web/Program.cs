@@ -44,7 +44,7 @@ public class Program
                             .AddDaprEventStore()
                             .AddDaprSnapshotStore(), 
                             s => s.AddFiffiInMemory())
-                        .AddModule(GameModule.Initialize)
+                        .AddFiffiModule(GameModule.Initialize)
                         .Conditional(ctx.Configuration.DaprEnabled(),
                             s => s.AddInMemoryEventSubscribers(sp => sp.GetRequiredService<BindingPublisher>().Publish),
                             s => s.AddInMemoryEventSubscribers())

@@ -23,7 +23,7 @@ public class HostTests
                 webBuilder.ConfigureServices((ctx, services) =>
                 services
                 .AddFiffiInMemory()
-                .AddModule(TestModule.Initialize)
+                .AddFiffiModule(TestModule.Initialize)
                 .AddInMemoryEventSubscribers())
                 .Configure(app => app.UseWelcomePage())
                .UseTestServer())

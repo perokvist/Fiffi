@@ -6,16 +6,22 @@ using Microsoft.Extensions.Hosting;
 
 namespace Fiffi.AspNetCore.Testing;
 
-public record TestRegistration(ITestContext Context, IModule Module);
+public record TestRegistration<T>(ITestContext Context, T Module) where T : IModule;
 
 public static class Extensions
 {
+    public static (IHost, ITestContext) CreateFiffiTestContext<TModule>(
+    this IHostBuilder hostBuilder,
+    Func<IServiceProvider, Func<IAdvancedEventStore, ISnapshotStore, Func<IEvent[], Task>, TModule>> f)
+    where TModule : class, IModule
+    => CreateFiffiTestContext(hostBuilder, services => { },
+        (sp, store, snap, pub) => f(sp)(store, snap, pub));
 
     public static (IHost, ITestContext) CreateFiffiTestContext<TModule>(
         this IHostBuilder hostBuilder,
         Func<IAdvancedEventStore, ISnapshotStore, Func<IEvent[], Task>, TModule> f)
         where TModule : class, IModule
-        => CreateFiffiTestContext<TModule>(hostBuilder, services => { },
+        => CreateFiffiTestContext(hostBuilder, services => { },
             (sp, store, snap, pub) => f(store, snap, pub));
 
     public static (IHost, ITestContext) CreateFiffiTestContext<TModule>(
@@ -23,7 +29,7 @@ public static class Extensions
     Action<IServiceCollection> testServices,
     Func<IAdvancedEventStore, ISnapshotStore, Func<IEvent[], Task>, TModule> f)
     where TModule : class, IModule
-    => CreateFiffiTestContext<TModule>(hostBuilder, services => { },
+    => CreateFiffiTestContext(hostBuilder, services => { },
         (sp,store, snap, pub) => f(store, snap, pub));
 
     /// <summary>
@@ -47,7 +53,7 @@ public static class Extensions
         .ConfigureTestServices(services =>
             services
                 .Tap(testServices)
-                .AddSingleton<TestRegistration>(sp =>
+                .AddSingleton<TestRegistration<TModule>>(sp =>
                 {
                     TModule? m = default;
                     var tc = TestContextBuilder.Create(
@@ -56,10 +62,10 @@ public static class Extensions
                         );
                     return new(tc, m);
                 })
-        .AddSingleton(sp => sp.GetRequiredService<TestRegistration>().Module)
+        .AddFiffiModule(sp => sp.GetRequiredService<TestRegistration<TModule>>().Module)
         )
         .UseTestServer())
         .Build();
-        return (host, host.Services.GetRequiredService<TestRegistration>().Context);
+        return (host, host.Services.GetRequiredService<TestRegistration<TModule>>().Context);
     }
 }

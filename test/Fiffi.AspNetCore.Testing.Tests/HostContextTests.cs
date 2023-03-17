@@ -26,7 +26,7 @@ public class HostContextTests
                 webBuilder.ConfigureServices(services =>
                 services
                 .AddFiffiInMemory()
-                .AddModule(TestModule.Initialize)
+                .AddFiffiModule(TestModule.Initialize)
                 .AddInMemoryEventSubscribers()
                 )
                 .Configure(app => app.UseWelcomePage()))
