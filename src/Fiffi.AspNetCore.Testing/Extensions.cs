@@ -30,7 +30,7 @@ public static class Extensions
     Func<IAdvancedEventStore, ISnapshotStore, Func<IEvent[], Task>, TModule> f)
     where TModule : class, IModule
     => CreateFiffiTestContext(hostBuilder, services => { },
-        (sp,store, snap, pub) => f(store, snap, pub));
+        (sp, store, snap, pub) => f(store, snap, pub));
 
     /// <summary>
     /// Create TestContext for integration tests
@@ -58,8 +58,10 @@ public static class Extensions
                     TModule? m = default;
                     var tc = TestContextBuilder.Create(
                         () => sp.GetRequiredService<IAdvancedEventStore>(),
-                        (store, pub) =>f(sp, store, sp.GetRequiredService<ISnapshotStore>(), pub)
-                        );
+                        (store, pub) => {
+                            m = f(sp, store, sp.GetRequiredService<ISnapshotStore>(), pub);
+                            return m;
+                        });
                     return new(tc, m);
                 })
         .AddFiffiModule(sp => sp.GetRequiredService<TestRegistration<TModule>>().Module)

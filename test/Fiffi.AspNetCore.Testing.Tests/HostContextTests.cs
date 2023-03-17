@@ -35,6 +35,14 @@ public class HostContextTests
                 TestModule.Initialize);
     }
 
+
+    [Fact]
+    public async Task ResolveModuleAsync()
+    {
+        await host.StartAsync();
+        host.GetTestServer().Services.GetRequiredService<TestModule>();
+    }
+
     [Fact]
     public async Task SimpleEventCaptureAsync()
     {
