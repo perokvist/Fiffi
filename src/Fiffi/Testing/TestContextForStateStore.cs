@@ -67,4 +67,9 @@ public class TestContextForStateStore : ITestContext
     {
         throw new NotImplementedException();
     }
+
+    public Task ThenAsync(Func<IEvent[], Task> f)
+    {
+        throw new NotImplementedException();
+    }
 }

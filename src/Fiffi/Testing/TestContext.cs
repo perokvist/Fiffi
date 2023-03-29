@@ -13,7 +13,7 @@ public class TestContext : ITestContext
     public TestContext(
         Func<IEvent[], Func<IEventStore, Task>, Task> init,
         Queue<IEvent> q,
-        IModule module, 
+        IModule module,
         params Func<IEvent, Task>[] whens)
     {
         this.init = init;
@@ -27,21 +27,21 @@ public class TestContext : ITestContext
 
     public void Given(string[] streams, StreamName aggregateStream = StreamName.FromMeta, params IEvent[] events)
      => Do(aggregateStream switch
-        {
-            StreamName.FromMeta => () => events
-               .GroupBy(x => x.GetStreamName()) //TODO version and position ?
-               .ForEach(x => Given(new[] { x.Key }.Concat(streams).ToArray(), x)),
-            StreamName.FromSourceId => () => events.GroupBy(x => x.SourceId)
-               .ForEach(x => Given(new[] { x.Key }.Concat(streams).ToArray(), x)),
-            _ => () => Given(streams, events)
-        });
+     {
+         StreamName.FromMeta => () => events
+            .GroupBy(x => x.GetStreamName()) //TODO version and position ?
+            .ForEach(x => Given(new[] { x.Key }.Concat(streams).ToArray(), x)),
+         StreamName.FromSourceId => () => events.GroupBy(x => x.SourceId)
+            .ForEach(x => Given(new[] { x.Key }.Concat(streams).ToArray(), x)),
+         _ => () => Given(streams, events)
+     });
 
     static StreamName Foo(params IEvent[] events)
      => events.All(e => e.HasMeta(nameof(EventMetaData.StreamName))) switch
-        {
-            true => StreamName.FromMeta,
-            _ => StreamName.FromSourceId
-        };
+     {
+         true => StreamName.FromMeta,
+         _ => StreamName.FromSourceId
+     };
 
     static void Do(Action a) => a();
 
@@ -80,7 +80,10 @@ public class TestContext : ITestContext
     public async Task ThenAsync<T>(IQuery<T> q, Action<T> f)
         where T : class
         => f((await module.QueryAsync(q)));
-   
+
+    public Task ThenAsync(Func<IEvent[], Task> f)
+        => f(this.events);
+
     public enum StreamName
     {
         FromMeta = 10,
