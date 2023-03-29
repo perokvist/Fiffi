@@ -62,7 +62,8 @@ public static class ServiceCollectionExtensions
      => services
         .Configure(configure)
         .AddSingleton(sp => sp.GetRequiredService<IOptions<FiffiOptions>>().Value.JsonSerializerOptions)
-        .AddSingleton(sp => sp.GetRequiredService<IOptions<FiffiOptions>>().Value.TypeResolver)
+        .AddSingleton(sp => TypeResolver.FromMap(sp.GetRequiredService<IOptions<FiffiOptions>>().Value.TypeResolver))
+        .AddSingleton<IAdvancedEventStore, AdvancedEventStore>()
         .AddSingleton<IEventStore>(sp => sp.GetRequiredService<IAdvancedEventStore>());
 }
 
